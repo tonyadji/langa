@@ -1,0 +1,17 @@
+spring:
+    application:
+        name: langa-backend
+    data:
+        mongodb:
+            uri: mongodb://localhost:27017/langa_db
+
+application:
+    security:
+        jwt.secret: ${JWT_KEY}
+        jwt.kid: ${JWT_KID}
+        jwt.expiration: ${JWT_EXPIRATION}
+        jwt.refresh-token.expiration: ${JWT_REFRESH_TOKEN_EXPIRATION}
+logging:
+    level:
+        org.springframework.web: DEBUG
+        org.springframework.security: DEBUG

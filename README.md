@@ -1,4 +1,4 @@
-# 🚀 Monitoring Platform (Portfolio Project)
+# 🚀 Monitoring Platform
 
 ![Java](https://img.shields.io/badge/Java-17-orange?logo=java&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3-green?logo=springboot&logoColor=white)
