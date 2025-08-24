@@ -1,0 +1,70 @@
+############################
+# Java / Maven / Spring Boot
+############################
+target/
+*.jar
+*.war
+*.ear
+*.iml
+*.class
+*.log
+*.pid
+*.gz
+*.swp
+
+# Maven wrapper
+.mvn/wrapper/maven-wrapper.jar
+
+# Spring Boot specific
+application-*.yml
+application-*.yaml
+application-*.properties
+
+############################
+# Node / React
+############################
+node_modules/
+build/
+dist/
+.npm/
+.yarn/
+.pnp.*
+coverage/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+############################
+# IDE / Editors
+############################
+# IntelliJ
+.idea/
+*.iws
+*.ipr
+out/
+
+# VS Code
+.vscode/
+.history/
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+############################
+# OS specific
+############################
+.DS_Store
+Thumbs.db
+
+############################
+# Logs
+############################
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
