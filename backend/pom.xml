@@ -113,13 +113,11 @@
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.12</version>
                 <executions>
-                    <!-- attacher JaCoCo à la phase test -->
                     <execution>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
                     </execution>
-                    <!-- générer le rapport après les tests -->
                     <execution>
                         <id>report</id>
                         <phase>test</phase>
@@ -127,7 +125,6 @@
                             <goal>report</goal>
                         </goals>
                     </execution>
-                    <!-- optionnel : échouer le build si couverture < 80% -->
                     <execution>
                         <id>check</id>
                         <goals>
@@ -149,6 +146,27 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>1.20.2</version>
+                <configuration>
+                    <targetClasses>
+                        <param>com.langa.backend.*</param>
+                    </targetClasses>
+                    <targetTests>
+                        <param>com.langa.backend.*Test</param>
+                    </targetTests>
+                    <mutators>
+                        <mutator>STRONGER</mutator>
+                    </mutators>
+                    <outputFormats>
+                        <outputFormat>HTML</outputFormat>
+                        <outputFormat>XML</outputFormat>
+                    </outputFormats>
+                    <reportsDirectory>${project.build.directory}/pit-reports</reportsDirectory>
+                </configuration>
             </plugin>
         </plugins>
     </build>
