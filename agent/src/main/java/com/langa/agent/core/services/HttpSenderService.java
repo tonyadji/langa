@@ -8,8 +8,11 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class HttpSenderService implements SenderService {
+    private static final Logger log = LogManager.getLogger(HttpSenderService.class);
     private static final CloseableHttpClient httpClient = HttpClients.createDefault();
     private static final Gson gson = new Gson();
     private final String url;
@@ -27,13 +30,13 @@ public class HttpSenderService implements SenderService {
 
             try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
                 if (response.getStatusLine().getStatusCode() >= 400) {
-                    System.err.println("HttpSenderService - Failed with status " + response.getStatusLine().getStatusCode());
+                    log.error("HttpSenderService - Failed with status {}",response.getStatusLine().getStatusCode());
                     return false;
                 }
                 return true;
             }
         } catch (Exception e) {
-            System.err.println("HttpSenderService - Error sending payload: " + e.getMessage());
+            log.error("HttpSenderService - Error sending payload: {}",e.getMessage());
         }
         return false;
     }

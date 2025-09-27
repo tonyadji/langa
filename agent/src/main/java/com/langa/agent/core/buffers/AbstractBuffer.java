@@ -1,10 +1,13 @@
 package com.langa.agent.core.buffers;
 
 import com.langa.agent.core.services.SenderService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.*;
 
 public abstract class AbstractBuffer<T> {
+    private static final Logger log = LogManager.getLogger(AbstractBuffer.class);
     protected final BlockingQueue<T> mainQueue;
     protected final BlockingQueue<T> retryQueue;
     protected final ScheduledExecutorService scheduler;
@@ -29,7 +32,6 @@ public abstract class AbstractBuffer<T> {
 
         scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.scheduleAtFixedRate(this::flush, flushIntervalSeconds, flushIntervalSeconds, TimeUnit.SECONDS);
-        scheduler.schedule(this::retryFlush, flushIntervalSeconds, TimeUnit.SECONDS);
     }
 
     public void add(T entry) {
@@ -38,7 +40,7 @@ public abstract class AbstractBuffer<T> {
                 scheduler.submit(this::flush);
             }
         } else {
-            System.err.println("Failed to add entry to buffer");
+            log.error("Failed to add entry to buffer");
         }
     }
 

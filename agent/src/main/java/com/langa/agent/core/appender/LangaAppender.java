@@ -1,15 +1,14 @@
-package com.langa.agent.appender;
+package com.langa.agent.core.appender;
 
-import com.google.gson.Gson;
-import com.langa.agent.model.LogEntry;
-import com.langa.agent.model.LogRequestDto;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import com.langa.agent.core.buffers.BuffersFactory;
+import com.langa.agent.core.buffers.GenericBuffer;
+import com.langa.agent.core.model.LogEntry;
+import com.langa.agent.core.model.SendableRequestDto;
+import com.langa.agent.core.services.HttpSenderService;
+import com.langa.agent.core.services.SenderService;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.*;
+import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
@@ -18,29 +17,24 @@ import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 
 import java.io.Serializable;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.List;
 
 @Plugin(name = "LangaAppender",
         category = Core.CATEGORY_NAME,
         elementType = Appender.ELEMENT_TYPE,
         printObject = true)
 public class LangaAppender extends AbstractAppender {
-    private static final CloseableHttpClient httpClient = HttpClients.createDefault();
-    private static final Gson gson = new Gson();
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private static final Logger log = LogManager.getLogger(LangaAppender.class);
+    private static final int DEFAULT_BATCH_SIZE = 50;
+    private static final int DEFAULT_FLUSH_DELAY_IN_SECONDS = 5;
+    private final GenericBuffer<LogEntry, SendableRequestDto> logBuffer;
 
-
-    private final String url;
-    private final String appKey;
-    private final String accountKey;
 
     protected LangaAppender(String name, Filter filter, Layout<? extends Serializable> layout, String url, String appKey, String accountKey) {
-        super(name, filter, layout);
-        this.url = url;
-        this.appKey = appKey;
-        this.accountKey = accountKey;
+        super(name, filter, layout, true, null);
+        SenderService senderService = new HttpSenderService(url);
+        BuffersFactory.init(senderService, appKey, accountKey, DEFAULT_BATCH_SIZE, DEFAULT_FLUSH_DELAY_IN_SECONDS);
+        this.logBuffer = BuffersFactory.getLogBufferInstance();
     }
 
     @PluginFactory
@@ -63,39 +57,24 @@ public class LangaAppender extends AbstractAppender {
                 new java.util.Date(event.getTimeMillis()).toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 : java.time.LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 
-        executorService.execute(() -> {
             try {
-                LogEntry logData = new LogEntry(
+                LogEntry entry = new LogEntry(
                         message,
                         level,
                         loggerName,
                         timestamp
                 );
 
-                LogRequestDto requestDto = new LogRequestDto(this.appKey, this.accountKey, Collections.singletonList(logData));
-
-                String requestBody = gson.toJson(requestDto);
-
-                HttpPost httpPost = new HttpPost(url);
-                StringEntity entity = new StringEntity(requestBody, ContentType.APPLICATION_JSON);
-                httpPost.setEntity(entity);
-
-                try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-                    int statusCode = response.getStatusLine().getStatusCode();
-                    if (statusCode >= 400) {
-                        System.err.println("LangaAppender - Failed with status " + statusCode);
-                    }
-                }
+                logBuffer.add(entry);
 
             } catch (Exception e) {
-                System.err.println("Error sending log to Langa: " + e.getMessage());
+                log.error("Error sending log to Langa: %s", List.of(e.getMessage()).toArray());
             }
-        });
     }
 
     @Override
     public void stop() {
         super.stop();
-        executorService.shutdown();
+        logBuffer.shutdown();
     }
 }
