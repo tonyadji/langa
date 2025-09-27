@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Premain-Class: com.langa.agent.core.config.AgentInit
+Agent-Class: com.langa.agent.core.config.AgentInit
+Can-Redefine-Classes: true
+Can-Retransform-Classes: true
