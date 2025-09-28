@@ -22,7 +22,7 @@ public class AspectJMonitoringAspect {
             throw t;
         } finally {
             long duration = System.currentTimeMillis() - start;
-            collector.track(joinPoint.getSignature().toShortString(), duration, status);
+            collector.track(joinPoint.getSignature().toShortString(), duration, status, null, null, 0);
         }
     }
 }

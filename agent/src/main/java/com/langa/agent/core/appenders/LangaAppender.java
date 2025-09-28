@@ -1,4 +1,4 @@
-package com.langa.agent.core.appender;
+package com.langa.agent.core.appenders;
 
 import com.langa.agent.core.buffers.BuffersFactory;
 import com.langa.agent.core.buffers.GenericBuffer;
@@ -7,8 +7,8 @@ import com.langa.agent.core.model.SendableRequestDto;
 import com.langa.agent.core.services.HttpSenderService;
 import com.langa.agent.core.services.SenderService;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.*;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.*;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
@@ -17,7 +17,6 @@ import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 
 import java.io.Serializable;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 @Plugin(name = "LangaAppender",
         category = Core.CATEGORY_NAME,
@@ -65,10 +64,11 @@ public class LangaAppender extends AbstractAppender {
                         timestamp
                 );
 
+                log.debug("Adding entry to log buffer");
                 logBuffer.add(entry);
 
             } catch (Exception e) {
-                log.error("Error sending log to Langa: %s", List.of(e.getMessage()).toArray());
+                log.error("Error sending log to Langa: %s", e.getMessage());
             }
     }
 

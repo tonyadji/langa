@@ -2,11 +2,13 @@ package com.langa.backend.infra.persistence.repositories.applications.mongo;
 
 import com.langa.backend.domain.applications.Application;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
-@Document(collection = "applications")
+@Document(collection = "c_applications")
 public class ApplicationDocument {
+    @Id
     private String id;
     private String name;
     private String key;

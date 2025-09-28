@@ -5,7 +5,9 @@ import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.common.utils.KeyGenerator;
 import com.langa.backend.domain.applications.exceptions.ApplicationException;
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
-import com.langa.backend.infra.rest.applications.dto.LogDto;
+import com.langa.backend.domain.applications.valueobjects.MetricEntry;
+import com.langa.backend.infra.rest.common.dto.LogDto;
+import com.langa.backend.infra.rest.common.dto.MetricDto;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -38,6 +40,14 @@ public class Application extends AbstractModel {
     public List<LogEntry> createLogEntries(List<LogDto> logs) {
         return logs.stream()
                 .map(logDto -> logDto.toLogEntry()
+                        .setAppKey(key)
+                        .setAccountKey(accountKey))
+                .toList();
+    }
+
+    public List<MetricEntry> createMetricEntries(List<MetricDto> metrics) {
+        return metrics.stream()
+                .map(metricDto -> metricDto.toMetricEntry()
                         .setAppKey(key)
                         .setAccountKey(accountKey))
                 .toList();

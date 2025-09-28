@@ -2,5 +2,5 @@ package com.langa.agent.core.model;
 
 import java.util.List;
 
-public record LogRequestDto(String appKey, String accountKey, List<LogEntry> logs) implements SendableRequestDto {
+public record LogRequestDto(String appKey, String accountKey, List<LogEntry> entries, SendableRequestType type) implements SendableRequestDto {
 }

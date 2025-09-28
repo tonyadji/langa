@@ -33,7 +33,7 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authorizer -> authorizer
-                .requestMatchers("/api/logs/**").permitAll()
+                .requestMatchers("/api/ingestion/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, BasicAuthenticationFilter.class);

@@ -12,12 +12,12 @@ public class BuffersFactory {
     public static void init(SenderService senderService, String appKey, String accountKey, int batchSize, int flushIntervalSeconds) {
         if( logBufferInstance == null) {
             logBufferInstance = new GenericBuffer<>(
-                    entries -> new LogRequestDto(appKey, accountKey, entries),
+                    entries -> new LogRequestDto(appKey, accountKey, entries, SendableRequestType.LOG),
                     senderService, appKey, accountKey, batchSize, flushIntervalSeconds);
         }
         if( metricBufferInstance == null) {
             metricBufferInstance = new GenericBuffer<>(
-                    entries -> new MetricRequestDto(appKey, accountKey, entries),
+                    entries -> new MetricRequestDto(appKey, accountKey, entries, SendableRequestType.METRIC),
                     senderService, appKey, accountKey, batchSize, flushIntervalSeconds);
         }
     }

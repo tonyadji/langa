@@ -23,17 +23,20 @@ public class GenericBuffer<T, U extends SendableRequestDto> extends AbstractBuff
     }
 
     @Override
-    protected void flush() {
+    public void flush() {
+        log.debug("Flushing buffer (main queue)");
         flushAndCheck(mainQueue);
     }
 
     @Override
     protected void retryFlush() {
+        log.trace("Flushing buffer (retry queue)");
         flushAndCheck(retryQueue);
     }
 
     private void flushAndCheck(BlockingQueue<T> processingQueue) {
         if (processingQueue.isEmpty()) {
+            log.warn("Empty queue ! Nothing to flush");
             return;
         }
 
@@ -46,7 +49,7 @@ public class GenericBuffer<T, U extends SendableRequestDto> extends AbstractBuff
             if(!isSendSuccess) {
                 consecutiveSendingErrors++;
                 entries.forEach(entry -> {
-                    if (!retryQueue.offer(entry)) log.error("Entry lost {}", List.of(entry).toArray());
+                    if (!retryQueue.offer(entry)) log.error("Entry lost {}", entry);
                 });
                 scheduleRetryFlush();
             } else {

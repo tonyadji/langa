@@ -1,6 +1,7 @@
 package com.langa.backend.infra.rest.applications.dto;
 
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
+import com.langa.backend.infra.rest.common.dto.LogDto;
 import org.junit.jupiter.api.Test;
 
 import jakarta.validation.Validation;

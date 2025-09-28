@@ -7,6 +7,7 @@ import com.langa.backend.domain.applications.usecases.GetLogUseCase;
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
 import com.langa.backend.domain.applications.valueobjects.PaginatedResult;
 import com.langa.backend.infra.rest.applications.dto.*;
+import com.langa.backend.infra.rest.common.dto.LogDto;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -42,12 +43,12 @@ public class ApplicationController {
     @GetMapping()
     public ResponseEntity<List<ApplicationDto>> getAllApplications(@AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(getApplicationsUseCase.getApplications(userDetails.getUsername())
-                .stream().map(ApplicationDto::of).collect(Collectors.toList()));
+                .stream().map(ApplicationDto::of).toList());
     }
 
     public ResponseEntity<List<LogDto>> getLogsByAppKey(@AuthenticationPrincipal UserDetails userDetails, @PathVariable String appId) {
         return ResponseEntity.ok(getLogUseCase.getLogs(appId, userDetails.getUsername())
-                .stream().map(LogDto::of).collect(Collectors.toList()));
+                .stream().map(LogDto::of).toList());
     }
 
 
@@ -75,7 +76,7 @@ public class ApplicationController {
                         log.getLoggerName(),
                         log.getTimestamp().toString()
                 ))
-                .collect(Collectors.toList());
+                .toList();
 
         PaginatedResponse<LogDto> response = new PaginatedResponse<>(
                 logDtos,

@@ -7,7 +7,7 @@ import com.langa.backend.domain.applications.valueobjects.ApplicationInfo;
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
 import com.langa.backend.infra.rest.applications.dto.ApplicationDto;
 import com.langa.backend.infra.rest.applications.dto.CreateApplicationRequestDto;
-import com.langa.backend.infra.rest.applications.dto.LogDto;
+import com.langa.backend.infra.rest.common.dto.LogDto;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

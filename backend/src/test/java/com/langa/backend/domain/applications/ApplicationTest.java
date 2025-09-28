@@ -2,7 +2,7 @@ package com.langa.backend.domain.applications;
 
 import com.langa.backend.domain.applications.exceptions.ApplicationException;
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
-import com.langa.backend.infra.rest.applications.dto.LogDto;
+import com.langa.backend.infra.rest.common.dto.LogDto;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
