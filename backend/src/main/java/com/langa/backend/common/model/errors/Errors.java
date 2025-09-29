@@ -12,6 +12,8 @@ public enum Errors {
     USERNAME_ALREADY_EXISTS(400,"400-102", "Username already exists"),
     PASSWORDS_MISMATCH(400,"400-103", "Passwords do not match"),
 
+    TEAM_NAME_ALREADY_EXISTS(400, "400-200", "Team name already exists"),
+
     INVALID_CREDENTIALS(401,"401-000" ,"Invalid credentials"),
 
     ACCESS_DENIED(403,"403-000", "Access denied"),
