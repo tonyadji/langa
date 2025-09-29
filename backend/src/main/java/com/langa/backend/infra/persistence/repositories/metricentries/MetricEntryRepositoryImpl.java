@@ -19,6 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MetricEntryRepositoryImpl implements MetricEntryRepository {
 
+    public static final String TIMESTAMP = "timestamp";
     private final MongoMetricEntryDao mongoMetricEntryDao;
     private final MongoTemplate mongoTemplate;
 
@@ -60,9 +61,7 @@ public class MetricEntryRepositoryImpl implements MetricEntryRepository {
         query.addCriteria(Criteria.where("appKey").is(appKey));
         query.addCriteria(Criteria.where("accountKey").is(accountKey));
 
-        if(filter.getName() != null && !filter.getName().isEmpty()) {
-            query.addCriteria(Criteria.where("name").regex(".*" + filter.getName() + ".*", "i"));
-        }
+        setNameCriteria(filter, query);
 
         if (filter.getDurationGreaterThan() != null && filter.getDurationGreaterThan() > 0) {
             query.addCriteria(Criteria.where("durationMillis").gt(filter.getDurationGreaterThan()));
@@ -84,21 +83,21 @@ public class MetricEntryRepositoryImpl implements MetricEntryRepository {
             query.addCriteria(Criteria.where("status").is(filter.getStatus()));
         }
 
-        if (filter.getHttpStatus() > 0) {
+        if (filter.getHttpStatus() != null && filter.getHttpStatus() > 0) {
             query.addCriteria(Criteria.where("httpStatus").is(filter.getHttpStatus()));
         }
 
         if (filter.getStartDate() != null) {
-            query.addCriteria(Criteria.where("timestamp").gte(filter.getStartDate()));
+            query.addCriteria(Criteria.where(TIMESTAMP).gte(filter.getStartDate()));
         }
 
         if (filter.getEndDate() != null) {
-            query.addCriteria(Criteria.where("timestamp").lt(filter.getEndDate()));
+            query.addCriteria(Criteria.where(TIMESTAMP).lt(filter.getEndDate()));
         }
 
         int skip = page * size;
         query.skip(skip).limit(size);
-        query.with(Sort.by(Sort.Direction.DESC, "timestamp"));
+        query.with(Sort.by(Sort.Direction.DESC, TIMESTAMP));
 
         List<MetricEntryDocument> documents = mongoTemplate.find(query, MetricEntryDocument.class);
         long total = mongoTemplate.count(query.skip(0).limit(0), MetricEntryDocument.class);
@@ -107,4 +106,11 @@ public class MetricEntryRepositoryImpl implements MetricEntryRepository {
 
         return new PaginatedResult<>(content, total, totalPages, page, size);
     }
+
+    private static void setNameCriteria(MetricFilter filter, Query query) {
+        if(filter.getName() != null && !filter.getName().isEmpty()) {
+            query.addCriteria(Criteria.where("name").regex(".*" + filter.getName() + ".*", "i"));
+        }
+    }
+
 }

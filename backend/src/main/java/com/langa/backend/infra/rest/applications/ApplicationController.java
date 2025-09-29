@@ -4,10 +4,13 @@ import com.langa.backend.domain.applications.Application;
 import com.langa.backend.domain.applications.usecases.CreateApplicationUseCase;
 import com.langa.backend.domain.applications.usecases.GetApplicationsUseCase;
 import com.langa.backend.domain.applications.usecases.GetLogUseCase;
+import com.langa.backend.domain.applications.usecases.GetMetricsUseCase;
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
+import com.langa.backend.domain.applications.valueobjects.MetricEntry;
 import com.langa.backend.domain.applications.valueobjects.PaginatedResult;
 import com.langa.backend.infra.rest.applications.dto.*;
 import com.langa.backend.infra.rest.common.dto.LogDto;
+import com.langa.backend.infra.rest.common.dto.MetricDto;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +19,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/applications")
@@ -25,11 +27,13 @@ public class ApplicationController {
 
     private final GetApplicationsUseCase getApplicationsUseCase;
     private final GetLogUseCase getLogUseCase;
+    private final GetMetricsUseCase getMetricsUseCase;
     private final CreateApplicationUseCase createApplicationUseCase;
 
-    public ApplicationController(GetApplicationsUseCase getApplicationsUseCase, GetLogUseCase getLogUseCase, CreateApplicationUseCase createApplicationUseCase) {
+    public ApplicationController(GetApplicationsUseCase getApplicationsUseCase, GetLogUseCase getLogUseCase, GetMetricsUseCase getMetricsUseCase, CreateApplicationUseCase createApplicationUseCase) {
         this.getApplicationsUseCase = getApplicationsUseCase;
         this.getLogUseCase = getLogUseCase;
+        this.getMetricsUseCase = getMetricsUseCase;
         this.createApplicationUseCase = createApplicationUseCase;
     }
 
@@ -89,4 +93,42 @@ public class ApplicationController {
         return ResponseEntity.ok(new ApplicationLogsResponseDto(app.getName(), response));
     }
 
+    @GetMapping("/{appId}/metrics")
+    public ResponseEntity<ApplicationMetricsResponseDto> getFilteredMetrics(@AuthenticationPrincipal UserDetails userDetails,
+                                             @PathVariable String appId,
+                                             @ModelAttribute MetricFilterDto filterDto,
+                                             @RequestParam(defaultValue = "0") int page,
+                                             @RequestParam(defaultValue = "20") int size) {
+
+        final Application app = getApplicationsUseCase.getApplication(appId, userDetails.getUsername());
+        PaginatedResult<MetricEntry> result = getMetricsUseCase.getFilteredMetrics(
+                appId,
+                userDetails.getUsername(),
+                filterDto.toMetricFilter(),
+                page,
+                size
+        );
+
+        List<MetricDto> metricDtos = result.getContent().stream()
+                .map(metric -> new MetricDto(
+                        metric.getName(),
+                        metric.getDurationMillis(),
+                        metric.getStatus(),
+                        metric.getTimestamp(),
+                        metric.getUri(),
+                        metric.getHttpMethod(),
+                        metric.getHttpStatus()
+                ))
+                .toList();
+
+        PaginatedResponse<MetricDto> response = new PaginatedResponse<>(
+                metricDtos,
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.getPage(),
+                result.getSize()
+        );
+
+        return ResponseEntity.ok(new ApplicationMetricsResponseDto(app.getName(), response));
+    }
 }

@@ -11,7 +11,7 @@ public record MetricDto(
 
         String uri,
         String httpMethod,
-        int httpStatus
+        Integer httpStatus
 ) {
 
     public MetricEntry toMetricEntry () {
