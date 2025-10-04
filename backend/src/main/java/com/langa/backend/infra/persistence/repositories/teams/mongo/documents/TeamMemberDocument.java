@@ -1,4 +1,4 @@
-package com.langa.backend.infra.persistence.repositories.teams.mongo;
+package com.langa.backend.infra.persistence.repositories.teams.mongo.documents;
 
 import com.langa.backend.domain.teams.valueobjects.TeamMember;
 import com.langa.backend.domain.teams.valueobjects.TeamRole;

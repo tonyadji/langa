@@ -9,6 +9,7 @@ public class KeyGenerator {
     private static final String APP_PREFIX = "APP-";
     private static final String USER_PREFIX = "U-";
     private static final String TEAM_PREFIX = "T-";
+    private static final String INVITATION_PREFIX = "TI-";
 
     private KeyGenerator() {}
 
@@ -30,6 +31,11 @@ public class KeyGenerator {
         return TEAM_PREFIX.concat(sb.reverse().toString());
     }
 
+    public static String generateTeamInvitationKey(String teamName, String owner, String guest, String invitationDate) {
+        UUID uuid = UUID.nameUUIDFromBytes(teamName.concat(owner).concat(guest).concat(invitationDate).getBytes());
+        StringBuilder sb = toBase62(uuid);
+        return INVITATION_PREFIX.concat(sb.reverse().toString());
+    }
     private static StringBuilder toBase62(UUID uuid) {
         BigInteger number = new BigInteger(uuid.toString().replace("-", ""), 16);
         StringBuilder sb = new StringBuilder();

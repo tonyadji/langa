@@ -2,8 +2,8 @@ package com.langa.backend.infra.persistence.repositories.teams;
 
 import com.langa.backend.domain.teams.Team;
 import com.langa.backend.domain.teams.repositories.TeamRepository;
-import com.langa.backend.infra.persistence.repositories.teams.mongo.MongoTeamDao;
-import com.langa.backend.infra.persistence.repositories.teams.mongo.TeamDocument;
+import com.langa.backend.infra.persistence.repositories.teams.mongo.dao.MongoTeamDao;
+import com.langa.backend.infra.persistence.repositories.teams.mongo.documents.TeamDocument;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

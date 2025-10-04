@@ -13,6 +13,9 @@ public enum Errors {
     PASSWORDS_MISMATCH(400,"400-103", "Passwords do not match"),
 
     TEAM_NAME_ALREADY_EXISTS(400, "400-200", "Team name already exists"),
+    TEAM_NOT_FOUND(400, "400-201", "Team not found"),
+    TEAM_INVITATION_EXISTING(400, "400-202", "Team invitation existing"),
+    TEAM_MEMBER_ALREADY(400, "400-203" , "The user you tried to invite is already a team member"),
 
     INVALID_CREDENTIALS(401,"401-000" ,"Invalid credentials"),
 
@@ -20,11 +23,13 @@ public enum Errors {
 
     VALIDATION_ERROR(400,"400", "Validation error"),
 
-    INTERNAL_SERVER_ERROR(500,"500", "Internal server error");
+    INTERNAL_SERVER_ERROR(500,"500", "Internal server error"),
 
-    private int httpCode;
-    private String code;
-    private String message;
+    NOTIFICATION_MAIL_ERROR(500,"500-001" , "Error sending notification email" );
+
+    private final int httpCode;
+    private final String code;
+    private final String message;
 
     Errors(int httpCode, String code, String message) {
         this.httpCode = httpCode;
