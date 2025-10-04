@@ -7,4 +7,6 @@ import java.util.Optional;
 
 public interface TeamInvitationDao extends MongoRepository<TeamInvitationDocument, String> {
     Optional<TeamInvitationDocument> findByTeamAndGuest(String key, String guest);
+
+    Optional<TeamInvitationDocument> findByInvitationToken(String token);
 }

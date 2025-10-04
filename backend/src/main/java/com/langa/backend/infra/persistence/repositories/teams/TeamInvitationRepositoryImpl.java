@@ -28,4 +28,10 @@ public class TeamInvitationRepositoryImpl implements TeamInvitationRepository {
         return teamInvitationDao.findByTeamAndGuest(key, guest)
                 .map(TeamInvitationDocument::toTeamInvitation);
     }
+
+    @Override
+    public Optional<TeamInvitation> findByToken(String token) {
+        return teamInvitationDao.findByInvitationToken(token)
+                .map(TeamInvitationDocument::toTeamInvitation);
+    }
 }

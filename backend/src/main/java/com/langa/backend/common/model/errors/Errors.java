@@ -16,6 +16,7 @@ public enum Errors {
     TEAM_NOT_FOUND(400, "400-201", "Team not found"),
     TEAM_INVITATION_EXISTING(400, "400-202", "Team invitation existing"),
     TEAM_MEMBER_ALREADY(400, "400-203" , "The user you tried to invite is already a team member"),
+    TEAM_INVITATION_NOTFOUND_OR_EXPIRED(400, "400-204" , "Team invitation not found or expired"),
 
     INVALID_CREDENTIALS(401,"401-000" ,"Invalid credentials"),
 

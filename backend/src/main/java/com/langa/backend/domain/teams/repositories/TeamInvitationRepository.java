@@ -9,4 +9,6 @@ public interface TeamInvitationRepository {
     TeamInvitation save(TeamInvitation teamInvitation);
 
     Optional<TeamInvitation> findExistingValidInvitation(String key, String guest);
+
+    Optional<TeamInvitation> findByToken(String token);
 }

@@ -17,4 +17,10 @@ public class TeamInvitation {
     private LocalDateTime inviteDate;
     private LocalDateTime expiryDate;
     private InvitationStatus status;
+
+    public void checkExpiration() {
+        if (LocalDateTime.now().isAfter(expiryDate)) {
+            status = InvitationStatus.EXPIRED;
+        }
+    }
 }
