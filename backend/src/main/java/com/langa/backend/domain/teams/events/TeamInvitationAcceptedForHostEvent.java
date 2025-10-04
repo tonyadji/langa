@@ -3,13 +3,12 @@ package com.langa.backend.domain.teams.events;
 import com.langa.backend.common.eda.annotations.DomainEventType;
 import com.langa.backend.common.eda.model.DomainEvent;
 import com.langa.backend.common.eda.registry.EventTypeRegistry;
-import com.langa.backend.domain.teams.Team;
 import com.langa.backend.domain.teams.TeamInvitation;
 
 import java.time.LocalDateTime;
 
-@DomainEventType("TeamInvitationEmailEvent")
-public record TeamInvitationEmailEvent(
+@DomainEventType("TeamInvitationAcceptedForHostEvent")
+public record TeamInvitationAcceptedForHostEvent(
         String aggregateId,
         String guest,
         String host,
@@ -20,7 +19,7 @@ public record TeamInvitationEmailEvent(
 
     @Override
     public EventTypeRegistry getEventType() {
-        return EventTypeRegistry.TEAM_INVITATION_EMAIL;
+        return EventTypeRegistry.TEAM_INVITATION_EMAIL_ACCEPTED_FOR_HOST;
     }
 
     @Override
@@ -33,12 +32,12 @@ public record TeamInvitationEmailEvent(
         return aggregateId;
     }
 
-    public static TeamInvitationEmailEvent of(TeamInvitation invitation, Team team) {
-        return new TeamInvitationEmailEvent(
+    public static TeamInvitationAcceptedForHostEvent of(TeamInvitation invitation) {
+        return new TeamInvitationAcceptedForHostEvent(
                 invitation.getId(),
                 invitation.getGuest(),
                 invitation.getHost(),
-                team.getName(),
+                invitation.getTeam(),
                 invitation.getInvitationToken(),
                 invitation.getExpiryDate()
         );

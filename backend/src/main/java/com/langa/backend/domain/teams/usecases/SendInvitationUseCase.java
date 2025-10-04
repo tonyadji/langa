@@ -33,15 +33,8 @@ public class SendInvitationUseCase {
 
         final TeamInvitation invitation = teamInvitationRepository.save(team.invite(teamInvitation.getGuest()));
 
+        TeamInvitationEmailEvent invitationEmailEvent = TeamInvitationEmailEvent.of(teamInvitation, team);
 
-        TeamInvitationEmailEvent invitationEmailEvent = new TeamInvitationEmailEvent(
-                invitation.getId(),
-                invitation.getGuest(),
-                invitation.getHost(),
-                team.getName(),
-                invitation.getInvitationToken(),
-                invitation.getExpiryDate()
-        );
         outboxEventService.storeOutboxEvent(invitationEmailEvent);
 
         return invitation;

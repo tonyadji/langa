@@ -11,4 +11,6 @@ public interface TeamInvitationRepository {
     Optional<TeamInvitation> findExistingValidInvitation(String key, String guest);
 
     Optional<TeamInvitation> findByToken(String token);
+
+    Optional<TeamInvitation> findById(String invitationId);
 }

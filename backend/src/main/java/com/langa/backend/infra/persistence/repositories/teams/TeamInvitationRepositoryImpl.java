@@ -34,4 +34,10 @@ public class TeamInvitationRepositoryImpl implements TeamInvitationRepository {
         return teamInvitationDao.findByInvitationToken(token)
                 .map(TeamInvitationDocument::toTeamInvitation);
     }
+
+    @Override
+    public Optional<TeamInvitation> findById(String invitationId) {
+        return teamInvitationDao.findById(invitationId)
+                .map(TeamInvitationDocument::toTeamInvitation);
+    }
 }

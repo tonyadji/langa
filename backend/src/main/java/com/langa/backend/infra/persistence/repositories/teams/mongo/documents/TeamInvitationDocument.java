@@ -19,6 +19,7 @@ public class TeamInvitationDocument {
     private String invitationToken;
     private LocalDateTime inviteDate;
     private LocalDateTime expiryDate;
+    private LocalDateTime acceptedDate;
     private InvitationStatus status;
 
     public TeamInvitation toTeamInvitation() {
@@ -30,6 +31,7 @@ public class TeamInvitationDocument {
                 .setInvitationToken(invitationToken)
                 .setInviteDate(inviteDate)
                 .setExpiryDate(expiryDate)
+                .setAcceptedDate(acceptedDate)
                 .setStatus(status);
     }
 
@@ -42,6 +44,7 @@ public class TeamInvitationDocument {
         teamInvitationDocument.setInvitationToken(teamInvitation.getInvitationToken());
         teamInvitationDocument.setInviteDate(teamInvitation.getInviteDate());
         teamInvitationDocument.setExpiryDate(teamInvitation.getExpiryDate());
+        teamInvitationDocument.setAcceptedDate(teamInvitation.getAcceptedDate());
         teamInvitationDocument.setStatus(teamInvitation.getStatus());
         return teamInvitationDocument;
     }
