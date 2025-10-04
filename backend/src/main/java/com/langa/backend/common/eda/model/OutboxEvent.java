@@ -14,6 +14,7 @@ public class OutboxEvent {
     private String eventType;
     private String payload;
     private LocalDateTime createdDate;
+    private LocalDateTime processedDate;
     private boolean processed;
     private boolean error;
 

@@ -14,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -35,6 +37,7 @@ public class TransactionalOutboxEventProcessor {
             domainEventPublisher.publish(domainEvent);
 
             outboxEvent.setProcessed(true);
+            outboxEvent.setProcessedDate(LocalDateTime.now());
             outboxEventRepository.save(outboxEvent);
             log.debug("Outbox Event processed successfully");
         } catch (JsonProcessingException ex) {

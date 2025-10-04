@@ -21,6 +21,7 @@ public class OutboxEventDocument {
     private String eventType;
     private String payload;
     private LocalDateTime createdDate;
+    private LocalDateTime processedDate;
     private boolean processed;
     private boolean errored;
 
@@ -31,7 +32,10 @@ public class OutboxEventDocument {
                 .setAggregateType(aggregateType)
                 .setEventType(eventType)
                 .setPayload(payload)
-                .setProcessed(processed);
+                .setProcessed(processed)
+                .setError(errored)
+                .setCreatedDate(createdDate)
+                .setProcessedDate(processedDate);
     }
 
     public static OutboxEventDocument of(OutboxEvent outboxEvent) {
@@ -42,6 +46,7 @@ public class OutboxEventDocument {
                 .eventType(outboxEvent.getEventType())
                 .payload(outboxEvent.getPayload())
                 .createdDate(outboxEvent.getCreatedDate())
+                .processedDate(outboxEvent.getProcessedDate())
                 .processed(outboxEvent.isProcessed())
                 .errored(outboxEvent.isError())
                 .build();

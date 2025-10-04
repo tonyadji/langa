@@ -31,7 +31,7 @@ public class TeamInvitation {
 
     public TeamInvitation couldBeAccepted() {
         if(List.of(InvitationStatus.ACCEPTED, InvitationStatus.EXPIRED).contains(status)) {
-            throw new TeamException("Invalid status", null, Errors.TEAM_INVITATION_NOTFOUND_OR_EXPIRED);
+            throw new TeamException("Invalid status", null, Errors.TEAM_INVITATION_INVALID_STATUS);
         }
         status = InvitationStatus.ACCEPTED;
         acceptedDate = LocalDateTime.now();
