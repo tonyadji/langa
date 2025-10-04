@@ -3,11 +3,13 @@ package com.langa.backend.infra.persistence.repositories.users.mongo;
 import com.langa.backend.domain.users.User;
 import com.langa.backend.domain.users.repositories.UserRepository;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
-@Document(collection = "users")
+@Document(collection = "c_users")
 public class UserDocument {
+    @Id
     private String id;
     private String email;
     private String password;

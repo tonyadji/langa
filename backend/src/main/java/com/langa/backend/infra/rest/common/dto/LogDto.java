@@ -1,8 +1,7 @@
-package com.langa.backend.infra.rest.applications.dto;
+package com.langa.backend.infra.rest.common.dto;
 
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.io.Serializable;

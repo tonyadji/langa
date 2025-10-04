@@ -5,7 +5,7 @@ import com.langa.backend.domain.applications.Application;
 import com.langa.backend.domain.applications.exceptions.ApplicationException;
 import com.langa.backend.domain.applications.repositories.ApplicationRepository;
 import com.langa.backend.domain.applications.repositories.LogEntryRepository;
-import com.langa.backend.infra.rest.applications.dto.LogDto;
+import com.langa.backend.infra.rest.common.dto.LogDto;
 import com.langa.backend.infra.rest.applications.dto.LogRequestDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

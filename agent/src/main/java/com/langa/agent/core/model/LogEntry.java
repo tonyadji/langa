@@ -1,4 +1,4 @@
-package com.langa.agent.model;
+package com.langa.agent.core.model;
 
 
 public class LogEntry {

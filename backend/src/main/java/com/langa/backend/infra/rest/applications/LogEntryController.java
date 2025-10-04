@@ -5,19 +5,16 @@ import com.langa.backend.infra.rest.applications.dto.LogRequestDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/logs")
 @RequiredArgsConstructor
+@Deprecated
 public class LogEntryController {
 
     private final IngestLogUseCase ingestLogUseCase;
 
-    @PostMapping
     public ResponseEntity<Void> receiveLogs(@RequestBody @Valid LogRequestDto logRequestDto) {
         ingestLogUseCase.process(logRequestDto);
         return ResponseEntity.accepted().build();
