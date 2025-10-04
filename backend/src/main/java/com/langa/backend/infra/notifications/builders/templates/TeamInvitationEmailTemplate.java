@@ -29,9 +29,9 @@ public class TeamInvitationEmailTemplate extends EmailTemplate {
 
     @Override
     public String getMessage() {
-        return "You have been invited to join a team" +
-                "Please follow the link "+baseUrl+
-                "/teams/"+variables.get(TEAM_KEY).toString()+"/invitations?token="+variables.get(TOKEN_KEY).toString()+" to join the team";
+        return "You have been invited to join the team " +variables.get(TEAM_KEY).toString() +
+                "\nPlease follow the link "+baseUrl+
+                "/team-invitations?token="+variables.get(TOKEN_KEY).toString()+" to join the team";
     }
 
     @Override
