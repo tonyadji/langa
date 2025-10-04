@@ -17,7 +17,8 @@ spring:
               enable: true
               required: true
 application:
-  persitence:
+  base-url: ${BASE_URL}
+  persistence:
     provider: mongo
   security:
       jwt.secret: ${JWT_KEY}

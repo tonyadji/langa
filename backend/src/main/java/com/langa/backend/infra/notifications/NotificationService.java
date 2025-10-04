@@ -1,7 +1,7 @@
 package com.langa.backend.infra.notifications;
 
-import com.langa.backend.infra.notifications.model.DomainNotification;
+import com.langa.backend.infra.notifications.model.Notification;
 
 public interface NotificationService {
-    void send(DomainNotification notification);
+    void send(Notification notification);
 }

@@ -1,6 +1,6 @@
 package com.langa.backend.infra.notifications.model;
 
-public interface DomainNotification {
+public interface Notification {
 
     NotificationType getType();
 }

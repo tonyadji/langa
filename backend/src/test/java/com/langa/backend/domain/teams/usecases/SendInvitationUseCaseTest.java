@@ -93,21 +93,9 @@ class SendInvitationUseCaseTest {
 
         verify(teamRepository).findById("team123");
         verify(teamInvitationRepository).findExistingValidInvitation(any(), any());
+        verify(team).checkOwnership("host@example.com");
         verifyNoMoreInteractions(teamInvitationRepository);
         verifyNoInteractions(outboxEventService);
     }
 
-    @Test
-    void invite_shouldCheckOwnership() {
-        when(teamRepository.findById("team123")).thenReturn(Optional.of(team));
-        when(teamInvitationRepository.findExistingValidInvitation(any(), any())).thenReturn(Optional.empty());
-        when(team.invite(any())).thenReturn(invitation);
-        when(teamInvitationRepository.save(any())).thenReturn(invitation);
-        when(team.getKey()).thenReturn("team123-key");
-        when(team.getName()).thenReturn("Dream Team");
-
-        useCase.invite(invitation);
-
-        verify(team).checkOwnership("host@example.com");
-    }
 }
