@@ -25,6 +25,10 @@ public class AccountSetupCompleteMailListener {
     @EventListener
     void handleTeamInvitationEmailEvent(AccountSetupCompleteMailEvent accountSetupCompleteMailEvent) {
         log.debug("Event received: {}", accountSetupCompleteMailEvent);
-        notificationService.send(mailNotificationBuilder.build(accountSetupCompleteMailEvent));
+        try {
+            notificationService.send(mailNotificationBuilder.build(accountSetupCompleteMailEvent));
+        } catch (Exception e) {
+            log.error("Error handling event: {}", accountSetupCompleteMailEvent, e);
+        }
     }
 }

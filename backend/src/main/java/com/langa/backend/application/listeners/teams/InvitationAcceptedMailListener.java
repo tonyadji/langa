@@ -25,6 +25,11 @@ public class InvitationAcceptedMailListener {
     @EventListener
     void handleTeamInvitationEmailEvent(InvitationAcceptedMailEvent invitationAcceptedMailEvent) {
         log.debug("Event received: {}", invitationAcceptedMailEvent);
-        notificationService.send(mailNotificationBuilder.build(invitationAcceptedMailEvent));
+        try {
+            notificationService.send(mailNotificationBuilder.build(invitationAcceptedMailEvent));
+        } catch (Exception e) {
+            log.error("Error handling event: {}", invitationAcceptedMailEvent, e);
+        }
+
     }
 }

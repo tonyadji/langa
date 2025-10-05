@@ -25,6 +25,11 @@ public class FirstConnectionMailListener {
     @EventListener
     void handleTeamInvitationEmailEvent(FirstConnectionMailEvent firstConnectionMailEvent) {
         log.debug("Event received: {}", firstConnectionMailEvent);
-        notificationService.send(mailNotificationBuilder.build(firstConnectionMailEvent));
+        try {
+            notificationService.send(mailNotificationBuilder.build(firstConnectionMailEvent));
+        } catch (Exception e) {
+            log.error("Error handling event: {}", firstConnectionMailEvent, e);
+        }
+
     }
 }

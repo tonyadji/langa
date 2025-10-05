@@ -25,6 +25,10 @@ public class TeamInvitationAcceptedForHostListener {
     @EventListener
     void handleTeamInvitationAcceptedForHostEvent(TeamInvitationAcceptedForHostEvent teamInvitationAcceptedForHostEvent) {
         log.debug("Event received: {}", teamInvitationAcceptedForHostEvent);
-        notificationService.send(mailNotificationBuilder.build(teamInvitationAcceptedForHostEvent));
+        try {
+            notificationService.send(mailNotificationBuilder.build(teamInvitationAcceptedForHostEvent));
+        } catch (Exception e) {
+            log.error("Error handling event: {}", teamInvitationAcceptedForHostEvent, e);
+        }
     }
 }
