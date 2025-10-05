@@ -1,5 +1,6 @@
 package com.langa.backend.domain.teams.usecases;
 
+import com.langa.backend.common.annotations.UseCase;
 import com.langa.backend.common.eda.services.OutboxEventService;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.teams.Team;
@@ -9,10 +10,8 @@ import com.langa.backend.domain.teams.exceptions.TeamException;
 import com.langa.backend.domain.teams.repositories.TeamInvitationRepository;
 import com.langa.backend.domain.teams.repositories.TeamRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
-@Component
+@UseCase
 @RequiredArgsConstructor
 public class SendInvitationUseCase {
 
@@ -20,7 +19,7 @@ public class SendInvitationUseCase {
     private final TeamInvitationRepository teamInvitationRepository;
     private final OutboxEventService outboxEventService;
 
-    @Transactional
+
     public TeamInvitation invite(TeamInvitation teamInvitation) {
         final Team team = teamRepository.findById(teamInvitation.getTeam())
                 .orElseThrow(() -> new TeamException("Team not found with id "+ teamInvitation.getTeam(), null, Errors.TEAM_NOT_FOUND));

@@ -1,18 +1,18 @@
 package com.langa.backend.domain.users.usecases;
 
+import com.langa.backend.common.annotations.UseCase;
 import com.langa.backend.common.model.errors.Errors;
-import com.langa.backend.domain.users.services.RefreshTokenService;
-import com.langa.backend.domain.users.services.TokenProvider;
 import com.langa.backend.domain.users.User;
 import com.langa.backend.domain.users.exceptions.UserException;
 import com.langa.backend.domain.users.repositories.UserRepository;
+import com.langa.backend.domain.users.services.RefreshTokenService;
+import com.langa.backend.domain.users.services.TokenProvider;
 import com.langa.backend.domain.users.valueobjects.AuthRequest;
 import com.langa.backend.domain.users.valueobjects.AuthTokens;
 import jakarta.validation.Valid;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
 
-@Component
+@UseCase
 public class LoginUseCase {
 
     private final UserRepository userRepository;

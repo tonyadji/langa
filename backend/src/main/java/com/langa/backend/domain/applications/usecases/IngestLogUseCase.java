@@ -7,12 +7,10 @@ import com.langa.backend.domain.applications.repositories.ApplicationRepository;
 import com.langa.backend.domain.applications.repositories.LogEntryRepository;
 import com.langa.backend.infra.rest.applications.dto.LogRequestDto;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 /**
  * @deprecated Use IngestionUseCase instead
  */
-@Service
 @RequiredArgsConstructor
 @Deprecated(forRemoval = true)
 public class IngestLogUseCase {

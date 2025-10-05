@@ -30,6 +30,8 @@ application:
         - /api/auth/**
         - /api/ingestion/**
         - /api/team-invitations/**
+        - /api/first-connection**
+        - /api/first-connection/**
     cors:
       allowed-origins:
         - http://localhost:3000

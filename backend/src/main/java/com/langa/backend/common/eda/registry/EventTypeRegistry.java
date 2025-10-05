@@ -5,12 +5,14 @@ import com.langa.backend.domain.teams.events.InvitationAcceptedMailEvent;
 import com.langa.backend.domain.teams.events.TeamInvitationAcceptedByGuestEvent;
 import com.langa.backend.domain.teams.events.TeamInvitationAcceptedForHostEvent;
 import com.langa.backend.domain.teams.events.TeamInvitationEmailEvent;
+import com.langa.backend.domain.users.events.AccountSetupCompleteMailEvent;
 import com.langa.backend.domain.users.events.FirstConnectionMailEvent;
 import lombok.Getter;
 
 @Getter
 public enum EventTypeRegistry {
 
+    ACCOUNT_SETUP_COMPLETE_MAIL(AccountSetupCompleteMailEvent.class),
     FIRST_CONNECTION_MAIL(FirstConnectionMailEvent.class),
     INVITATION_ACCEPTED_EMAIL(InvitationAcceptedMailEvent.class),
     OUTBOX_EVENT(OutboxEvent.class),

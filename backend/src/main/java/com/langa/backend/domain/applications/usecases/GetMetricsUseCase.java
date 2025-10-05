@@ -1,5 +1,6 @@
 package com.langa.backend.domain.applications.usecases;
 
+import com.langa.backend.common.annotations.UseCase;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.applications.Application;
 import com.langa.backend.domain.applications.exceptions.ApplicationException;
@@ -8,9 +9,8 @@ import com.langa.backend.domain.applications.repositories.MetricEntryRepository;
 import com.langa.backend.domain.applications.valueobjects.MetricEntry;
 import com.langa.backend.domain.applications.valueobjects.MetricFilter;
 import com.langa.backend.domain.applications.valueobjects.PaginatedResult;
-import org.springframework.stereotype.Component;
 
-@Component
+@UseCase
 public class GetMetricsUseCase {
 
     private final ApplicationRepository applicationRepository;

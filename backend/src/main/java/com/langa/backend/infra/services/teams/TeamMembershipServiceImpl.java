@@ -1,4 +1,4 @@
-package com.langa.backend.infra.services;
+package com.langa.backend.infra.services.teams;
 
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.teams.Team;

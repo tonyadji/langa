@@ -1,5 +1,6 @@
 package com.langa.backend.domain.applications.usecases;
 
+import com.langa.backend.common.annotations.UseCase;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.applications.Application;
 import com.langa.backend.domain.applications.exceptions.ApplicationException;
@@ -10,9 +11,8 @@ import com.langa.backend.infra.rest.ingest.dto.IngestionRequestDto;
 import com.langa.backend.infra.rest.ingest.dto.LogIngestionRequestDto;
 import com.langa.backend.infra.rest.ingest.dto.MetricIngestionRequestDto;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
-@Service
+@UseCase
 @RequiredArgsConstructor
 public class IngestionUseCase {
 

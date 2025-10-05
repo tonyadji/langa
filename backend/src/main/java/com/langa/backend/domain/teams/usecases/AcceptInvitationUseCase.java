@@ -1,5 +1,6 @@
 package com.langa.backend.domain.teams.usecases;
 
+import com.langa.backend.common.annotations.UseCase;
 import com.langa.backend.common.eda.services.OutboxEventService;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.teams.TeamInvitation;
@@ -7,9 +8,8 @@ import com.langa.backend.domain.teams.events.TeamInvitationAcceptedByGuestEvent;
 import com.langa.backend.domain.teams.events.TeamInvitationAcceptedForHostEvent;
 import com.langa.backend.domain.teams.exceptions.TeamException;
 import com.langa.backend.domain.teams.repositories.TeamInvitationRepository;
-import org.springframework.stereotype.Component;
 
-@Component
+@UseCase
 public class AcceptInvitationUseCase {
 
     private final TeamInvitationRepository teamInvitationRepository;

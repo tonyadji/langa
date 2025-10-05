@@ -1,6 +1,7 @@
 package com.langa.backend.common.utils;
 
 import java.math.BigInteger;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class KeyGenerator {
@@ -35,6 +36,17 @@ public class KeyGenerator {
         UUID uuid = UUID.nameUUIDFromBytes(teamName.concat(owner).concat(guest).concat(invitationDate).getBytes());
         StringBuilder sb = toBase62(uuid);
         return INVITATION_PREFIX.concat(sb.reverse().toString());
+    }
+
+    public static String genericToken(String... params) {
+        UUID uuid = UUID.randomUUID();
+        String token = uuid.toString().concat(LocalDateTime.now().toString());
+        for (String param : params) {
+            token = token.concat(param);
+        }
+
+        StringBuilder sb = toBase62(UUID.nameUUIDFromBytes(token.getBytes()));
+        return sb.reverse().toString();
     }
     private static StringBuilder toBase62(UUID uuid) {
         BigInteger number = new BigInteger(uuid.toString().replace("-", ""), 16);

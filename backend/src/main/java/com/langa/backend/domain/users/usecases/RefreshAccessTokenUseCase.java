@@ -1,12 +1,12 @@
 package com.langa.backend.domain.users.usecases;
 
+import com.langa.backend.common.annotations.UseCase;
+import com.langa.backend.domain.users.repositories.UserRepository;
 import com.langa.backend.domain.users.services.RefreshTokenService;
 import com.langa.backend.domain.users.services.TokenProvider;
-import com.langa.backend.domain.users.repositories.UserRepository;
 import com.langa.backend.domain.users.valueobjects.AuthTokens;
-import org.springframework.stereotype.Component;
 
-@Component
+@UseCase
 public class RefreshAccessTokenUseCase {
 
     private final RefreshTokenService refreshTokenService;

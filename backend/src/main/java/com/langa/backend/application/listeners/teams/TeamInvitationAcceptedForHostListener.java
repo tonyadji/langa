@@ -1,4 +1,4 @@
-package com.langa.backend.application.listeners;
+package com.langa.backend.application.listeners.teams;
 
 import com.langa.backend.domain.teams.events.TeamInvitationAcceptedForHostEvent;
 import com.langa.backend.infra.notifications.NotificationService;

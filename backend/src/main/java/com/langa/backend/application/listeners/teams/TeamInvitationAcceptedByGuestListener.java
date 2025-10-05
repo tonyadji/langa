@@ -1,4 +1,4 @@
-package com.langa.backend.application.listeners;
+package com.langa.backend.application.listeners.teams;
 
 import com.langa.backend.common.eda.services.OutboxEventService;
 import com.langa.backend.domain.teams.Team;
@@ -35,10 +35,15 @@ public class TeamInvitationAcceptedByGuestListener {
     @EventListener
     void handleTeamInvitationAcceptedByGuestEvent(TeamInvitationAcceptedByGuestEvent teamInvitationAcceptedByGuestEvent) {
         log.debug("Event received: {}", teamInvitationAcceptedByGuestEvent);
-        User user = userService.findOrCreateUserByEmail(teamInvitationAcceptedByGuestEvent.guest());
-        Team team = teamMemberShipService.addMemberToTeam(teamInvitationAcceptedByGuestEvent.team(), user.getEmail());
+        try {
+            User user = userService.findOrCreateUserByEmail(teamInvitationAcceptedByGuestEvent.guest());
+            Team team = teamMemberShipService.addMemberToTeam(teamInvitationAcceptedByGuestEvent.team(), user.getEmail());
 
-        outboxEventService.storeOutboxEvent(InvitationAcceptedMailEvent.of(team, user.getEmail()));
-        outboxEventService.storeOutboxEvent(FirstConnectionMailEvent.of(user));
+            outboxEventService.storeOutboxEvent(InvitationAcceptedMailEvent.of(team, user.getEmail()));
+            outboxEventService.storeOutboxEvent(FirstConnectionMailEvent.of(user));
+        } catch (Exception e) {
+            log.error("Error handling event: {}", teamInvitationAcceptedByGuestEvent, e);
+        }
+
     }
 }

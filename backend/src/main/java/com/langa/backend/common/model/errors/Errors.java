@@ -10,7 +10,8 @@ public enum Errors {
 
     USER_NOT_FOUND(400,"400-101", "User not found"),
     USERNAME_ALREADY_EXISTS(400,"400-102", "Username already exists"),
-    PASSWORDS_MISMATCH(400,"400-103", "Passwords do not match"),
+    PASSWORDS_MISMATCH(400,"400-103", "Passwords and confirmation do not match"),
+    USER_ILLEGAL_STATUS(400,"400-104" , "User status is illegal to perform this action" ),
 
     TEAM_NAME_ALREADY_EXISTS(400, "400-200", "Team name already exists"),
     TEAM_NOT_FOUND(400, "400-201", "Team not found"),

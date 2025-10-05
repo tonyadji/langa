@@ -1,4 +1,4 @@
-package com.langa.backend.application.listeners;
+package com.langa.backend.application.listeners.users;
 
 import com.langa.backend.domain.users.events.FirstConnectionMailEvent;
 import com.langa.backend.infra.notifications.NotificationService;

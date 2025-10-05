@@ -1,15 +1,15 @@
 package com.langa.backend.domain.teams.usecases;
 
+import com.langa.backend.common.annotations.UseCase;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.teams.Team;
 import com.langa.backend.domain.teams.exceptions.TeamException;
 import com.langa.backend.domain.teams.repositories.TeamMemberRepository;
 import com.langa.backend.domain.teams.repositories.TeamRepository;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
-@Component
+@UseCase
 public class CreateTeamUseCase {
 
     private final TeamRepository teamRepository;

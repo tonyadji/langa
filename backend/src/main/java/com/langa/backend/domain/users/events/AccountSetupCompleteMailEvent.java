@@ -5,15 +5,14 @@ import com.langa.backend.common.eda.model.DomainEvent;
 import com.langa.backend.common.eda.registry.EventTypeRegistry;
 import com.langa.backend.domain.users.User;
 
-@DomainEventType("FirstConnectionMailEvent")
-public record FirstConnectionMailEvent(
+@DomainEventType("AccountSetupCompleteMailEvent")
+public record AccountSetupCompleteMailEvent(
         String aggregateId,
-        String email,
-        String firstConnectionToken
+        String email
 ) implements DomainEvent {
     @Override
     public EventTypeRegistry getEventType() {
-        return EventTypeRegistry.FIRST_CONNECTION_MAIL;
+        return EventTypeRegistry.ACCOUNT_SETUP_COMPLETE_MAIL;
     }
 
     @Override
@@ -26,7 +25,7 @@ public record FirstConnectionMailEvent(
         return aggregateId;
     }
 
-    public static FirstConnectionMailEvent of(User user) {
-        return new FirstConnectionMailEvent(user.getAccountKey(), user.getEmail(), user.getFirstConnectionToken());
+    public static AccountSetupCompleteMailEvent of(User user) {
+        return new AccountSetupCompleteMailEvent(user.getId(), user.getEmail());
     }
 }
