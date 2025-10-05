@@ -3,6 +3,7 @@ package com.langa.backend.domain.users;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.common.model.errors.GenericException;
 import com.langa.backend.domain.users.repositories.RefreshTokenRepository;
+import com.langa.backend.domain.users.services.RefreshTokenService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

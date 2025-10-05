@@ -2,8 +2,8 @@ package com.langa.backend.domain.users.usecases;
 
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.users.RefreshToken;
-import com.langa.backend.domain.users.RefreshTokenService;
-import com.langa.backend.domain.users.TokenProvider;
+import com.langa.backend.domain.users.services.RefreshTokenService;
+import com.langa.backend.domain.users.services.TokenProvider;
 import com.langa.backend.domain.users.User;
 import com.langa.backend.domain.users.exceptions.UserException;
 import com.langa.backend.domain.users.repositories.UserRepository;

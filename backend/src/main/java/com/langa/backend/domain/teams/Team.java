@@ -64,4 +64,16 @@ public class Team {
                 .setInviteDate(now)
                 .setExpiryDate(now.plusDays(1));
     }
+
+    public TeamMember addMember(String memberEmail) {
+        boolean isAlreadyMember = members.stream()
+                .anyMatch(teamMember -> Objects.equals(teamMember.email(), memberEmail));
+
+        if(isAlreadyMember) {
+            throw new TeamException("Already member of the team", null, Errors.TEAM_MEMBER_ALREADY);
+        }
+        final TeamMember teamMember = new TeamMember(memberEmail, TeamRole.MEMBER, key, LocalDateTime.now());
+        members.add(teamMember);
+        return teamMember;
+    }
 }

@@ -1,7 +1,8 @@
-package com.langa.backend.domain.users;
+package com.langa.backend.domain.users.services;
 
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.common.model.errors.GenericException;
+import com.langa.backend.domain.users.RefreshToken;
 import com.langa.backend.domain.users.repositories.RefreshTokenRepository;
 
 import java.security.SecureRandom;

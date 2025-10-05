@@ -1,4 +1,6 @@
-package com.langa.backend.domain.users;
+package com.langa.backend.domain.users.services;
+
+import com.langa.backend.domain.users.User;
 
 public interface TokenProvider {
     String generateToken(User user);
