@@ -35,12 +35,12 @@ public record TeamInvitationEmailEvent(
 
     public static TeamInvitationEmailEvent of(TeamInvitation invitation, Team team) {
         return new TeamInvitationEmailEvent(
-                invitation.getId(),
-                invitation.getGuest(),
-                invitation.getHost(),
+                invitation.getIdentity().id(),
+                invitation.getStakeHolders().guest(),
+                invitation.getStakeHolders().host(),
                 team.getName(),
-                invitation.getInvitationToken(),
-                invitation.getExpiryDate()
+                invitation.getIdentity().invitationToken(),
+                invitation.getInvitationPeriod().expiryDate()
         );
     }
 }

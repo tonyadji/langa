@@ -19,7 +19,9 @@ public class GetInvitationUseCase {
         final TeamInvitation teamInvitation = teamInvitationRepository.findByToken(invitationToken)
                 .orElseThrow(() -> new TeamException("Invitation not found", null, Errors.TEAM_INVITATION_NOTFOUND_OR_EXPIRED));
 
-        teamInvitation.checkExpiration();
+        if(teamInvitation.isExpired()) {
+            teamInvitation.markAsExpired();
+        }
         teamInvitationRepository.save(teamInvitation);
         return teamInvitation;
     }

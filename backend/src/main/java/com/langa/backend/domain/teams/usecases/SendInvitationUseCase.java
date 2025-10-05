@@ -21,16 +21,16 @@ public class SendInvitationUseCase {
 
 
     public TeamInvitation invite(TeamInvitation teamInvitation) {
-        final Team team = teamRepository.findById(teamInvitation.getTeam())
-                .orElseThrow(() -> new TeamException("Team not found with id "+ teamInvitation.getTeam(), null, Errors.TEAM_NOT_FOUND));
+        final Team team = teamRepository.findById(teamInvitation.getStakeHolders().team())
+                .orElseThrow(() -> new TeamException("Team not found with id "+ teamInvitation.getStakeHolders().team(), null, Errors.TEAM_NOT_FOUND));
 
-        team.checkOwnership(teamInvitation.getHost());
-        teamInvitationRepository.findExistingValidInvitation(team.getKey(), teamInvitation.getGuest())
+        team.checkOwnership(teamInvitation.getStakeHolders().host());
+        teamInvitationRepository.findExistingValidInvitation(team.getKey(), teamInvitation.getStakeHolders().guest())
                 .ifPresent(invitation -> {
                     throw new TeamException("Invitation found with status : "+invitation.getStatus().name(), null, Errors.TEAM_INVITATION_EXISTING);
                 });
 
-        final TeamInvitation invitation = teamInvitationRepository.save(team.invite(teamInvitation.getGuest()));
+        final TeamInvitation invitation = teamInvitationRepository.save(team.invite(teamInvitation.getStakeHolders().guest()));
 
         TeamInvitationEmailEvent invitationEmailEvent = TeamInvitationEmailEvent.of(teamInvitation, team);
 

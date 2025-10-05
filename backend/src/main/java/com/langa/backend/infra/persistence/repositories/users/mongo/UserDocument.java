@@ -19,14 +19,7 @@ public class UserDocument {
     private String firstConnectionToken;
 
     public User toUser() {
-        User user = new User();
-        user.setId(id);
-        user.setEmail(email);
-        user.setPassword(password);
-        user.setAccountKey(accountKey);
-        user.setStatus(userStatus);
-        user.setFirstConnectionToken(firstConnectionToken);
-        return user;
+        return User.populate(id, email, password, accountKey, userStatus, firstConnectionToken);
     }
 
     public static UserDocument of(User user) {

@@ -34,7 +34,7 @@ public class IngestionUseCase {
                         logRequestDto.accountKey())
                 .orElseThrow(() -> new ApplicationException("Application not found with key: " + logRequestDto.appKey() + " and account key: " + logRequestDto.accountKey(), null, Errors.APPLICATION_NOT_FOUND));
 
-        logEntryRepository.saveAll(application.createLogEntries(logRequestDto.entries()));
+        logEntryRepository.saveAll(application.createLogEntries(logRequestDto.getEntries()));
     }
 
     private void processMetricIngestion(MetricIngestionRequestDto metricIngestionRequestDto) {
@@ -43,6 +43,6 @@ public class IngestionUseCase {
                         metricIngestionRequestDto.accountKey())
                 .orElseThrow(() -> new ApplicationException("Application not found with key: " + metricIngestionRequestDto.appKey() + " and account key: " + metricIngestionRequestDto.accountKey(), null, Errors.APPLICATION_NOT_FOUND));
 
-        metricEntryRepository.saveAll(application.createMetricEntries(metricIngestionRequestDto.entries()));
+        metricEntryRepository.saveAll(application.createMetricEntries(metricIngestionRequestDto.getEntries()));
     }
 }

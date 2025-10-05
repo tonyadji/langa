@@ -22,13 +22,9 @@ public class TeamDocument {
     private LocalDateTime createdDate;
 
     public Team toTeam() {
-        return new Team()
-                .setId(id)
-                .setName(name)
-                .setKey(key)
-                .setMembers(members)
-                .setCreatedBy(createdBy)
-                .setCreatedDate(createdDate);
+        final Team team = Team.populate(id, name, createdBy, createdDate);
+        team.getMembers().addAll(members);
+        return team;
     }
 
     public static TeamDocument of(Team team) {

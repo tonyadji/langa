@@ -1,10 +1,10 @@
 package com.langa.backend.domain.users.usecases;
 
 import com.langa.backend.common.annotations.UseCase;
+import com.langa.backend.common.eda.model.DomainEvent;
 import com.langa.backend.common.eda.services.OutboxEventService;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.users.User;
-import com.langa.backend.domain.users.events.AccountSetupCompleteMailEvent;
 import com.langa.backend.domain.users.exceptions.UserException;
 import com.langa.backend.domain.users.repositories.UserRepository;
 import com.langa.backend.domain.users.services.PasswordService;
@@ -32,10 +32,10 @@ public class CompleteFirstConnectionUseCase {
 
         final String encodedPassword = passwordService.checkAndGetEncoded(updatePassword);
 
-        user.couldCouldCompleteFirstConnection(encodedPassword);
+        DomainEvent event = user.completeFirstConnection(encodedPassword);
 
         userRepository.save(user);
 
-        outboxEventService.storeOutboxEvent(AccountSetupCompleteMailEvent.of(user));
+        outboxEventService.storeOutboxEvent(event);
     }
 }

@@ -12,10 +12,10 @@ public record InviteMemberResponseDto(
 ) {
     public static InviteMemberResponseDto of(TeamInvitation invitation) {
         return new InviteMemberResponseDto(
-                invitation.getGuest(),
-                invitation.getTeam(),
-                invitation.getInvitationToken(),
-                invitation.getExpiryDate()
+                invitation.getStakeHolders().guest(),
+                invitation.getStakeHolders().team(),
+                invitation.getIdentity().invitationToken(),
+                invitation.getInvitationPeriod().expiryDate()
         );
     }
 }

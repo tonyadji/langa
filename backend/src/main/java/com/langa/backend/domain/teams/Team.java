@@ -3,31 +3,27 @@ package com.langa.backend.domain.teams;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.common.utils.KeyGenerator;
 import com.langa.backend.domain.teams.exceptions.TeamException;
-import com.langa.backend.domain.teams.valueobjects.InvitationStatus;
-import com.langa.backend.domain.teams.valueobjects.TeamMember;
-import com.langa.backend.domain.teams.valueobjects.TeamRole;
-import lombok.Data;
-import lombok.experimental.Accessors;
+import com.langa.backend.domain.teams.valueobjects.*;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@Data
-@Accessors(chain = true)
+@Getter
 public class Team {
 
-    private String id;
-    private String name;
-    private String key;
-    private List<TeamMember> members;
-    private String createdBy;
-    private LocalDateTime createdDate;
+    private final String id;
+    private final String name;
+    private final String key;
+    private final List<TeamMember> members;
+    private final String createdBy;
+    private final LocalDateTime createdDate;
 
-    public Team() {}
 
-    private Team(String name, String createdBy, LocalDateTime createdDate) {
+    private Team(String id, String name, String createdBy, LocalDateTime createdDate) {
+        this.id = id;
         this.name = name;
         this.key = KeyGenerator.generateTeamKey(name, createdBy);
         this.createdBy = createdBy;
@@ -36,8 +32,12 @@ public class Team {
         this.members.add(new TeamMember(createdBy, TeamRole.OWNER, this.key, LocalDateTime.now()));
     }
 
+    public static Team populate(String id, String name, String createdBy, LocalDateTime createdDate) {
+        return new Team(id, name, createdBy, createdDate);
+    }
+
     public static Team createNew(String name, String createdBy, LocalDateTime createdDate) {
-        return new Team(name, createdBy, createdDate);
+        return new Team(null, name, createdBy, createdDate);
     }
 
     public void checkOwnership(String host) {
@@ -55,17 +55,15 @@ public class Team {
         }
 
         LocalDateTime now = LocalDateTime.now();
-        return new TeamInvitation()
-                .setTeam(key)
-                .setHost(createdBy)
-                .setGuest(guest)
-                .setStatus(InvitationStatus.CREATED)
-                .setInvitationToken(KeyGenerator.generateTeamInvitationKey(key, createdBy, guest, now.toString()))
-                .setInviteDate(now)
-                .setExpiryDate(now.plusDays(1));
+
+        return TeamInvitation.populate(null,
+                new TeamInvitationStakeHolders(key, createdBy, guest),
+                new TeamInvitationPeriod(now, now.plusDays(1)),
+                null,
+                InvitationStatus.CREATED);
     }
 
-    public TeamMember addMember(String memberEmail) {
+    public void addMember(String memberEmail) {
         boolean isAlreadyMember = members.stream()
                 .anyMatch(teamMember -> Objects.equals(teamMember.email(), memberEmail));
 
@@ -74,6 +72,5 @@ public class Team {
         }
         final TeamMember teamMember = new TeamMember(memberEmail, TeamRole.MEMBER, key, LocalDateTime.now());
         members.add(teamMember);
-        return teamMember;
     }
 }

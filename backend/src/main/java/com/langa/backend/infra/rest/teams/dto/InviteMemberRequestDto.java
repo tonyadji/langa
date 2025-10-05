@@ -1,6 +1,7 @@
 package com.langa.backend.infra.rest.teams.dto;
 
 import com.langa.backend.domain.teams.TeamInvitation;
+import com.langa.backend.domain.teams.valueobjects.TeamInvitationStakeHolders;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -11,9 +12,7 @@ public record InviteMemberRequestDto(
 ) {
 
     public TeamInvitation toTeamInvitation(String host) {
-        return new TeamInvitation()
-                .setGuest(guest)
-                .setTeam(team)
-                .setHost(host);
+        return TeamInvitation.populate(null, new TeamInvitationStakeHolders(team, host, guest),
+                null, null, null);
     }
 }

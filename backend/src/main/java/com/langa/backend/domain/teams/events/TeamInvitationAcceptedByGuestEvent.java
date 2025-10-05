@@ -34,12 +34,12 @@ public record TeamInvitationAcceptedByGuestEvent(
 
     public static TeamInvitationAcceptedByGuestEvent of(TeamInvitation invitation) {
         return new TeamInvitationAcceptedByGuestEvent(
-                invitation.getId(),
-                invitation.getGuest(),
-                invitation.getHost(),
-                invitation.getTeam(),
-                invitation.getInvitationToken(),
-                invitation.getExpiryDate()
+                invitation.getIdentity().id(),
+                invitation.getStakeHolders().guest(),
+                invitation.getStakeHolders().host(),
+                invitation.getStakeHolders().team(),
+                invitation.getIdentity().invitationToken(),
+                invitation.getInvitationPeriod().expiryDate()
         );
     }
 }

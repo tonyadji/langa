@@ -26,7 +26,7 @@ class ApplicationTest {
         Application app = Application.createNew("MyApp", "accountKey123", "owner@example.com");
 
         LogDto logDto = new LogDto("message", "INFO", "loggerName", "2025-08-23T12:00:00");
-        List<LogEntry> logEntries = app.createLogEntries(List.of(logDto));
+        List<LogEntry> logEntries = app.createLogEntries(List.of(logDto.toLogEntry()));
 
         assertEquals(1, logEntries.size());
         LogEntry entry = logEntries.get(0);

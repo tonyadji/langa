@@ -16,13 +16,7 @@ public class ApplicationDocument {
     private String owner;
 
     public Application toApplication() {
-        Application application = new Application();
-        application.setId(id);
-        application.setName(name);
-        application.setKey(key);
-        application.setAccountKey(accountKey);
-        application.setOwner(owner);
-        return application;
+        return Application.populate(id, name, accountKey, owner);
     }
 
     public static ApplicationDocument of(Application application) {

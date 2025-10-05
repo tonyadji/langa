@@ -30,6 +30,5 @@ public class FirstConnectionMailListener {
         } catch (Exception e) {
             log.error("Error handling event: {}", firstConnectionMailEvent, e);
         }
-
     }
 }

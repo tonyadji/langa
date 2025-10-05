@@ -15,11 +15,11 @@ public record GetInvitationResponseDto(
 ) {
     public static GetInvitationResponseDto of(TeamInvitation teamInvitation) {
         return new GetInvitationResponseDto(
-                teamInvitation.getId(),
-                teamInvitation.getTeam(),
-                teamInvitation.getHost(),
-                teamInvitation.getGuest(),
-                teamInvitation.getExpiryDate(),
+                teamInvitation.getIdentity().id(),
+                teamInvitation.getStakeHolders().team(),
+                teamInvitation.getStakeHolders().host(),
+                teamInvitation.getStakeHolders().guest(),
+                teamInvitation.getInvitationPeriod().expiryDate(),
                 teamInvitation.getStatus()
         );
     }

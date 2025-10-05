@@ -24,7 +24,12 @@ public class AcceptInvitationUseCase {
         final TeamInvitation teamInvitation = teamInvitationRepository.findById(id)
                 .orElseThrow(() -> new TeamException("Invitation not found", null, Errors.TEAM_INVITATION_NOTFOUND_OR_EXPIRED));
 
-        teamInvitationRepository.save(teamInvitation.checkExpiration().couldBeAccepted());
+        if(teamInvitation.isExpired()) {
+            teamInvitation.markAsExpired();
+            teamInvitationRepository.save(teamInvitation);
+            throw new TeamException("Invalid status", null, Errors.TEAM_INVITATION_INVALID_STATUS);
+        }
+        teamInvitationRepository.save(teamInvitation.accept());
 
         outboxEventService.storeOutboxEvent(TeamInvitationAcceptedForHostEvent.of(teamInvitation));
         outboxEventService.storeOutboxEvent(TeamInvitationAcceptedByGuestEvent.of(teamInvitation));
