@@ -4,6 +4,7 @@ import com.langa.backend.domain.teams.valueobjects.TeamMember;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface TeamMemberRepository {
 
@@ -14,4 +15,6 @@ public interface TeamMemberRepository {
     List<TeamMember> findByEmail(String owner);
 
     void saveAll(List<TeamMember> teamMembers);
+
+    Set<String> findTeamsKeysByMemberUsername(String username);
 }

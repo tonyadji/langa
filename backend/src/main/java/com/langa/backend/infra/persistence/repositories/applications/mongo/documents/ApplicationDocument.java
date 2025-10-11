@@ -1,9 +1,12 @@
-package com.langa.backend.infra.persistence.repositories.applications.mongo;
+package com.langa.backend.infra.persistence.repositories.applications.mongo.documents;
 
 import com.langa.backend.domain.applications.Application;
+import com.langa.backend.domain.applications.valueobjects.ShareWith;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.Set;
 
 @Data
 @Document(collection = "c_applications")
@@ -14,9 +17,10 @@ public class ApplicationDocument {
     private String key;
     private String accountKey;
     private String owner;
+    private Set<ShareWith> sharedWith;
 
     public Application toApplication() {
-        return Application.populate(id, name, accountKey, owner);
+        return Application.populate(id, name, key, accountKey, owner, sharedWith);
     }
 
     public static ApplicationDocument of(Application application) {
@@ -26,6 +30,7 @@ public class ApplicationDocument {
         applicationDocument.setKey(application.getKey());
         applicationDocument.setAccountKey(application.getAccountKey());
         applicationDocument.setOwner(application.getOwner());
+        applicationDocument.setSharedWith(application.getSharedWith());
         return applicationDocument;
     }
 }

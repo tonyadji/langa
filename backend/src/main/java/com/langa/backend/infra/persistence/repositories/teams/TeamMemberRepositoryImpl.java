@@ -9,6 +9,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -39,5 +41,13 @@ public class TeamMemberRepositoryImpl implements TeamMemberRepository {
     @Override
     public void saveAll(List<TeamMember> teamMembers) {
         teamMembers.forEach(this::save);
+    }
+
+    @Override
+    public Set<String> findTeamsKeysByMemberUsername(String username) {
+        return mongoTeamMemberDao.findByEmail(username)
+                .stream()
+                .map(TeamMemberDocument::getTeamKey)
+                .collect(Collectors.toSet());
     }
 }

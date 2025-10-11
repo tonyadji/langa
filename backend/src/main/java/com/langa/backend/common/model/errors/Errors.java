@@ -7,6 +7,8 @@ public enum Errors {
 
     APPLICATION_NOT_FOUND(400,"400-000", "Application not found"),
     APPLICATION_NAME_ALREADY_EXISTS(400,"400-001", "Application name already exists"),
+    APPLICATION_ALREADY_SHARED(400, "400-002","Application already shared"),
+    APPLICATION_AUTO_SHARE_FORBIDDEN(400, "400-003","Application auto share forbidden"),
 
     USER_NOT_FOUND(400,"400-101", "User not found"),
     USERNAME_ALREADY_EXISTS(400,"400-102", "Username already exists"),

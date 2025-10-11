@@ -1,9 +1,11 @@
-package com.langa.backend.infra.persistence.repositories.applications.mongo;
+package com.langa.backend.infra.persistence.repositories.applications.mongo.daos;
 
+import com.langa.backend.infra.persistence.repositories.applications.mongo.documents.ApplicationDocument;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface MongoApplicationDao extends MongoRepository<ApplicationDocument, String> {
     Optional<ApplicationDocument> findByKey(String key);
@@ -12,6 +14,8 @@ public interface MongoApplicationDao extends MongoRepository<ApplicationDocument
 
     List<ApplicationDocument> findByAccountKey(String accountKey);
     List<ApplicationDocument> findByOwner(String owner);
+    List<ApplicationDocument> findBySharedWith_key(String accountOrTeamKey);
+    List<ApplicationDocument> findBySharedWith_KeyIn(Set<String> teamKeys);
 
     Optional<ApplicationDocument> findByOwnerAndName(String owner, String name);
 

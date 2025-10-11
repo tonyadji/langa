@@ -9,8 +9,10 @@ import com.langa.backend.domain.applications.repositories.LogEntryRepository;
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
 import com.langa.backend.domain.applications.valueobjects.LogFilter;
 import com.langa.backend.domain.applications.valueobjects.PaginatedResult;
+import com.langa.backend.domainexchange.user.UserAccountService;
 
 import java.util.List;
+import java.util.Set;
 
 @UseCase
 public class GetLogUseCase {
@@ -18,10 +20,12 @@ public class GetLogUseCase {
     public static final String APPLICATION_NOT_FOUND_WITH_ID = "Application not found with id: ";
     private final LogEntryRepository logRepository;
     private final ApplicationRepository applicationRepository;
+    private final UserAccountService userAccountService;
 
-    public GetLogUseCase(LogEntryRepository logRepository, ApplicationRepository applicationRepository) {
+    public GetLogUseCase(LogEntryRepository logRepository, ApplicationRepository applicationRepository, UserAccountService userAccountService) {
         this.logRepository = logRepository;
         this.applicationRepository = applicationRepository;
+        this.userAccountService = userAccountService;
     }
 
     public List<LogEntry> getLogs(String appId) {
@@ -37,7 +41,8 @@ public class GetLogUseCase {
         final Application app = applicationRepository.findById(appId)
                 .orElseThrow(() -> new ApplicationException(APPLICATION_NOT_FOUND_WITH_ID + appId, null, Errors.APPLICATION_NOT_FOUND));
 
-        app.checkOwnership(username);
+        Set<String> accountKeys = userAccountService.getAllAccountKeys(username);
+        app.authorizedToAccess(username, accountKeys);
 
         return logRepository.findByAppKeyAndAccountKeyOrderByTimestampDesc(app.getKey(), app.getAccountKey())
                 .stream()
@@ -54,8 +59,8 @@ public class GetLogUseCase {
         final Application app = applicationRepository.findById(appId)
                 .orElseThrow(() -> new ApplicationException(APPLICATION_NOT_FOUND_WITH_ID + appId, null, Errors.APPLICATION_NOT_FOUND));
 
-        app.checkOwnership(userEmail);
-
+        Set<String> accountKeys = userAccountService.getAllAccountKeys(userEmail);
+        app.authorizedToAccess(userEmail, accountKeys);
 
         PaginatedResult<LogEntry> pageResult = logRepository.findFiltered(app.getKey(), app.getAccountKey(), filter, page, size);
 
