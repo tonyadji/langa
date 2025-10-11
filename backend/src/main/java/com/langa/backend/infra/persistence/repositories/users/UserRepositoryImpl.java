@@ -34,4 +34,10 @@ public class UserRepositoryImpl implements UserRepository {
         return mongoUserDao.findByFirstConnectionToken(token)
                 .map(UserDocument::toUser);
     }
+
+    @Override
+    public Optional<User> findByEmailOrAccountKey(String userEmailOrAccountKey) {
+        return mongoUserDao.findByEmailOrAccountKey(userEmailOrAccountKey, userEmailOrAccountKey)
+                .map(UserDocument::toUser);
+    }
 }

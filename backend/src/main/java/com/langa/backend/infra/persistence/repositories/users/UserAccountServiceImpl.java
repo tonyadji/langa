@@ -58,7 +58,7 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     @Override
     public ShareWithInfo getShareWithInfo(String userEmail) {
-        return userRepository.findByEmail(userEmail)
+        return userRepository.findByEmailOrAccountKey(userEmail)
                 .map(user -> new ShareWithInfo(user.getAccountKey(), user.getEmail()))
                 .orElseThrow(() -> new UserException(
                         USER_NOT_FOUND,

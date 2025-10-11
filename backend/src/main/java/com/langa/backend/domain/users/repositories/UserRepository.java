@@ -8,4 +8,6 @@ public interface UserRepository {
     Optional<User> save(User user);
     Optional<User> findByEmail(String email);
     Optional<User> findByFistConnectionToken(String token);
+
+    Optional<User> findByEmailOrAccountKey(String userEmailOrAccountKey);
 }
