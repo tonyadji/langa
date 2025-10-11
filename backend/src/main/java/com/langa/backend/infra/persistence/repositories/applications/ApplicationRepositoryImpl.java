@@ -4,13 +4,14 @@ import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.applications.Application;
 import com.langa.backend.domain.applications.exceptions.ApplicationException;
 import com.langa.backend.domain.applications.repositories.ApplicationRepository;
-import com.langa.backend.infra.persistence.repositories.applications.mongo.ApplicationDocument;
-import com.langa.backend.infra.persistence.repositories.applications.mongo.MongoApplicationDao;
+import com.langa.backend.infra.persistence.repositories.applications.mongo.documents.ApplicationDocument;
+import com.langa.backend.infra.persistence.repositories.applications.mongo.daos.MongoApplicationDao;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
@@ -46,14 +47,14 @@ public class ApplicationRepositoryImpl implements ApplicationRepository {
     public Optional<Application> findById(String id) {
         return mongoApplicationDao.findById(id)
                 .map(ApplicationDocument::toApplication)
-                .or(() -> Optional.empty());
+                .or(Optional::empty);
     }
 
     @Override
     public Optional<Application> findByKeyAndAccountKey(String key, String accountKey) {
         return mongoApplicationDao.findByKeyAndAccountKey(key, accountKey)
                 .map(ApplicationDocument::toApplication)
-                .or(() -> Optional.empty());
+                .or(Optional::empty);
     }
 
     @Override
@@ -72,13 +73,25 @@ public class ApplicationRepositoryImpl implements ApplicationRepository {
     public Optional<Application> findByOwnerAndName(String owner, String name) {
         return mongoApplicationDao.findByOwnerAndName(owner, name)
                 .map(ApplicationDocument::toApplication)
-                .or(() -> Optional.empty());
+                .or(Optional::empty);
     }
 
     @Override
     public Optional<Application> findByIdAndOwner(String appId, String username) {
         return mongoApplicationDao.findByIdAndOwner(appId, username)
                 .map(ApplicationDocument::toApplication)
-                .or(() -> Optional.empty());
+                .or(Optional::empty);
+    }
+
+    @Override
+    public List<Application> findBySharedWithUser(String sharedWith) {
+        return mongoApplicationDao.findBySharedWith_key(sharedWith)
+                .stream().map(ApplicationDocument::toApplication).toList();
+    }
+
+    @Override
+    public List<Application> findBySharedWithTeams(Set<String> teamKeys) {
+        return mongoApplicationDao.findBySharedWith_KeyIn(teamKeys)
+                .stream().map(ApplicationDocument::toApplication).toList();
     }
 }

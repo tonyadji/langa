@@ -1,15 +1,17 @@
 package com.langa.backend.infra.security.utils;
 
-import com.langa.backend.domain.users.TokenProvider;
+import com.langa.backend.domain.users.services.TokenProvider;
 import com.langa.backend.domain.users.User;
 import com.langa.backend.infra.security.config.JwtConfig;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
 
 @Component
+@Slf4j
 public class JwtUtils implements TokenProvider {
 
     private final JwtConfig jwtConfig;
@@ -45,7 +47,7 @@ public class JwtUtils implements TokenProvider {
             Jwts.parserBuilder().setSigningKey(jwtConfig.getKey()).build().parseClaimsJws(token);
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.getMessage(), e);
             return false;
         }
     }

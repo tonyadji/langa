@@ -2,25 +2,24 @@ package com.langa.backend.infra.persistence.repositories.users.mongo;
 
 import com.langa.backend.domain.users.User;
 import com.langa.backend.domain.users.repositories.UserRepository;
+import com.langa.backend.domain.users.valueobjects.UserStatus;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
-@Document(collection = "users")
+@Document(collection = "c_users")
 public class UserDocument {
+    @Id
     private String id;
     private String email;
     private String password;
     private String accountKey;
-    private UserRepository userRepository;
+    private UserStatus userStatus;
+    private String firstConnectionToken;
 
     public User toUser() {
-        User user = new User();
-        user.setId(id);
-        user.setEmail(email);
-        user.setPassword(password);
-        user.setAccountKey(accountKey);
-        return user;
+        return User.populate(id, email, password, accountKey, userStatus, firstConnectionToken);
     }
 
     public static UserDocument of(User user) {
@@ -29,6 +28,8 @@ public class UserDocument {
         userDocument.setEmail(user.getEmail());
         userDocument.setPassword(user.getPassword());
         userDocument.setAccountKey(user.getAccountKey());
+        userDocument.setUserStatus(user.getStatus());
+        userDocument.setFirstConnectionToken(user.getFirstConnectionToken());
         return userDocument;
     }
 }
