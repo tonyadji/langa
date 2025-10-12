@@ -20,6 +20,12 @@ public class KeyGenerator {
         return APP_PREFIX.concat(sb.reverse().toString());
     }
 
+    public static String generateAppSecret() {
+        UUID uuid = UUID.randomUUID();
+        StringBuilder sb = toBase62(uuid).append(toBase62(UUID.randomUUID()));
+        return sb.reverse().toString();
+    }
+
     public static String generateAccountKey(String email) {
         UUID uuid = UUID.nameUUIDFromBytes(email.getBytes());
         StringBuilder sb = toBase62(uuid);
@@ -57,6 +63,7 @@ public class KeyGenerator {
         }
         return sb;
     }
+
 
 
 }

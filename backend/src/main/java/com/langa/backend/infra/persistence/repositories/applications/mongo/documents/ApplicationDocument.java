@@ -16,6 +16,7 @@ public class ApplicationDocument {
     private String name;
     private String key;
     private String accountKey;
+    private String secret;
     private String owner;
     private Set<ShareWith> sharedWith;
 
@@ -31,6 +32,7 @@ public class ApplicationDocument {
         applicationDocument.setAccountKey(application.getAccountKey());
         applicationDocument.setOwner(application.getOwner());
         applicationDocument.setSharedWith(application.getSharedWith());
+        applicationDocument.setSecret(application.getSecret());
         return applicationDocument;
     }
 }

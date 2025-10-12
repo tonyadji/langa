@@ -22,6 +22,7 @@ public class Application extends AbstractModel {
     private final String key;
     private final String accountKey;
     private final String owner;
+    private String secret;
     private final Set<ShareWith> sharedWith;
 
 
@@ -31,6 +32,7 @@ public class Application extends AbstractModel {
         this.accountKey = accountKey;
         this.owner = owner;
         this.key = KeyGenerator.generateAppKey();
+        this.secret = KeyGenerator.generateAppSecret();
         sharedWith = new HashSet<>();
     }
 
@@ -108,5 +110,9 @@ public class Application extends AbstractModel {
     private Predicate<ShareWith> isSharedWith(String accountOrTeamKey) {
         return sw -> Objects.equals(sw.key(), accountOrTeamKey)
                 && sw.isCurrentlyActive();
+    }
+
+    public String getSecret() {
+        return secret == null ? key : secret;
     }
 }
