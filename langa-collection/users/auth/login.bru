@@ -1,0 +1,28 @@
+meta {
+  name: login
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{langa-api}}/api/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username":"langa2@langa.com",
+    "password":"langa"
+  }
+  
+  /*
+  {
+    "username":"langa2@langa.com",//evubeatz@gmail.com
+    "password":"langa"
+  }*/
+}
+
+script:post-response {
+  bru.setEnvVar('user_token', res.body.accessToken)
+}

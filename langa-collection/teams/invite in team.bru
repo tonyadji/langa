@@ -1,0 +1,22 @@
+meta {
+  name: invite in team
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{langa-api}}/api/teams/invite
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{user_token}}
+}
+
+body:json {
+  {
+    "guest":"evubeatz@gmail.com",
+    "team": "68db12d6417ba79609d55735"
+  }
+}

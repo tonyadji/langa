@@ -1,0 +1,21 @@
+meta {
+  name: get first connection
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{langa-api}}/api/first-connection?token=5tdM2aXJnbkP4PDdGOraCr
+  body: json
+  auth: none
+}
+
+params:query {
+  token: 5tdM2aXJnbkP4PDdGOraCr
+}
+
+body:json {
+  {
+    "invitationId":"68e294269850c8097375d5a1"
+  }
+}

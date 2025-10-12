@@ -1,0 +1,21 @@
+meta {
+  name: create team
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{langa-api}}/api/teams
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{user_token}}
+}
+
+body:json {
+  {
+    "name":"langa2_team"
+  }
+}

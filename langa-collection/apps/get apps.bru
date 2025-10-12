@@ -1,0 +1,15 @@
+meta {
+  name: get apps
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{langa-api}}/api/applications
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{user_token}}
+}
