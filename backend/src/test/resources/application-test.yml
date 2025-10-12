@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: langa-backend
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:x}
+    password: ${MAIL_PASSWORD:x}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+application:
+  base-url: ${BASE_URL:x}
+  persistence:
+    provider: mongo
+  security:
+    jwt.secret: ${JWT_KEY:rJ2-FzobD5EcF435O0KwR1wzlf6W8jznk_sYKSvs2hY=}
+    jwt.kid: ${JWT_KID:d6543593-012e-4032-998d-9e7e59493885}
+    jwt.expiration: ${JWT_EXPIRATION:1}
+    jwt.refresh-token.expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:1}
+    endpoints:
+      unsecured:
+        - /api/auth/**
+        - /api/ingestion/**
+        - /api/team-invitations/**
+        - /api/first-connection**
+        - /api/first-connection/**
+    cors:
+      allowed-origins:
+        - http://localhost:3000
+        - http://localhost:5173
+      allowed-methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+        - HEAD
+      allowed-headers:
+        - "*"
+      allow-credentials: true
+      pattern-registry: /**
+  mail:
+    provider: gmail
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    com.langa: DEBUG
