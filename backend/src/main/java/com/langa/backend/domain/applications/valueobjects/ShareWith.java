@@ -11,4 +11,8 @@ public record ShareWith(
         LocalDateTime expirationDate,
         LocalDateTime revokedDate
 ) {
+
+    public boolean isCurrentlyActive() { return !isExpired() && !isRevoked(); }
+    public boolean isExpired() { return expirationDate != null && expirationDate.isBefore(LocalDateTime.now()); }
+    public boolean isRevoked() { return revokedDate != null; }
 }

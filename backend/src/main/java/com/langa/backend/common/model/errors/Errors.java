@@ -9,6 +9,7 @@ public enum Errors {
     APPLICATION_NAME_ALREADY_EXISTS(400,"400-001", "Application name already exists"),
     APPLICATION_ALREADY_SHARED(400, "400-002","Application already shared"),
     APPLICATION_AUTO_SHARE_FORBIDDEN(400, "400-003","Application auto share forbidden"),
+    APPLICATION_SHARING_NOT_FOUND_TO_REVOKE(400, "400-004","Application sharing not found to revoke"),
 
     USER_NOT_FOUND(400,"400-101", "User not found"),
     USERNAME_ALREADY_EXISTS(400,"400-102", "Username already exists"),
