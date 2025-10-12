@@ -1,5 +1,6 @@
 package com.langa.backend.infra.rest.ingest.dto;
 
+import com.langa.backend.domain.applications.valueobjects.IngestionType;
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
 import com.langa.backend.infra.rest.common.dto.LogDto;
 

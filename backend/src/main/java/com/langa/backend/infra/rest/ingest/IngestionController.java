@@ -1,7 +1,7 @@
 package com.langa.backend.infra.rest.ingest;
 
-import com.langa.backend.domain.applications.usecases.IngestionUseCase;
 import com.langa.backend.infra.rest.ingest.dto.IngestionRequestDto;
+import com.langa.backend.infra.services.applications.IngestionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class IngestionController {
 
-    private final IngestionUseCase ingestionUseCase;
+    private final IngestionService ingestionService;
 
     @PostMapping
     public ResponseEntity<Void> receiveLogs(@RequestBody @Valid IngestionRequestDto ingestionRequestDto) {
-        ingestionUseCase.process(ingestionRequestDto);
+        ingestionService.process(ingestionRequestDto);
         return ResponseEntity.accepted().build();
     }
 }

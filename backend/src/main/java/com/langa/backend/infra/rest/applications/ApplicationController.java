@@ -1,10 +1,7 @@
 package com.langa.backend.infra.rest.applications;
 
 import com.langa.backend.domain.applications.Application;
-import com.langa.backend.domain.applications.usecases.CreateApplicationUseCase;
-import com.langa.backend.domain.applications.usecases.GetApplicationsUseCase;
-import com.langa.backend.domain.applications.usecases.GetLogUseCase;
-import com.langa.backend.domain.applications.usecases.GetMetricsUseCase;
+import com.langa.backend.domain.applications.usecases.*;
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
 import com.langa.backend.domain.applications.valueobjects.MetricEntry;
 import com.langa.backend.domain.applications.valueobjects.PaginatedResult;
@@ -29,12 +26,14 @@ public class ApplicationController {
     private final GetLogUseCase getLogUseCase;
     private final GetMetricsUseCase getMetricsUseCase;
     private final CreateApplicationUseCase createApplicationUseCase;
+    private final GetUsageUseCase getUsageUseCase;
 
-    public ApplicationController(GetApplicationsUseCase getApplicationsUseCase, GetLogUseCase getLogUseCase, GetMetricsUseCase getMetricsUseCase, CreateApplicationUseCase createApplicationUseCase) {
+    public ApplicationController(GetApplicationsUseCase getApplicationsUseCase, GetLogUseCase getLogUseCase, GetMetricsUseCase getMetricsUseCase, CreateApplicationUseCase createApplicationUseCase, GetUsageUseCase getUsageUseCase) {
         this.getApplicationsUseCase = getApplicationsUseCase;
         this.getLogUseCase = getLogUseCase;
         this.getMetricsUseCase = getMetricsUseCase;
         this.createApplicationUseCase = createApplicationUseCase;
+        this.getUsageUseCase = getUsageUseCase;
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -130,5 +129,11 @@ public class ApplicationController {
         );
 
         return ResponseEntity.ok(new ApplicationMetricsResponseDto(app.getName(), response));
+    }
+
+    @GetMapping("/{appId}/usage")
+    public ResponseEntity<ApplicationUsageDto> getUsage(@AuthenticationPrincipal UserDetails userDetails,
+                                             @PathVariable String appId) {
+        return ResponseEntity.ok(ApplicationUsageDto.of(getUsageUseCase.getApplicationUsage(appId, userDetails.getUsername())));
     }
 }

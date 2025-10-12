@@ -32,6 +32,14 @@ application:
         - /api/team-invitations/**
         - /api/first-connection**
         - /api/first-connection/**
+        - /swagger-ui.html
+        - /swagger-ui/**
+        - /swagger-config
+        - /swagger-resources/**
+        - /v2/api-docs
+        - /v3/api-docs/**
+        - /configuration/ui
+        - /webjars/**
     cors:
       allowed-origins:
         - http://localhost:3000
