@@ -8,11 +8,12 @@ import com.langa.backend.domain.applications.repositories.MetricEntryRepository;
 import com.langa.backend.domain.applications.valueobjects.MetricEntry;
 import com.langa.backend.domain.applications.valueobjects.MetricFilter;
 import com.langa.backend.domain.applications.valueobjects.PaginatedResult;
+import com.langa.backend.domainexchange.teams.TeamService;
+import com.langa.backend.domainexchange.user.UserAccountService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
@@ -33,6 +34,12 @@ class GetMetricsUseCaseTest {
     @Mock
     private MetricEntryRepository metricEntryRepository;
 
+    @Mock
+    private UserAccountService userAccountService;
+
+    @Mock
+    private TeamService teamService;
+
 
     @Test
     void testGetFilteredMetrics_ValidApplicationAndFilter() {
@@ -41,11 +48,7 @@ class GetMetricsUseCaseTest {
         int page = 0;
         int size = 10;
 
-        Application mockApp = new Application()
-                .setId(appId)
-                .setAccountKey("account123")
-                .setKey("appKey123")
-                .setOwner(userEmail);
+        Application mockApp = Application.createNew("app-key123", "U-accountkey123", userEmail);
 
         MetricFilter filter = new MetricFilter();
         MetricEntry metric = new MetricEntry();
@@ -55,6 +58,7 @@ class GetMetricsUseCaseTest {
         when(applicationRepository.findById(appId)).thenReturn(Optional.of(mockApp));
         when(metricEntryRepository.findFiltered(mockApp.getKey(), mockApp.getAccountKey(), filter, page, size))
                 .thenReturn(mockPageResult);
+        when(userAccountService.getAllAccountKeys(userEmail)).thenReturn(Collections.singleton("U-accountkey123"));
 
         PaginatedResult<MetricEntry> result = getMetricsUseCase.getFilteredMetrics(appId, userEmail, filter, page, size);
 
@@ -94,24 +98,18 @@ class GetMetricsUseCaseTest {
         String appId = "app123";
         String userEmail = "unauthorizedUser@example.com";
 
-        Application mockApp = Mockito.spy(new Application()
-                .setId(appId)
-                .setAccountKey("account123")
-                .setKey("appKey123")
-                .setOwner("owner@example.com"));
+        Application mockApp = Application.createNew("app-key123", "U-accountkey123", "owner@example.com");
 
         when(applicationRepository.findById(appId)).thenReturn(Optional.of(mockApp));
-        doThrow(new ApplicationException("Unauthorized access", null, Errors.ACCESS_DENIED))
-                .when(mockApp).checkOwnership(userEmail);
+
 
         ApplicationException exception = assertThrows(ApplicationException.class,
                 () -> getMetricsUseCase.getFilteredMetrics(appId, userEmail, new MetricFilter(), 0, 10));
 
-        assertEquals("Unauthorized access", exception.getMessage());
+        assertEquals("Application access", exception.getMessage());
         assertEquals(Errors.ACCESS_DENIED, exception.getError());
 
         verify(applicationRepository, times(1)).findById(appId);
-        verify(mockApp, times(1)).checkOwnership(userEmail);
         verifyNoInteractions(metricEntryRepository);
     }
 
@@ -122,11 +120,7 @@ class GetMetricsUseCaseTest {
         int page = 0;
         int size = 10;
 
-        Application mockApp = new Application()
-                .setId(appId)
-                .setAccountKey("account123")
-                .setKey("appKey123")
-                .setOwner(userEmail);
+        Application mockApp = Application.createNew("app-key123", "U-accountkey123", userEmail);
 
         MetricFilter filter = new MetricFilter();
         PaginatedResult<MetricEntry> mockPageResult = new PaginatedResult<>(
@@ -135,6 +129,8 @@ class GetMetricsUseCaseTest {
         when(applicationRepository.findById(appId)).thenReturn(Optional.of(mockApp));
         when(metricEntryRepository.findFiltered(mockApp.getKey(), mockApp.getAccountKey(), filter, page, size))
                 .thenReturn(mockPageResult);
+        when(userAccountService.getAllAccountKeys(userEmail)).thenReturn(Collections.singleton("U-accountkey123"));
+
 
         PaginatedResult<MetricEntry> result = getMetricsUseCase.getFilteredMetrics(appId, userEmail, filter, page, size);
 

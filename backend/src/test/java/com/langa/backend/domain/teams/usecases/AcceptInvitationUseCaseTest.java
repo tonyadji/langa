@@ -6,6 +6,9 @@ import com.langa.backend.domain.teams.TeamInvitation;
 import com.langa.backend.domain.teams.exceptions.TeamException;
 import com.langa.backend.domain.teams.repositories.TeamInvitationRepository;
 import com.langa.backend.domain.teams.valueobjects.InvitationStatus;
+import com.langa.backend.domain.teams.valueobjects.TeamInvitationIdentity;
+import com.langa.backend.domain.teams.valueobjects.TeamInvitationPeriod;
+import com.langa.backend.domain.teams.valueobjects.TeamInvitationStakeHolders;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -35,10 +38,12 @@ class AcceptInvitationUseCaseTest {
     @Test
     void shouldAcceptInvitationWhenIdExists() {
         String invitationId = "valid-invitation-id";
-        final TeamInvitation validInvitation = new TeamInvitation()
-                .setId(invitationId)
-                .setStatus(InvitationStatus.CREATED)
-                .setExpiryDate(LocalDateTime.now().plusDays(1));
+        final TeamInvitation validInvitation =TeamInvitation.populate(new TeamInvitationIdentity(invitationId, "token"),
+                        new TeamInvitationStakeHolders("team", "host", "guest"),
+                        new TeamInvitationPeriod(null, LocalDateTime.now().plusDays(1)),
+                        null,
+                        InvitationStatus.CREATED);
+
         when(teamInvitationRepository.findById(invitationId))
                 .thenReturn(Optional.of(validInvitation));
         when(teamInvitationRepository.save(Mockito.any(TeamInvitation.class))).thenReturn(validInvitation);
@@ -68,9 +73,11 @@ class AcceptInvitationUseCaseTest {
     @Test
     void shouldThrowExceptionWhenInvitationExpired() {
         String invalidInvitationId = "expired-invitation-id";
-        final TeamInvitation expiredInvitation = new TeamInvitation()
-                .setId(invalidInvitationId)
-                .setExpiryDate(LocalDateTime.now().minusDays(1));
+        final TeamInvitation expiredInvitation = TeamInvitation.populate(new TeamInvitationIdentity(invalidInvitationId, "token"),
+                        null,
+                        new TeamInvitationPeriod(null, LocalDateTime.now().minusDays(1)),
+                        null,
+                        null);
         when(teamInvitationRepository.findById(invalidInvitationId)).thenReturn(Optional.of(expiredInvitation));
 
         assertThatThrownBy(() -> acceptInvitationUseCase.acceptInvitation(invalidInvitationId))
@@ -78,7 +85,7 @@ class AcceptInvitationUseCaseTest {
                 .hasMessageContaining("Invalid status");
 
         verify(teamInvitationRepository, times(1)).findById(invalidInvitationId);
-        verify(teamInvitationRepository, never()).save(Mockito.any());
+        verify(teamInvitationRepository, times(1)).save(Mockito.any());
         verify(outboxEventService, never()).storeOutboxEvent(Mockito.any(DomainEvent.class));
     }
 

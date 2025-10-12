@@ -5,6 +5,8 @@ import com.langa.backend.domain.teams.TeamInvitation;
 import com.langa.backend.domain.teams.exceptions.TeamException;
 import com.langa.backend.domain.teams.repositories.TeamInvitationRepository;
 import com.langa.backend.domain.teams.valueobjects.InvitationStatus;
+import com.langa.backend.domain.teams.valueobjects.TeamInvitationIdentity;
+import com.langa.backend.domain.teams.valueobjects.TeamInvitationPeriod;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,9 +33,9 @@ class GetInvitationUseCaseTest {
     @Test
     void shouldReturnInvitationByValidToken() {
         String validToken = "invitationToken123";
-        TeamInvitation expectedInvitation = new TeamInvitation()
-                .setInvitationToken(validToken)
-                .setExpiryDate(LocalDateTime.now().plusDays(1));
+        TeamInvitation expectedInvitation = TeamInvitation.populate(new TeamInvitationIdentity("", validToken),
+                null,
+                new TeamInvitationPeriod(null, LocalDateTime.now().minusDays(1)), null, null);
         when(teamInvitationRepository.findByToken(validToken)).thenReturn(Optional.of(expectedInvitation));
         when(teamInvitationRepository.save(any())).thenReturn(expectedInvitation);
 
@@ -45,9 +47,10 @@ class GetInvitationUseCaseTest {
     @Test
     void shouldThrowExceptionIfInvitationExpired() {
         String expiredToken = "expiredToken";
-        TeamInvitation expiredInvitation = new TeamInvitation()
-                .setInvitationToken(expiredToken)
-                .setExpiryDate(LocalDateTime.now().minusDays(1));
+        TeamInvitation expiredInvitation = TeamInvitation.populate(new TeamInvitationIdentity("", expiredToken), null,
+                new TeamInvitationPeriod(null, LocalDateTime.now().minusDays(1)),
+                null, null);
+
         when(teamInvitationRepository.findByToken(expiredToken)).thenReturn(Optional.of(expiredInvitation));
         when(teamInvitationRepository.save(any())).thenReturn(expiredInvitation);
 

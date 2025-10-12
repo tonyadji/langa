@@ -44,7 +44,7 @@ class RegisterUseCaseTest {
     @Test
     void register_shouldThrowException_whenUsernameExists() {
         RegisterRequestDto dto = new RegisterRequestDto("user@example.com", "pwd", "pwd");
-        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(new User()));
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(User.createNew("user@example.com", "encodedPassword")));
 
         UserException ex = assertThrows(UserException.class, () -> registerUseCase.register(dto.username(), dto.password(), dto.confirmationPassword()));
         assertEquals(Errors.USERNAME_ALREADY_EXISTS, ex.getError());

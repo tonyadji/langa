@@ -9,7 +9,6 @@ import com.langa.backend.domainexchange.user.UserAccountService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
@@ -57,8 +56,10 @@ class CreateApplicationUseCaseTest {
         String name = "MyApp";
         String ownerEmail = "user@example.com";
 
+        final Application app = Application.createNew(name, "key", ownerEmail);
+
         when(applicationRepository.findByOwnerAndName(ownerEmail, name))
-                .thenReturn(Optional.of(new Application()));
+                .thenReturn(Optional.of(app));
 
         ApplicationException ex = assertThrows(ApplicationException.class, () ->
                 createApplicationUseCase.create(name, ownerEmail)

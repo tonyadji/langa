@@ -2,13 +2,13 @@ package com.langa.backend.domain.users.usecases;
 
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.users.RefreshToken;
-import com.langa.backend.domain.users.services.RefreshTokenService;
-import com.langa.backend.domain.users.services.TokenProvider;
 import com.langa.backend.domain.users.User;
 import com.langa.backend.domain.users.exceptions.UserException;
 import com.langa.backend.domain.users.repositories.UserRepository;
+import com.langa.backend.domain.users.services.RefreshTokenService;
+import com.langa.backend.domain.users.services.TokenProvider;
 import com.langa.backend.domain.users.valueobjects.AuthRequest;
-import com.langa.backend.domain.users.valueobjects.AuthTokens; // <-- correction ici
+import com.langa.backend.domain.users.valueobjects.AuthTokens;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -42,9 +42,7 @@ class LoginUseCaseTest {
 
     @Test
     void login_shouldReturnAuthTokens_whenCredentialsAreValid() {
-        User user = new User();
-        user.setEmail("user@example.com");
-        user.setPassword("encodedPassword");
+        User user = User.createNew("user@example.com", "encodedPassword");
 
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("rawPassword", "encodedPassword")).thenReturn(true);
@@ -72,9 +70,7 @@ class LoginUseCaseTest {
 
     @Test
     void login_shouldThrowException_whenPasswordInvalid() {
-        User user = new User();
-        user.setEmail("user@example.com");
-        user.setPassword("encodedPassword");
+        User user = User.createNew("user@example.com", "encodedPassword");
 
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrongPassword", "encodedPassword")).thenReturn(false);

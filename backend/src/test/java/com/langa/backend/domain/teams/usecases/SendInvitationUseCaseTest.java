@@ -9,6 +9,9 @@ import com.langa.backend.domain.teams.exceptions.TeamException;
 import com.langa.backend.domain.teams.repositories.TeamInvitationRepository;
 import com.langa.backend.domain.teams.repositories.TeamRepository;
 import com.langa.backend.domain.teams.valueobjects.InvitationStatus;
+import com.langa.backend.domain.teams.valueobjects.TeamInvitationIdentity;
+import com.langa.backend.domain.teams.valueobjects.TeamInvitationPeriod;
+import com.langa.backend.domain.teams.valueobjects.TeamInvitationStakeHolders;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,6 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -44,10 +48,9 @@ class SendInvitationUseCaseTest {
 
     @BeforeEach
     void setup() {
-        invitation = new TeamInvitation();
-        invitation.setTeam("team123");
-        invitation.setGuest("guest@example.com");
-        invitation.setHost("host@example.com");
+        invitation = TeamInvitation.populate(new TeamInvitationIdentity("team123", null),
+                new TeamInvitationStakeHolders("team123", "host@example.com","guest@example.com"),
+                new TeamInvitationPeriod(null, LocalDateTime.now().minusDays(1)), null, null);
     }
 
     @Test
@@ -83,8 +86,9 @@ class SendInvitationUseCaseTest {
     void invite_shouldThrowException_whenExistingInvitationFound() {
         when(teamRepository.findById("team123")).thenReturn(Optional.of(team));
         when(team.getKey()).thenReturn("team123-key");
-        final TeamInvitation teamInvitation = new TeamInvitation()
-                .setStatus(InvitationStatus.CREATED);
+        final TeamInvitation teamInvitation = TeamInvitation.populate(new TeamInvitationIdentity("team123", null),
+                new TeamInvitationStakeHolders("team123", "host@example.com","guest@example.com"),
+                null, null, InvitationStatus.CREATED);
         when(teamInvitationRepository.findExistingValidInvitation("team123-key", "guest@example.com"))
                 .thenReturn(Optional.of(teamInvitation));
 

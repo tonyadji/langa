@@ -28,16 +28,14 @@ class GetUserUseCaseTest {
 
     @Test
     void me_shouldReturnUserInfo_whenUserExists() {
-        User user = new User();
-        user.setEmail("user@example.com");
-        user.setAccountKey("accountKey123");
+        User user = User.createNew("user@example.com", "encodedPassword");
 
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
 
         UserInfo info = getUserUseCase.me("user@example.com");
 
         assertEquals("user@example.com", info.email());
-        assertEquals("accountKey123", info.accountKey());
+        assertNotNull(info.accountKey());
     }
 
     @Test

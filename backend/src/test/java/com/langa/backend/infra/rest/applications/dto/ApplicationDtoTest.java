@@ -9,7 +9,7 @@ class ApplicationDtoTest {
 
     @Test
     void of_shouldMapFromApplicationInfo() {
-        ApplicationInfo info = new ApplicationInfo("app-id", "MyApp", "APP-213", "U-123","owner@example.com");
+        ApplicationInfo info = new ApplicationInfo("app-id", "MyApp", "APP-213", "U-123","owner@example.com", null);
 
         ApplicationDto dto = ApplicationDto.of(info);
 
@@ -21,7 +21,7 @@ class ApplicationDtoTest {
 
     @Test
     void recordAccessors_shouldWorkCorrectly() {
-        ApplicationDto dto = new ApplicationDto("id-001", "TestApp", "acc-999", "me@example.com");
+        ApplicationDto dto = new ApplicationDto("id-001", "TestApp", "acc-999", "me@example.com", null);
 
         assertThat(dto.id()).isEqualTo("id-001");
         assertThat(dto.name()).isEqualTo("TestApp");
