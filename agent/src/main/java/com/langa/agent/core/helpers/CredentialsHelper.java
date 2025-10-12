@@ -7,6 +7,8 @@ public class CredentialsHelper {
     private static final String X_USER_AGENT = "X-USER-AGENT";
     private static final String X_USER_AGENT_VALUE = "langa-agent-v1.0.0";
     private static final String X_AGENT_SIGNATURE = "X-AGENT-SIGNATURE";
+    private static final String X_APP_KEY = "X-APP-KEY";
+    private static final String X_ACCOUNT_KEY = "X-ACCOUNT-KEY";
     private static final String X_TIMESTAMP = "X-TIMESTAMP";
 
     private final String appKey;
@@ -36,6 +38,8 @@ public class CredentialsHelper {
         String signature = buildSignature(appKey, accountKey, timestamp, CredentialType.HTTP);
         return Map.of(
                 X_USER_AGENT, X_USER_AGENT_VALUE,
+                X_APP_KEY, appKey,
+                X_ACCOUNT_KEY, accountKey,
                 X_AGENT_SIGNATURE, signature,
                 X_TIMESTAMP, String.valueOf(timestamp)
 
