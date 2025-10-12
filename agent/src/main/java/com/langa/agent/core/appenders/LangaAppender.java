@@ -2,6 +2,7 @@ package com.langa.agent.core.appenders;
 
 import com.langa.agent.core.buffers.BuffersFactory;
 import com.langa.agent.core.buffers.GenericBuffer;
+import com.langa.agent.core.helpers.CredentialsHelper;
 import com.langa.agent.core.model.LogEntry;
 import com.langa.agent.core.model.SendableRequestDto;
 import com.langa.agent.core.services.HttpSenderService;
@@ -29,9 +30,9 @@ public class LangaAppender extends AbstractAppender {
     private final GenericBuffer<LogEntry, SendableRequestDto> logBuffer;
 
 
-    protected LangaAppender(String name, Filter filter, Layout<? extends Serializable> layout, String url, String appKey, String accountKey) {
+    protected LangaAppender(String name, Filter filter, Layout<? extends Serializable> layout, String url, String appKey, String accountKey, String appSecret) {
         super(name, filter, layout, true, null);
-        SenderService senderService = new HttpSenderService(url);
+        SenderService senderService = new HttpSenderService(url, CredentialsHelper.of(appKey, accountKey, appSecret).getCredentials(CredentialsHelper.CredentialType.HTTP));
         BuffersFactory.init(senderService, appKey, accountKey, DEFAULT_BATCH_SIZE, DEFAULT_FLUSH_DELAY_IN_SECONDS);
         this.logBuffer = BuffersFactory.getLogBufferInstance();
     }
@@ -43,8 +44,9 @@ public class LangaAppender extends AbstractAppender {
             @PluginElement("Layout") Layout<? extends Serializable> layout,
             @PluginAttribute("url") String url,
             @PluginAttribute("appKey") String appKey,
-            @PluginAttribute("accountKey") String accountKey) {
-        return new LangaAppender(name, filter, layout, url, appKey, accountKey);
+            @PluginAttribute("accountKey") String accountKey,
+            @PluginAttribute("accountKey") String appSecret) {
+        return new LangaAppender(name, filter, layout, url, appKey, accountKey, appSecret);
     }
 
     @Override

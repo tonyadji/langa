@@ -2,23 +2,51 @@ package com.langa.agent.core.services;
 
 import com.google.gson.Gson;
 import com.langa.agent.core.model.SendableRequestDto;
+import org.apache.http.Header;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicHeader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 public class HttpSenderService implements SenderService {
     private static final Logger log = LogManager.getLogger(HttpSenderService.class);
-    private static final CloseableHttpClient httpClient = HttpClients.createDefault();
+    private static final int MAXIMUM_CONNECTIONS = 100;
+    private static final int MAXIMUM_CONNECTIONS_PER_ROUTE = 20;
+    private static final int REQUEST_TIMEOUT_MILLIS = 5000;
+    private static final int SOCKET_TIMEOUT_MILLIS = 10000;
+    private static final int POOL_CONNECTION_TIMEOUT_MILLIS = 30000;
+
+    private static final CloseableHttpClient httpClient = HttpClients.custom()
+            .setConnectionTimeToLive(1, TimeUnit.MINUTES)
+            .setMaxConnTotal(MAXIMUM_CONNECTIONS)
+            .setMaxConnPerRoute(MAXIMUM_CONNECTIONS_PER_ROUTE)
+            .setRetryHandler(new DefaultHttpRequestRetryHandler(3, true))
+            .setDefaultRequestConfig(RequestConfig.custom()
+                    .setConnectTimeout(REQUEST_TIMEOUT_MILLIS)
+                    .setSocketTimeout(SOCKET_TIMEOUT_MILLIS)
+                    .setConnectionRequestTimeout(POOL_CONNECTION_TIMEOUT_MILLIS)
+                    .build())
+            .build();
     private static final Gson gson = new Gson();
     private final String url;
+    private final List<? extends Header> headers;
 
-    public HttpSenderService(String url) {
+    public HttpSenderService(String url, Map<String, String> credentials) {
         this.url = url;
+        this.headers = credentials.entrySet()
+                .stream().map(entry -> new BasicHeader(entry.getKey(), entry.getValue()))
+                .toList();
     }
 
     @Override
@@ -26,6 +54,9 @@ public class HttpSenderService implements SenderService {
         try {
             String json = gson.toJson(payload);
             HttpPost httpPost = new HttpPost(url);
+
+            headers.forEach(httpPost::setHeader);
+
             httpPost.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
 
             try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
