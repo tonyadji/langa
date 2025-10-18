@@ -5,9 +5,9 @@ import jakarta.validation.constraints.NotNull;
 
 public record MetricDto(
         @NotNull String name,
-        long durationMillis,
+        Integer durationMillis,
         @NotNull String status,
-        long timestamp,
+        String timestamp,
 
         String uri,
         String httpMethod,

@@ -73,7 +73,7 @@ public class IngestionUseCase {
 
     private void updateApplicationUsage(String appKey, long bytes, IngestionType ingestionType) {
         ApplicationUsage usage = applicationUsageRepository.findByApplicationKey(appKey)
-                .orElseGet(() -> new ApplicationUsage(appKey, 0L, 0L));
+                .orElseGet(() -> new ApplicationUsage(null, appKey, 0L, 0L));
 
         if (ingestionType == IngestionType.LOG) {
             usage = usage.increaseLogBytes(bytes);

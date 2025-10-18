@@ -28,12 +28,26 @@ public class CredentialsHelper {
     public Map<String, String> getCredentials(CredentialType credentialType) {
         return switch (credentialType) {
             case HTTP -> buildHttpCredentials();
-            case KAFKA -> null; // call buildKafkaCredentials()
+            case KAFKA -> buildKafkaCredentials();
             case MQ -> null; // call buildMqCredentials()
         };
     }
 
-    private Map<String, String> buildHttpCredentials() {
+
+  private Map<String, String> buildKafkaCredentials() {
+    long timestamp = System.currentTimeMillis();
+    String signature = buildSignature(appKey, accountKey, timestamp, CredentialType.KAFKA);
+
+    return Map.of(
+        "xUserAgent", X_USER_AGENT_VALUE,
+        "xAppKey", appKey,
+        "xAccountKey", accountKey,
+        "xAgentSignature", signature,
+        "xTimestamp", String.valueOf(timestamp)
+    );
+  }
+
+  private Map<String, String> buildHttpCredentials() {
         long timestamp = System.currentTimeMillis();
         String signature = buildSignature(appKey, accountKey, timestamp, CredentialType.HTTP);
         return Map.of(

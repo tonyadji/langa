@@ -7,21 +7,19 @@ import com.langa.agent.core.buffers.GenericBuffer;
 import com.langa.agent.core.helpers.CredentialsHelper;
 import com.langa.agent.core.model.LogEntry;
 import com.langa.agent.core.model.SendableRequestDto;
-import com.langa.agent.core.services.HttpSenderService;
 import com.langa.agent.core.services.SenderService;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
+import com.langa.agent.core.services.SenderServiceFactory;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class LangaLogbackAppender extends AppenderBase<ILoggingEvent> {
     private static final Logger log = LogManager.getLogger(LangaLogbackAppender.class);
     private static final int DEFAULT_BATCH_SIZE = 50;
     private static final int DEFAULT_FLUSH_DELAY_IN_SECONDS = 5;
 
-    private String url;
     private String appKey;
     private String accountKey;
     private String appSecret;
@@ -31,10 +29,7 @@ public class LangaLogbackAppender extends AppenderBase<ILoggingEvent> {
     @Override
     public void start() {
         try {
-            SenderService senderService = new HttpSenderService(
-                    url,
-                    CredentialsHelper.of(appKey, accountKey, appSecret).getCredentials(CredentialsHelper.CredentialType.HTTP)
-            );
+            SenderService senderService = SenderServiceFactory.createFromEnvironmentAndCredentialHelper(CredentialsHelper.of(appKey, accountKey, appSecret));
             BuffersFactory.init(senderService, appKey, accountKey,
                     DEFAULT_BATCH_SIZE, DEFAULT_FLUSH_DELAY_IN_SECONDS);
             this.logBuffer = BuffersFactory.getLogBufferInstance();
@@ -73,13 +68,11 @@ public class LangaLogbackAppender extends AppenderBase<ILoggingEvent> {
         }
     }
 
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
     public void setAppKey(String appKey) {
         this.appKey = appKey;
     }
+
+    public void setAppSecret(String appSecret) {this.appSecret = appSecret;}
 
     public void setAccountKey(String accountKey) {
         this.accountKey = accountKey;

@@ -16,11 +16,12 @@ public class ApplicationUsageDocument {
     private long totalMetricBytes;
 
     public ApplicationUsage toApplicationUsage() {
-        return new ApplicationUsage(appKey, totalLogBytes, totalMetricBytes);
+        return new ApplicationUsage(id, appKey, totalLogBytes, totalMetricBytes);
     }
 
     public static ApplicationUsageDocument of(ApplicationUsage applicationUsage) {
         ApplicationUsageDocument applicationUsageDocument = new ApplicationUsageDocument();
+        applicationUsageDocument.setId(applicationUsage.id());
         applicationUsageDocument.setAppKey(applicationUsage.appKey());
         applicationUsageDocument.setTotalLogBytes(applicationUsage.totalLogBytes());
         applicationUsageDocument.setTotalMetricBytes(applicationUsage.totalMetricBytes());

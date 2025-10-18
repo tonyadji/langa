@@ -14,9 +14,9 @@ public class MetricEntryDocument {
     private String accountKey;
 
     private String name;
-    private long durationMillis;
+    private Integer durationMillis;
     private String status;
-    private long timestamp;
+    private String timestamp;
     private String uri;
     private String httpMethod;
     private int httpStatus;

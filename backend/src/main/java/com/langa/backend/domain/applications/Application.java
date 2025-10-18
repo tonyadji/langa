@@ -45,8 +45,18 @@ public class Application extends AbstractModel {
         this.sharedWith = sharedWith == null ? new HashSet<>() : sharedWith;
     }
 
-    public static Application populate(String id, String name, String key, String accountKey, String owner, Set<ShareWith> sharedWith) {
-        return new Application(id, name, key, accountKey, owner, sharedWith);
+    private Application(String id, String name, String key, String accountKey, String secret, String owner, Set<ShareWith> sharedWith) {
+        this.id = id;
+        this.name = name;
+        this.accountKey = accountKey;
+        this.secret = secret;
+        this.owner = owner;
+        this.key = key;
+        this.sharedWith = sharedWith == null ? new HashSet<>() : sharedWith;
+    }
+
+    public static Application populate(String id, String name, String key, String accountKey, String secret, String owner, Set<ShareWith> sharedWith) {
+        return new Application(id, name, key, accountKey, secret, owner, sharedWith);
     }
 
     public static Application createNew(String name, String accountKey, String owner) {
@@ -110,9 +120,5 @@ public class Application extends AbstractModel {
     private Predicate<ShareWith> isSharedWith(String accountOrTeamKey) {
         return sw -> Objects.equals(sw.key(), accountOrTeamKey)
                 && sw.isCurrentlyActive();
-    }
-
-    public String getSecret() {
-        return secret == null ? key : secret;
     }
 }

@@ -1,11 +1,10 @@
 package com.langa.backend.infra.rest.common.dto;
 
+import com.langa.backend.common.utils.DateUtils;
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 public record LogDto(
         @NotBlank(message = "Log message is required")
@@ -22,7 +21,7 @@ public record LogDto(
                     .setMessage(message)
                     .setLevel(level)
                     .setLoggerName(loggerName)
-                    .setTimestamp(LocalDateTime.parse(timestamp));
+                    .setTimestamp(DateUtils.fromTimestamp(timestamp));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

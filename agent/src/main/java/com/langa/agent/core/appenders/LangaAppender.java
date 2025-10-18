@@ -5,19 +5,22 @@ import com.langa.agent.core.buffers.GenericBuffer;
 import com.langa.agent.core.helpers.CredentialsHelper;
 import com.langa.agent.core.model.LogEntry;
 import com.langa.agent.core.model.SendableRequestDto;
-import com.langa.agent.core.services.HttpSenderService;
 import com.langa.agent.core.services.SenderService;
+import com.langa.agent.core.services.SenderServiceFactory;
+import java.io.Serializable;
+import java.time.format.DateTimeFormatter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.*;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.Core;
+import org.apache.logging.log4j.core.Filter;
+import org.apache.logging.log4j.core.Layout;
+import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
-
-import java.io.Serializable;
-import java.time.format.DateTimeFormatter;
 
 @Plugin(name = "LangaAppender",
         category = Core.CATEGORY_NAME,
@@ -30,23 +33,22 @@ public class LangaAppender extends AbstractAppender {
     private final GenericBuffer<LogEntry, SendableRequestDto> logBuffer;
 
 
-    protected LangaAppender(String name, Filter filter, Layout<? extends Serializable> layout, String url, String appKey, String accountKey, String appSecret) {
+    protected LangaAppender(String name, Filter filter, Layout<? extends Serializable> layout, String appKey, String accountKey, String appSecret) {
         super(name, filter, layout, true, null);
-        SenderService senderService = new HttpSenderService(url, CredentialsHelper.of(appKey, accountKey, appSecret).getCredentials(CredentialsHelper.CredentialType.HTTP));
+        SenderService senderService = SenderServiceFactory.createFromEnvironmentAndCredentialHelper(CredentialsHelper.of(appKey, accountKey, appSecret));
         BuffersFactory.init(senderService, appKey, accountKey, DEFAULT_BATCH_SIZE, DEFAULT_FLUSH_DELAY_IN_SECONDS);
         this.logBuffer = BuffersFactory.getLogBufferInstance();
     }
 
-    @PluginFactory
+  @PluginFactory
     public static LangaAppender createAppender(
             @PluginAttribute("name") String name,
             @PluginElement("Filter") Filter filter,
             @PluginElement("Layout") Layout<? extends Serializable> layout,
-            @PluginAttribute("url") String url,
             @PluginAttribute("appKey") String appKey,
             @PluginAttribute("accountKey") String accountKey,
-            @PluginAttribute("accountKey") String appSecret) {
-        return new LangaAppender(name, filter, layout, url, appKey, accountKey, appSecret);
+            @PluginAttribute("appSecret") String appSecret) {
+        return new LangaAppender(name, filter, layout, appKey, accountKey, appSecret);
     }
 
     @Override
@@ -70,7 +72,7 @@ public class LangaAppender extends AbstractAppender {
                 logBuffer.add(entry);
 
             } catch (Exception e) {
-                log.error("Error sending log to Langa: %s", e.getMessage());
+                log.error("Error sending log to Langa: {}", e.getMessage(), e);
             }
     }
 

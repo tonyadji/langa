@@ -10,9 +10,9 @@ public class MetricEntry implements Entry {
     private String accountKey;
 
     private String name;
-    private long durationMillis;
+    private Integer durationMillis;
     private String status;
-    private long timestamp;
+    private String timestamp;
 
     private String uri;
     private String httpMethod;
@@ -28,7 +28,7 @@ public class MetricEntry implements Entry {
         sizeInBytes += getStringSize(httpMethod);
         sizeInBytes += getStringSize(status);
         sizeInBytes += getStringSize(String.valueOf(durationMillis));
-        sizeInBytes += getStringSize(String.valueOf(timestamp));
+        sizeInBytes += getStringSize(timestamp);
         sizeInBytes += getStringSize(String.valueOf(httpStatus));
         sizeInBytes += TIMESTAMP_SIZE;
         return sizeInBytes;

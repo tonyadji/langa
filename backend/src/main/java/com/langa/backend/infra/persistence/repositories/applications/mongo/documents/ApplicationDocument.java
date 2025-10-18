@@ -21,7 +21,7 @@ public class ApplicationDocument {
     private Set<ShareWith> sharedWith;
 
     public Application toApplication() {
-        return Application.populate(id, name, key, accountKey, owner, sharedWith);
+        return Application.populate(id, name, key, accountKey, secret, owner, sharedWith);
     }
 
     public static ApplicationDocument of(Application application) {

@@ -13,6 +13,18 @@ spring:
           starttls:
             enable: true
             required: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: langa-ingestion-group-test
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: false
+      properties:
+        spring.json.trusted.packages: "com.langa.backend.infra.rest.ingest.dto"
+    listener:
+      ack-mode: manual_immediate
 application:
   base-url: ${BASE_URL:x}
   persistence:

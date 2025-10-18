@@ -1,15 +1,16 @@
 package com.langa.backend.domain.applications;
 
 public record ApplicationUsage(
-        String appKey,
+    String id,
+    String appKey,
         long totalLogBytes,
         long totalMetricBytes
 ) {
     public ApplicationUsage increaseLogBytes(long bytes) {
-        return new ApplicationUsage(appKey, totalLogBytes + bytes, totalMetricBytes);
+        return new ApplicationUsage(id, appKey, totalLogBytes + bytes, totalMetricBytes);
     }
 
     public ApplicationUsage increaseTotalMetricBytes(long bytes) {
-        return new ApplicationUsage(appKey, totalLogBytes, totalMetricBytes + bytes);
+        return new ApplicationUsage(id, appKey, totalLogBytes, totalMetricBytes + bytes);
     }
 }
