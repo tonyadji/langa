@@ -26,7 +26,18 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public Optional<User> findByEmail(String email) {
         return mongoUserDao.findByEmail(email)
-                .map(UserDocument::toUser)
-                .or(() -> Optional.empty());
+                .map(UserDocument::toUser);
+    }
+
+    @Override
+    public Optional<User> findByFistConnectionToken(String token) {
+        return mongoUserDao.findByFirstConnectionToken(token)
+                .map(UserDocument::toUser);
+    }
+
+    @Override
+    public Optional<User> findByEmailOrAccountKey(String userEmailOrAccountKey) {
+        return mongoUserDao.findByEmailOrAccountKey(userEmailOrAccountKey, userEmailOrAccountKey)
+                .map(UserDocument::toUser);
     }
 }

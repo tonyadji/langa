@@ -6,4 +6,8 @@ import java.util.Optional;
 
 public interface MongoUserDao extends MongoRepository<UserDocument, String> {
     Optional<UserDocument> findByEmail(String email);
+
+    Optional<UserDocument> findByFirstConnectionToken(String token);
+
+    Optional<UserDocument> findByEmailOrAccountKey(String email, String accountKey);
 }

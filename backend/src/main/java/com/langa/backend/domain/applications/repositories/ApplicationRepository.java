@@ -4,6 +4,7 @@ import com.langa.backend.domain.applications.Application;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface ApplicationRepository {
 
@@ -25,4 +26,7 @@ public interface ApplicationRepository {
     Optional<Application> findByOwnerAndName(String owner, String name);
 
     Optional<Application> findByIdAndOwner(String appId, String username);
+
+    List<Application> findBySharedWithUser(String sharedWith);
+    List<Application> findBySharedWithTeams(Set<String> teamKeys);
 }

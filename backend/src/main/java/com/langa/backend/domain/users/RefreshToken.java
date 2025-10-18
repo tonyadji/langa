@@ -5,15 +5,12 @@ import lombok.Getter;
 import java.time.Instant;
 
 @Getter
-
 public class RefreshToken {
     private String id;
     private String token;
     private String userEmail;
     private Instant expiresAt;
     private boolean revoked;
-
-    public RefreshToken() {}
 
     public RefreshToken(String token, String userEmail, Instant expiresAt) {
         this.token = token;
