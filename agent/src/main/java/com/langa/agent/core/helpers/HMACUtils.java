@@ -23,8 +23,11 @@ public class HMACUtils {
             byte[] encodedHash = sha256.doFinal(message.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(encodedHash);
         } catch (Exception e) {
-            log.error("Error hashing message: {}", e.getMessage());
+            log.error("Error hashing message: {}", e.getMessage(), e);
         }
         return null;
     }
+
+    public static String clean(String s) {return s.trim();}
+
 }

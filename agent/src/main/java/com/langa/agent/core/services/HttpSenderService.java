@@ -1,6 +1,7 @@
 package com.langa.agent.core.services;
 
 import com.google.gson.Gson;
+import com.langa.agent.core.helpers.CredentialsHelper;
 import com.langa.agent.core.model.SendableRequestDto;
 import org.apache.http.Header;
 import org.apache.http.client.config.RequestConfig;
@@ -16,7 +17,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class HttpSenderService implements SenderService {
@@ -40,11 +40,16 @@ public class HttpSenderService implements SenderService {
             .build();
     private static final Gson gson = new Gson();
     private final String url;
-    private final List<? extends Header> headers;
+    private final CredentialsHelper credentialsHelper;
 
-    public HttpSenderService(String url, Map<String, String> credentials) {
+    public HttpSenderService(String url, CredentialsHelper credentialshelper) {
         this.url = url;
-        this.headers = credentials.entrySet()
+        this.credentialsHelper = credentialshelper;
+    }
+
+    private List<? extends Header> getCredentials() {
+        return this.credentialsHelper.getCredentials(CredentialsHelper.CredentialType.HTTP)
+                .entrySet()
                 .stream().map(entry -> new BasicHeader(entry.getKey(), entry.getValue()))
                 .toList();
     }
@@ -55,7 +60,7 @@ public class HttpSenderService implements SenderService {
             String json = gson.toJson(payload);
             HttpPost httpPost = new HttpPost(url);
 
-            headers.forEach(httpPost::setHeader);
+            getCredentials().forEach(httpPost::addHeader);
 
             httpPost.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
 

@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+import static com.langa.backend.infra.security.utils.HMACUtils.clean;
+
 @Service
 @Slf4j
 public class IngestionSecurityImpl implements IngestionSecurity {
@@ -35,10 +37,10 @@ public class IngestionSecurityImpl implements IngestionSecurity {
         if(!Objects.equals(credentials.appKey(), app.getKey()) || !Objects.equals(credentials.accountKey(), app.getAccountKey())) {
             throw new IngestionSecurityException("Illegal app", null, Errors.ILLEGAL_INGESTION_REQUEST);
         }
-        return evaluateSignature(credentials.appKey(), credentials.accountKey(), credentials.timestamp(), credentials.signature(), credentials.credentialType(), app);
+        return evaluateSignature(credentials.appKey(), credentials.accountKey(), credentials.userAgent(), credentials.timestamp(), credentials.signature(), credentials.credentialType(), app);
     }
 
-    private boolean evaluateSignature(String appKey, String accountKey, String timestamp, String signature, CredentialType credentialType, Application app) {
+    private boolean evaluateSignature(String appKey, String accountKey, String agentVersion, String timestamp, String signature, CredentialType credentialType, Application app) {
         final String[] signatureParts = signature.split(":");
         final String nonce = signatureParts[0];
 
@@ -52,22 +54,23 @@ public class IngestionSecurityImpl implements IngestionSecurity {
 
         checkTimestampValidity(timestamp);
 
-        final String expectedSignature = buildSignature(nonce, appKey, accountKey, timestamp, credentialType, app.getSecret());
+        final String expectedSignature = buildSignature(nonce, appKey, accountKey, agentVersion, timestamp, credentialType, app.getSecret());
         if (!Objects.equals(expectedSignature, signature)) {
+            log.error("expected {} - received {}", expectedSignature, signature);
             throw new IngestionSecurityException("Signature mismatch", null, Errors.ILLEGAL_INGESTION_REQUEST);
         }
         applicationNonceRepository.save(appKey, nonce, LocalDateTime.now());
         return true;
     }
 
-    private String buildSignature(String nonce, String appKey, String accountKey, String timestamp, CredentialType credentialType, String appSecret) {
-        String concatMessage = appKey
-                .concat(accountKey)
-                .concat(agentVersion)
-                .concat(timestamp)
-                .concat(nonce)
+    private String buildSignature(String nonce, String appKey, String accountKey, String agentVersion, String timestamp, CredentialType credentialType, String appSecret) {
+        String concatMessage = clean(appKey)
+                .concat(clean(accountKey))
+                .concat(clean(agentVersion))
+                .concat(clean(timestamp))
+                .concat(clean(nonce))
                 .concat(credentialType.name());
-        return nonce + ":" + HMACUtils.hash(concatMessage, appSecret);
+        return nonce + ":" + HMACUtils.hash(concatMessage, appSecret.trim());
     }
 
     private void checkTimestampValidity(String timestampStr) {

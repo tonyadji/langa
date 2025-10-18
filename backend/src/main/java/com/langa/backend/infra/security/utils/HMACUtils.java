@@ -27,4 +27,5 @@ public class HMACUtils {
         }
         return null;
     }
+    public static String clean(String s) {return s.trim();}
 }

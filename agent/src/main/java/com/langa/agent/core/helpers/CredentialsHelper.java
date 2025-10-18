@@ -3,6 +3,8 @@ package com.langa.agent.core.helpers;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.langa.agent.core.helpers.HMACUtils.clean;
+
 public class CredentialsHelper {
     private static final String X_USER_AGENT = "X-USER-AGENT";
     private static final String X_USER_AGENT_VALUE = "langa-agent-v1.0.0";
@@ -34,20 +36,20 @@ public class CredentialsHelper {
     }
 
 
-  private Map<String, String> buildKafkaCredentials() {
-    long timestamp = System.currentTimeMillis();
-    String signature = buildSignature(appKey, accountKey, timestamp, CredentialType.KAFKA);
+    private Map<String, String> buildKafkaCredentials() {
+        long timestamp = System.currentTimeMillis();
+        String signature = buildSignature(appKey, accountKey, timestamp, CredentialType.KAFKA);
 
-    return Map.of(
-        "xUserAgent", X_USER_AGENT_VALUE,
-        "xAppKey", appKey,
-        "xAccountKey", accountKey,
-        "xAgentSignature", signature,
-        "xTimestamp", String.valueOf(timestamp)
-    );
-  }
+        return Map.of(
+                "xUserAgent", X_USER_AGENT_VALUE,
+                "xAppKey", appKey,
+                "xAccountKey", accountKey,
+                "xAgentSignature", signature,
+                "xTimestamp", String.valueOf(timestamp)
+        );
+    }
 
-  private Map<String, String> buildHttpCredentials() {
+    private Map<String, String> buildHttpCredentials() {
         long timestamp = System.currentTimeMillis();
         String signature = buildSignature(appKey, accountKey, timestamp, CredentialType.HTTP);
         return Map.of(
@@ -56,19 +58,18 @@ public class CredentialsHelper {
                 X_ACCOUNT_KEY, accountKey,
                 X_AGENT_SIGNATURE, signature,
                 X_TIMESTAMP, String.valueOf(timestamp)
-
         );
     }
 
     private String buildSignature(String appKey, String accountKey, long timestamp, CredentialType credentialType) {
         final String nonce = UUID.randomUUID().toString().replace("-", "");
-        String concatMessage = appKey
-                    .concat(accountKey)
-                    .concat(X_USER_AGENT_VALUE)
-                    .concat(String.valueOf(timestamp))
-                    .concat(nonce)
-                    .concat(credentialType.name());
-        return nonce + ":" + HMACUtils.hash(concatMessage, appSecret);
+        String concatMessage = clean(appKey)
+                .concat(clean(accountKey))
+                .concat(clean(X_USER_AGENT_VALUE))
+                .concat(clean(String.valueOf(timestamp)))
+                .concat(clean(nonce))
+                .concat(credentialType.name());
+        return nonce + ":" + HMACUtils.hash(concatMessage, appSecret.trim());
     }
 
     public enum CredentialType {

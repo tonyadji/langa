@@ -1,7 +1,6 @@
 package com.langa.agent.core.services;
 
 import com.langa.agent.core.helpers.CredentialsHelper;
-import com.langa.agent.core.helpers.CredentialsHelper.CredentialType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,6 +12,7 @@ import java.util.Map;
  */
 public class SenderServiceFactory {
     private static final Logger log = LogManager.getLogger(SenderServiceFactory.class);
+    private static final String DEFAULT_INGESTION_URL = "http://localhost:8080/api/ingestion";
 
     public enum SenderType {
         HTTP,
@@ -48,11 +48,11 @@ public class SenderServiceFactory {
         CredentialsHelper credentialsHelper) {
         String url = config.get("url");
         if (url == null || url.isEmpty()) {
-            throw new IllegalArgumentException("HTTP sender requires 'url' parameter");
+            return new HttpSenderService(DEFAULT_INGESTION_URL, credentialsHelper);
         }
 
         log.info("Creating HttpSenderService with url={}", url);
-        return new HttpSenderService(url, credentialsHelper.getCredentials(CredentialType.HTTP));
+        return new HttpSenderService(url, credentialsHelper);
     }
 
     /**
@@ -64,7 +64,7 @@ public class SenderServiceFactory {
         CredentialsHelper credentialsHelper) {
         String bootstrapServers = config.get("bootstrapServer");
         if (bootstrapServers == null || bootstrapServers.isEmpty()) {
-            throw new IllegalArgumentException("Kafka sender requires 'bootstrapServers' parameter");
+            return new NoOpSenderService("Kafka sender requires 'bootstrapServers' parameter");
         }
 
         String topic = config.getOrDefault("topic", "langa");
