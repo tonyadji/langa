@@ -23,11 +23,12 @@ public enum Errors {
     TEAM_INVITATION_NOTFOUND_OR_EXPIRED(400, "400-204" , "Team invitation not found or expired"),
     TEAM_INVITATION_INVALID_STATUS(400, "400-205" , "Team invitation invalid status"),
 
-    ILLEGAL_INGESTION_REQUEST(400,"400-401" ,"Illegal ingestion request"),
+
 
     INVALID_CREDENTIALS(401,"401-000" ,"Invalid credentials"),
 
     ACCESS_DENIED(403,"403-000", "Access denied"),
+    ILLEGAL_INGESTION_REQUEST(403,"403-001" ,"Illegal ingestion request"),
 
     VALIDATION_ERROR(400,"400", "Validation error"),
 
