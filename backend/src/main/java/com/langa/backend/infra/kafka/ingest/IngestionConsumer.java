@@ -1,8 +1,10 @@
 package com.langa.backend.infra.kafka.ingest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.applications.services.IngestionCredentials;
 import com.langa.backend.domain.applications.valueobjects.IngestionType;
+import com.langa.backend.infra.kafka.exceptions.KafkaIngestionException;
 import com.langa.backend.infra.kafka.ingest.services.KafkaCredentialsMapper;
 import com.langa.backend.infra.rest.common.dto.LogDto;
 import com.langa.backend.infra.rest.common.dto.MetricDto;
@@ -15,6 +17,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.KafkaException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -37,37 +40,30 @@ public class IngestionConsumer {
                     messageRecord.partition(), messageRecord.offset(), messageRecord.key());
             log.debug("Message payload: {}", messageRecord.value());
 
-            // Extract credentials from Kafka headers
             IngestionCredentials credentials = kafkaCredentialsMapper.mapFromKafkaHeaders(messageRecord);
             log.debug("Extracted credentials from headers: appKey={}, accountKey={}, timestamp={}", 
                     credentials.appKey(), credentials.accountKey(), credentials.timestamp());
 
-            // Parse the message body into IngestionRequestDto
             Map<String, Object> ingestionRequestMap = objectMapper.readValue(messageRecord.value(), Map.class);
 
             IngestionRequestDto ingestionRequest = mapToIngestionRequestDto(ingestionRequestMap);
 
-            log.debug("Parsed ingestion request: type={}, appKey={}, accountKey={}, entries count={}",
+            log.trace("Parsed ingestion request: type={}, appKey={}, accountKey={}, entries count={}",
                     ingestionRequest.getClass().getSimpleName(), 
                     getAppKey(ingestionRequest), 
                     getAccountKey(ingestionRequest), 
                     getEntriesCount(ingestionRequest));
 
-            // Process the ingestion request
             ingestionService.process(ingestionRequest, credentials);
             
-            log.info("Successfully processed ingestion message from Kafka: type={}, appKey={}", 
+            log.debug("Successfully processed ingestion message from Kafka: type={}, appKey={}",
                     ingestionRequest.getClass().getSimpleName(), getAppKey(ingestionRequest));
-
 
         } catch (Exception e) {
             log.error("Error processing Kafka ingestion message: topic={}, partition={}, offset={}, error={}", 
                     messageRecord.topic(), messageRecord.partition(), messageRecord.offset(), e.getMessage(), e);
-            // In a production environment, you might want to:
-            // 1. Send to a dead letter queue
-            // 2. Implement retry logic
-            // 3. Send alerts/notifications
-            throw new RuntimeException("Failed to process Kafka ingestion message", e);
+            // handle retry or dead letter queue logic
+            throw new KafkaIngestionException("Failed to process Kafka ingestion message", e, Errors.INTERNAL_SERVER_ERROR);
         }
     }
 
