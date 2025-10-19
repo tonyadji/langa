@@ -3,7 +3,7 @@ package com.langa.backend.infra.rest.applications;
 import com.langa.backend.domain.applications.usecases.RevokeSharingUseCase;
 import com.langa.backend.domain.applications.valueobjects.ShareWith;
 import com.langa.backend.infra.rest.applications.dto.ShareAppRequestDto;
-import com.langa.backend.infra.services.applications.ShareApplicationService;
+import com.langa.backend.infra.adapters.services.applications.ShareApplicationService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

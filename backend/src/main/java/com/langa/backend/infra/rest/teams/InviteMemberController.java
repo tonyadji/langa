@@ -3,7 +3,7 @@ package com.langa.backend.infra.rest.teams;
 import com.langa.backend.domain.teams.TeamInvitation;
 import com.langa.backend.infra.rest.teams.dto.InviteMemberRequestDto;
 import com.langa.backend.infra.rest.teams.dto.InviteMemberResponseDto;
-import com.langa.backend.infra.services.teams.SendInvitationService;
+import com.langa.backend.infra.adapters.services.teams.SendInvitationService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

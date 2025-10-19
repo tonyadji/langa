@@ -11,13 +11,12 @@ import com.langa.backend.infra.rest.common.dto.MetricDto;
 import com.langa.backend.infra.rest.ingest.dto.IngestionRequestDto;
 import com.langa.backend.infra.rest.ingest.dto.LogIngestionRequestDto;
 import com.langa.backend.infra.rest.ingest.dto.MetricIngestionRequestDto;
-import com.langa.backend.infra.services.applications.IngestionService;
+import com.langa.backend.infra.adapters.services.applications.IngestionService;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.common.KafkaException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 

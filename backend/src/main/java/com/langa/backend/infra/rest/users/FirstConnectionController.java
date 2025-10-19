@@ -3,7 +3,7 @@ package com.langa.backend.infra.rest.users;
 import com.langa.backend.domain.users.usecases.GetUserUseCase;
 import com.langa.backend.infra.rest.users.dto.CompleteFirstConnectionRequestDto;
 import com.langa.backend.infra.rest.users.dto.UserDto;
-import com.langa.backend.infra.services.users.CompleteFirstConnectionService;
+import com.langa.backend.infra.adapters.services.users.CompleteFirstConnectionService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
