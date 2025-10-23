@@ -3,19 +3,15 @@ package com.langa.backend.infra.security.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 @Component
 @ConfigurationProperties(prefix = "application.security.endpoints")
 public class SecurityEndpoints {
 
-    private List<String> unsecured;
+    private String unsecured;
 
-    public String[] getUnsecured() {
-        return unsecured.toArray(new String[0]);
-    }
+    public String[] getUnsecured() { return unsecured.split(","); }
 
-    public void setUnsecured(List<String> unsecured) {
+    public void setUnsecured(String unsecured) {
         this.unsecured = unsecured;
     }
 }

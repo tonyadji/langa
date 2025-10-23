@@ -25,12 +25,9 @@ jobs:
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
         with:
-          # In pr-mode: 'true' Qodana checks only changed files
           pr-mode: false
           use-caches: true
           post-pr-comment: true
           use-annotations: true
-          # Upload Qodana results (SARIF, other artifacts, logs) as an artifact to the job
           upload-result: false
-          # quick-fixes available in Ultimate and Ultimate Plus plans
           push-fixes: 'none'
