@@ -4,7 +4,7 @@ COPY backend/pom.xml .
 COPY backend/src ./src
 RUN mvn clean package -DskipTests
 
-FROM openjdk:21-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar langa-backend.jar
 ENTRYPOINT ["java", "-jar", "langa-backend.jar"]
