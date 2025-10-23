@@ -3,6 +3,10 @@ name: Publish Agent to Maven Central
 on:
   release:
     types: [created]
+  push:
+    branches: [ "main", "dev", "develop", "feature/deploy-on-maven" ]
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
     inputs:
       publish:
