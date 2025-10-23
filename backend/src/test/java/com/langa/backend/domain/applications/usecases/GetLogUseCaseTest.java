@@ -8,6 +8,7 @@ import com.langa.backend.domain.applications.repositories.LogEntryRepository;
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
 import com.langa.backend.domain.applications.valueobjects.LogFilter;
 import com.langa.backend.domain.applications.valueobjects.PaginatedResult;
+import com.langa.backend.domainexchange.user.UserAccountService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,9 +19,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,6 +35,9 @@ class GetLogUseCaseTest {
     @Mock
     private ApplicationRepository applicationRepository;
 
+    @Mock
+    private UserAccountService userAccountService;
+
     @InjectMocks
     private GetLogUseCase getLogUseCase;
 
@@ -39,18 +45,14 @@ class GetLogUseCaseTest {
 
     @BeforeEach
     void setUp() {
-        app = new Application()
-                .setId("appId")
-                .setKey("appKey")
-                .setAccountKey("accountKey")
-                .setOwner("owner@example.com");
+        app = Application.createNew("appKey", "accountKey", "owner@example.com");
     }
 
     @Test
     void getLogs_shouldReturnLogs() {
         LogEntry log = new LogEntry().setMessage("test");
         when(applicationRepository.findById("appId")).thenReturn(Optional.of(app));
-        when(logRepository.findByAppKeyAndAccountKeyOrderByTimestampDesc("appKey", "accountKey"))
+        when(logRepository.findByAppKeyAndAccountKeyOrderByTimestampDesc(any(), any()))
                 .thenReturn(List.of(log));
 
         List<LogEntry> result = getLogUseCase.getLogs("appId");
@@ -69,11 +71,10 @@ class GetLogUseCaseTest {
 
     @Test
     void getLogs_withUsername_wrongOwner_shouldThrowAccessDenied() {
-        app.setOwner("another@example.com");
         when(applicationRepository.findById("appId")).thenReturn(Optional.of(app));
 
         ApplicationException ex = assertThrows(ApplicationException.class,
-                () -> getLogUseCase.getLogs("appId", "owner@example.com"));
+                () -> getLogUseCase.getLogs("appId", "another@example.com"));
         assertEquals(Errors.ACCESS_DENIED, ex.getError());
     }
 
@@ -81,7 +82,7 @@ class GetLogUseCaseTest {
     void getLogs_withUsername_correctOwner_shouldReturnLogs() {
         LogEntry log = new LogEntry().setMessage("test");
         when(applicationRepository.findById("appId")).thenReturn(Optional.of(app));
-        when(logRepository.findByAppKeyAndAccountKeyOrderByTimestampDesc("appKey", "accountKey"))
+        when(logRepository.findByAppKeyAndAccountKeyOrderByTimestampDesc(any(), any()))
                 .thenReturn(List.of(log));
 
         List<LogEntry> result = getLogUseCase.getLogs("appId", "owner@example.com");
@@ -91,14 +92,7 @@ class GetLogUseCaseTest {
 
     @Test
     void getFilteredLogs_shouldReturnPaginatedLogs() {
-        String appId = "app-123";
         String userEmail = "owner@example.com";
-
-        Application app = new Application();
-        app.setId(appId);
-        app.setKey("app-key123");
-        app.setOwner(userEmail);
-        app.setAccountKey("U-accountkey123");
 
         LogEntry log1 = new LogEntry().setMessage("message1")
                 .setLevel("INFO").setLoggerName("logger1").setTimestamp(LocalDateTime.now());
@@ -115,9 +109,10 @@ class GetLogUseCaseTest {
 
         final LogFilter filter = new LogFilter("INFO", "message", null, null);
 
-        when(applicationRepository.findById(appId)).thenReturn(Optional.of(app));
+        when(applicationRepository.findById(any())).thenReturn(Optional.of(app));
         when(logRepository.findFiltered(app.getKey(), app.getAccountKey(), filter, 0, 20))
                 .thenReturn(paginatedResult);
+        when(userAccountService.getAllAccountKeys(userEmail)).thenReturn(Set.of(""));
 
         PaginatedResult<LogEntry> result = getLogUseCase.getFilteredLogs(app.getId(), userEmail, filter, 0, 20);
 

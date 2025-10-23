@@ -1,0 +1,23 @@
+
+# =============================================
+# Langa Agent Sender Configuration
+# =============================================
+
+# Sender type: http or kafka
+langa:
+  sender:
+    type: ${LANGA_SENDER_TYPE:kafka}
+
+  # =============================================
+  # HTTP Sender Configuration
+  # =============================================
+  http:
+    url: ${LANGA_HTTP_URL:https://api.langa.com/collect}
+
+  # =============================================
+  # Kafka Sender Configuration
+  # =============================================
+  kafka:
+    bootstrap:
+      server: ${LANGA_KAFKA_BOOTSTRAP_SERVER:localhost:9092}
+    topic: ${LANGA_KAFKA_TOPIC:langa}
