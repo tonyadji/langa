@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.capricedumardi</groupId>
     <artifactId>langa-agent</artifactId>
-    <version>0.0.0</version>
+    <version>0.0.0-M1</version>
     <name>Langa-Agent</name>
     <description>Java Agent for collecting logs and metrics with support for Log4j2, Logback, and AOP-based monitoring</description>
     <url>https://github.com/langa-org/langa</url>
