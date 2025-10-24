@@ -194,16 +194,16 @@ Ce projet est sous licence MIT. Voir [LICENSE](../LICENSE) pour plus de détails
 
 ## 🔗 Liens utiles
 
-- [Documentation complète](https://github.com/tonyadji/langa)
-- [Exemples](https://github.com/tonyadji/langa/tree/main/examples)
+- [Documentation complète](https://github.com/langa-org/langa)
+- [Exemples](https://github.com/langa-org/langa/tree/main/examples)
 - [Changelog](CHANGELOG.md)
-- [Issues](https://github.com/tonyadji/langa/issues)
+- [Issues](https://github.com/langa-org/langa/issues)
 
 ## 💬 Support
 
 - 📧 Email : contact@capricedumardi.com
-- 🐛 Issues : [GitHub Issues](https://github.com/tonyadji/langa/issues)
+- 🐛 Issues : [GitHub Issues](https://github.com/langa-org/langa/issues)
 
 ---
 
-Développé avec ❤️ par [Caprice du Mardi](https://github.com/tonyadji)
+Développé avec ❤️ par [Caprice du Mardi](https://github.com/langa-org)

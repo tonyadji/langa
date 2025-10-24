@@ -89,5 +89,5 @@ et ce projet adhère au [Versioning Sémantique](https://semver.org/lang/fr/).
 
 ---
 
-[Unreleased]: https://github.com/tonyadji/langa/compare/v0.0.1...HEAD
-[0.0.1]: https://github.com/tonyadji/langa/releases/tag/v0.0.1
+[Unreleased]: https://github.com/langa-org/langa/compare/v0.0.1...HEAD
+[0.0.1]: https://github.com/langa-org/langa/releases/tag/v0.0.1

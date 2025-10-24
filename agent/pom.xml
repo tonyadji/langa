@@ -13,7 +13,7 @@
     <version>0.0.0</version>
     <name>Langa-Agent</name>
     <description>Java Agent for collecting logs and metrics with support for Log4j2, Logback, and AOP-based monitoring</description>
-    <url>https://github.com/tonyadji/langa</url>
+    <url>https://github.com/langa-org/langa</url>
     
     <licenses>
         <license>
@@ -34,9 +34,9 @@
     </developers>
     
     <scm>
-        <connection>scm:git:git://github.com/tonyadji/langa.git</connection>
-        <developerConnection>scm:git:ssh://github.com:tonyadji/langa.git</developerConnection>
-        <url>https://github.com/tonyadji/langa/tree/main</url>
+        <connection>scm:git:git://github.com/langa-org/langa.git</connection>
+        <developerConnection>scm:git:ssh://github.com:langa-org/langa.git</developerConnection>
+        <url>https://github.com/langa-org/langa/tree/main</url>
         <tag>HEAD</tag>
     </scm>
     <properties>

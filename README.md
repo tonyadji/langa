@@ -50,7 +50,7 @@ This repository contains a full-stack monitoring platform composed of three main
 
 ### 1️⃣ Clone the repo
 ```bash
-git clone https://github.com/tonyadji/langa.git
+git clone https://github.com/langa-org/langa.git
 cd <langa>---
 
 ## 🌟 Features
@@ -67,7 +67,7 @@ cd <langa>---
 
 ### 1️⃣ Clone the repo
 ```bash
-git clone https://github.com/tonyadji/langa.git
+git clone https://github.com/langa-org/langa.git
 cd <langa>
 
 2️⃣ Start each service
