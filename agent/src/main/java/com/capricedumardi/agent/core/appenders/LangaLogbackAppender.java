@@ -1,31 +1,27 @@
-package com.langa.agent.core.appenders;
+package com.capricedumardi.agent.core.appenders;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
-import com.langa.agent.core.buffers.BuffersFactory;
-import com.langa.agent.core.buffers.GenericBuffer;
-import com.langa.agent.core.helpers.CredentialsHelper;
-import com.langa.agent.core.helpers.EnvironmentUtils;
-import com.langa.agent.core.helpers.IngestionParamsResolver;
-import com.langa.agent.core.model.LogEntry;
-import com.langa.agent.core.model.SendableRequestDto;
-import com.langa.agent.core.services.SenderService;
-import com.langa.agent.core.services.SenderServiceFactory;
+import com.capricedumardi.agent.core.buffers.BuffersFactory;
+import com.capricedumardi.agent.core.buffers.GenericBuffer;
+import com.capricedumardi.agent.core.helpers.EnvironmentUtils;
+import com.capricedumardi.agent.core.helpers.IngestionParamsResolver;
+import com.capricedumardi.agent.core.model.LogEntry;
+import com.capricedumardi.agent.core.model.SendableRequestDto;
+import com.capricedumardi.agent.core.services.SenderService;
+import com.capricedumardi.agent.core.services.SenderServiceFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class LangaLogbackAppender extends AppenderBase<ILoggingEvent> {
     private static final Logger log = LogManager.getLogger(LangaLogbackAppender.class);
     private static final int DEFAULT_BATCH_SIZE = 50;
     private static final int DEFAULT_FLUSH_DELAY_IN_SECONDS = 5;
 
-    private String appKey;
-    private String accountKey;
-    private String appSecret;
-    private String ingestionUrl;
 
     private GenericBuffer<LogEntry, SendableRequestDto> logBuffer;
 
@@ -70,15 +66,5 @@ public class LangaLogbackAppender extends AppenderBase<ILoggingEvent> {
         if (logBuffer != null) {
             logBuffer.shutdown();
         }
-    }
-
-    public void setAppKey(String appKey) {
-        this.appKey = appKey;
-    }
-
-    public void setAppSecret(String appSecret) {this.appSecret = appSecret;}
-
-    public void setAccountKey(String accountKey) {
-        this.accountKey = accountKey;
     }
 }

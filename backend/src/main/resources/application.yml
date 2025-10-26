@@ -41,6 +41,10 @@ server:
 application:
   agent-version: ${AGENT_VERSION}
   base-url: ${BASE_URL}
+  ingestion:
+    kafka-url: ${spring.kafka.bootstrap-servers}
+    kafka-topic: ${KAFKA_TOPIC}
+    endpoint: ${INGESTION_ENDPOINT}
   persistence:
     provider: ${PERSISTENCE_PROVIDER}
   security:

@@ -52,6 +52,11 @@ public class GetApplicationsUseCase {
                 .orElseThrow(() -> new ApplicationException("Application not found", null, Errors.APPLICATION_NOT_FOUND));
     }
 
+    public Application getSecuredApplication(String appId, String username) {
+        return applicationRepository.securedFindByIdAndOwner(appId, username)
+                .orElseThrow(() -> new ApplicationException("Application not found", null, Errors.APPLICATION_NOT_FOUND));
+    }
+
     private ApplicationInfo toOwnedApplicationDto(Application application) {
         return new ApplicationInfo(application.getId(),
                 application.getName(),

@@ -29,4 +29,8 @@ public interface ApplicationRepository {
 
     List<Application> findBySharedWithUser(String sharedWith);
     List<Application> findBySharedWithTeams(Set<String> teamKeys);
+
+    Optional<Application> findSecuredAppByKeyAndAccountKey(String key, String accountKey);
+
+    Optional<Application> securedFindByIdAndOwner(String appId, String username);
 }

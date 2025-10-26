@@ -1,7 +1,8 @@
-package com.langa.agent.core.services;
+package com.capricedumardi.agent.core.services;
 
-import com.langa.agent.core.helpers.CredentialsHelper;
-import com.langa.agent.core.helpers.IngestionParamsResolver;
+import com.capricedumardi.agent.core.helpers.CredentialsHelper;
+import com.capricedumardi.agent.core.helpers.IngestionParamsResolver;
+import com.capricedumardi.agent.core.model.SenderType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,11 +14,8 @@ import java.util.Map;
  */
 public class SenderServiceFactory {
     private static final Logger log = LogManager.getLogger(SenderServiceFactory.class);
-    private static final String DEFAULT_INGESTION_URL = "http://localhost:8080/api/ingestion";
 
-    public enum SenderType {
-        HTTP,
-        KAFKA
+    private SenderServiceFactory() {
     }
 
     /**
@@ -28,8 +26,8 @@ public class SenderServiceFactory {
      * @param credentialsHelper
      * @return SenderService instance
      */
-    public static SenderService create(SenderType type, Map<String, String> config,
-        CredentialsHelper credentialsHelper) {
+    private static SenderService create(SenderType type, Map<String, String> config,
+                                       CredentialsHelper credentialsHelper) {
         switch (type) {
             case HTTP -> {
                 return createHttpSender(config, credentialsHelper);
@@ -46,10 +44,10 @@ public class SenderServiceFactory {
      * Required config keys: url, appKey, accountKey, appSecret
      */
     private static SenderService createHttpSender(Map<String, String> config,
-        CredentialsHelper credentialsHelper) {
+                                                  CredentialsHelper credentialsHelper) {
         String url = config.get("url");
         if (url == null || url.isEmpty()) {
-            return new HttpSenderService(DEFAULT_INGESTION_URL, credentialsHelper);
+            return new NoOpSenderService("Url is null or empty");
         }
 
         log.info("Creating HttpSenderService with url={}", url);
@@ -62,7 +60,7 @@ public class SenderServiceFactory {
      * Optional: asyncSend (default: true)
      */
     private static SenderService createKafkaSender(Map<String, String> config,
-        CredentialsHelper credentialsHelper) {
+                                                   CredentialsHelper credentialsHelper) {
         String bootstrapServers = config.get("bootstrapServer");
         if (bootstrapServers == null || bootstrapServers.isEmpty()) {
             return new NoOpSenderService("Kafka sender requires 'bootstrapServers' parameter");
@@ -105,28 +103,33 @@ public class SenderServiceFactory {
     }
 
     public static SenderService create(final IngestionParamsResolver resolver) {
-        final String ingestionUrl = resolver.resolveHttpUrl();
-        final String secret = resolver.resolveSecret();
-        if(ingestionUrl == null || ingestionUrl.isEmpty()) {
-            return new NoOpSenderService("LANGA_URL environment variable or property langa.url is not set");
-        }
-        if(secret == null || secret.isEmpty()) {
-            return new NoOpSenderService("LANGA_SECRET environment variable or property langa.secret is not set");
-        }
-        SenderType senderType = SenderType.valueOf(resolver.resolveSenderType());
+        try {
+            final String ingestionUrl = resolver.ingestionUrl();
+            final String secret = resolver.resolveSecret();
+            if (ingestionUrl == null || ingestionUrl.isEmpty()) {
+                log.warn("LANGA_URL environment variable or property langa.url is not set, using default value {}", ingestionUrl);
+                return new NoOpSenderService("LANGA_URL environment variable or property langa.url is not set");
+            }
+            if (secret == null || secret.isEmpty()) {
+                log.warn("LANGA_SECRET environment variable or property langa.secret is not set{}", secret);
+                return new NoOpSenderService("LANGA_SECRET environment variable or property langa.secret is not set");
+            }
+            SenderType senderType = resolver.resolveSenderType();
 
-        Map<String, String> config = switch (senderType) {
-            case HTTP -> Map.of(
-                    "url", resolver.resolveHttpUrl()
-            );
-            case KAFKA -> Map.of(
-                    "bootstrapServer", resolver.resolveBootStrapServer(),
-                    "topic", resolver.resolveTopic()
-            );
-        };
-
-        log.info("Creating SenderService from environment: type={}", senderType);
-        return create(senderType, config, CredentialsHelper.of(resolver.resolveAppKey(), resolver.resolveAccountKey(), resolver.resolveSecret()));
+            Map<String, String> config = switch (senderType) {
+                case HTTP -> Map.of(
+                        "url", resolver.resolveHttpUrl()
+                );
+                case KAFKA -> Map.of(
+                        "bootstrapServer", resolver.resolveBootStrapServer(),
+                        "topic", resolver.resolveTopic()
+                );
+            };
+            log.info("Creating SenderService from environment: type={}", senderType);
+            return create(senderType, config, CredentialsHelper.of(resolver.resolveAppKey(), resolver.resolveAccountKey(), resolver.resolveSecret()));
+        } catch (Exception e) {
+            return new NoOpSenderService(e.getMessage());
+        }
     }
 
     /**

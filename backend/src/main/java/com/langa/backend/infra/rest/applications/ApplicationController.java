@@ -5,6 +5,7 @@ import com.langa.backend.domain.applications.usecases.*;
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
 import com.langa.backend.domain.applications.valueobjects.MetricEntry;
 import com.langa.backend.domain.applications.valueobjects.PaginatedResult;
+import com.langa.backend.infra.config.LangaApplicationProperties;
 import com.langa.backend.infra.rest.applications.dto.*;
 import com.langa.backend.infra.rest.common.dto.LogDto;
 import com.langa.backend.infra.rest.common.dto.MetricDto;
@@ -22,13 +23,15 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class ApplicationController {
 
+    private final LangaApplicationProperties applicationProperties;
     private final GetApplicationsUseCase getApplicationsUseCase;
     private final GetLogUseCase getLogUseCase;
     private final GetMetricsUseCase getMetricsUseCase;
     private final CreateApplicationUseCase createApplicationUseCase;
     private final GetUsageUseCase getUsageUseCase;
 
-    public ApplicationController(GetApplicationsUseCase getApplicationsUseCase, GetLogUseCase getLogUseCase, GetMetricsUseCase getMetricsUseCase, CreateApplicationUseCase createApplicationUseCase, GetUsageUseCase getUsageUseCase) {
+    public ApplicationController(LangaApplicationProperties applicationProperties, GetApplicationsUseCase getApplicationsUseCase, GetLogUseCase getLogUseCase, GetMetricsUseCase getMetricsUseCase, CreateApplicationUseCase createApplicationUseCase, GetUsageUseCase getUsageUseCase) {
+        this.applicationProperties = applicationProperties;
         this.getApplicationsUseCase = getApplicationsUseCase;
         this.getLogUseCase = getLogUseCase;
         this.getMetricsUseCase = getMetricsUseCase;
@@ -47,6 +50,15 @@ public class ApplicationController {
     public ResponseEntity<List<ApplicationDto>> getAllApplications(@AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(getApplicationsUseCase.getApplications(userDetails.getUsername())
                 .stream().map(ApplicationDto::of).toList());
+    }
+
+    @GetMapping("{appId}/secured-details")
+    public ResponseEntity<SecuredApplicationDto> getAllApplications(@AuthenticationPrincipal UserDetails userDetails, @PathVariable String appId) {
+        return ResponseEntity.ok(
+                SecuredApplicationDto.of(
+                        getApplicationsUseCase.getSecuredApplication(appId, userDetails.getUsername()),
+                        applicationProperties.getHttpPrefix(),
+                        applicationProperties.getKafkaPrefix()));
     }
 
     public ResponseEntity<List<LogDto>> getLogsByAppKey(@AuthenticationPrincipal UserDetails userDetails, @PathVariable String appId) {
