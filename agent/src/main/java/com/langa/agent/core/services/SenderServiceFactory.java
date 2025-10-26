@@ -1,6 +1,7 @@
 package com.langa.agent.core.services;
 
 import com.langa.agent.core.helpers.CredentialsHelper;
+import com.langa.agent.core.helpers.IngestionParamsResolver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -101,6 +102,31 @@ public class SenderServiceFactory {
 
         log.info("Creating SenderService from environment: type={}", senderType);
         return create(senderType, config, credentialsHelper);
+    }
+
+    public static SenderService create(final IngestionParamsResolver resolver) {
+        final String ingestionUrl = resolver.resolveHttpUrl();
+        final String secret = resolver.resolveSecret();
+        if(ingestionUrl == null || ingestionUrl.isEmpty()) {
+            return new NoOpSenderService("LANGA_URL environment variable or property langa.url is not set");
+        }
+        if(secret == null || secret.isEmpty()) {
+            return new NoOpSenderService("LANGA_SECRET environment variable or property langa.secret is not set");
+        }
+        SenderType senderType = SenderType.valueOf(resolver.resolveSenderType());
+
+        Map<String, String> config = switch (senderType) {
+            case HTTP -> Map.of(
+                    "url", resolver.resolveHttpUrl()
+            );
+            case KAFKA -> Map.of(
+                    "bootstrapServer", resolver.resolveBootStrapServer(),
+                    "topic", resolver.resolveTopic()
+            );
+        };
+
+        log.info("Creating SenderService from environment: type={}", senderType);
+        return create(senderType, config, CredentialsHelper.of(resolver.resolveAppKey(), resolver.resolveAccountKey(), resolver.resolveSecret()));
     }
 
     /**

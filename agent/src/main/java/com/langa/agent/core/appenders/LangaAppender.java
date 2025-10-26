@@ -47,7 +47,8 @@ public class LangaAppender extends AbstractAppender {
             @PluginElement("Layout") Layout<? extends Serializable> layout,
             @PluginAttribute("appKey") String appKey,
             @PluginAttribute("accountKey") String accountKey,
-            @PluginAttribute("appSecret") String appSecret) {
+            @PluginAttribute("appSecret") String appSecret,
+            @PluginAttribute("ingestionUrl") String ingestionUrl) {
         return new LangaAppender(name, filter, layout, appKey, accountKey, appSecret);
     }
 

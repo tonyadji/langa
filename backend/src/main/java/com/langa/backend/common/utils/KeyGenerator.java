@@ -2,6 +2,7 @@ package com.langa.backend.common.utils;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.UUID;
 
 public class KeyGenerator {
@@ -11,6 +12,7 @@ public class KeyGenerator {
     private static final String USER_PREFIX = "U-";
     private static final String TEAM_PREFIX = "T-";
     private static final String INVITATION_PREFIX = "TI-";
+    private static final String URI_DELIMITER = "-lga-";
 
     private KeyGenerator() {}
 
@@ -54,6 +56,11 @@ public class KeyGenerator {
         StringBuilder sb = toBase62(UUID.nameUUIDFromBytes(token.getBytes()));
         return sb.reverse().toString();
     }
+
+    public static String generateIngestionUri(String accountKey, String key) {
+        return Base64.getEncoder().encodeToString(accountKey.concat(URI_DELIMITER).concat(key).getBytes());
+    }
+
     private static StringBuilder toBase62(UUID uuid) {
         BigInteger number = new BigInteger(uuid.toString().replace("-", ""), 16);
         StringBuilder sb = new StringBuilder();
@@ -63,8 +70,5 @@ public class KeyGenerator {
         }
         return sb;
     }
-
-
-
 }
 

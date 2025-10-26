@@ -23,6 +23,7 @@ public class Application extends AbstractModel {
     private final String accountKey;
     private final String owner;
     private String secret;
+    private String ingestionUri;
     private final Set<ShareWith> sharedWith;
 
 
@@ -33,6 +34,7 @@ public class Application extends AbstractModel {
         this.owner = owner;
         this.key = KeyGenerator.generateAppKey();
         this.secret = KeyGenerator.generateAppSecret();
+        this.ingestionUri = KeyGenerator.generateIngestionUri(accountKey, this.key);
         sharedWith = new HashSet<>();
     }
 
@@ -45,22 +47,29 @@ public class Application extends AbstractModel {
         this.sharedWith = sharedWith == null ? new HashSet<>() : sharedWith;
     }
 
-    private Application(String id, String name, String key, String accountKey, String secret, String owner, Set<ShareWith> sharedWith) {
+    private Application(String id, String name, String key, String accountKey, String secret, String ingestionUri, String owner, Set<ShareWith> sharedWith) {
         this.id = id;
         this.name = name;
         this.accountKey = accountKey;
         this.secret = secret;
+        this.ingestionUri = ingestionUri;
         this.owner = owner;
         this.key = key;
         this.sharedWith = sharedWith == null ? new HashSet<>() : sharedWith;
     }
 
-    public static Application populate(String id, String name, String key, String accountKey, String secret, String owner, Set<ShareWith> sharedWith) {
-        return new Application(id, name, key, accountKey, secret, owner, sharedWith);
+    public static Application populate(String id, String name, String key, String accountKey, String owner, Set<ShareWith> sharedWith) {
+        return new Application(id, name, key, accountKey, owner, sharedWith);
     }
+
+
 
     public static Application createNew(String name, String accountKey, String owner) {
         return new Application(null, name, accountKey, owner);
+    }
+
+    public static Application populateSecured(String id, String name, String key, String accountKey, String secret, String ingestionUri, String owner, Set<ShareWith> sharedWith) {
+        return new Application(id, name, key, accountKey, secret, ingestionUri, owner, sharedWith);
     }
 
     public List<LogEntry> createLogEntries(List<LogEntry> logs) {

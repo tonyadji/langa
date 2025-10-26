@@ -5,6 +5,8 @@ import ch.qos.logback.core.AppenderBase;
 import com.langa.agent.core.buffers.BuffersFactory;
 import com.langa.agent.core.buffers.GenericBuffer;
 import com.langa.agent.core.helpers.CredentialsHelper;
+import com.langa.agent.core.helpers.EnvironmentUtils;
+import com.langa.agent.core.helpers.IngestionParamsResolver;
 import com.langa.agent.core.model.LogEntry;
 import com.langa.agent.core.model.SendableRequestDto;
 import com.langa.agent.core.services.SenderService;
@@ -23,14 +25,16 @@ public class LangaLogbackAppender extends AppenderBase<ILoggingEvent> {
     private String appKey;
     private String accountKey;
     private String appSecret;
+    private String ingestionUrl;
 
     private GenericBuffer<LogEntry, SendableRequestDto> logBuffer;
 
     @Override
     public void start() {
         try {
-            SenderService senderService = SenderServiceFactory.createFromEnvironmentAndCredentialHelper(CredentialsHelper.of(appKey, accountKey, appSecret));
-            BuffersFactory.init(senderService, appKey, accountKey,
+            IngestionParamsResolver resolver = EnvironmentUtils.getIngestionParamsResolver();
+            SenderService senderService = SenderServiceFactory.create(resolver);
+            BuffersFactory.init(senderService, resolver.resolveAppKey(), resolver.resolveAccountKey(),
                     DEFAULT_BATCH_SIZE, DEFAULT_FLUSH_DELAY_IN_SECONDS);
             this.logBuffer = BuffersFactory.getLogBufferInstance();
             super.start();
