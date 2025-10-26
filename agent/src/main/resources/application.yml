@@ -6,13 +6,13 @@
 # Sender type: http or kafka
 langa:
   sender:
-    type: ${LANGA_SENDER_TYPE:kafka}
+    type: ${LANGA_SENDER_TYPE:http}
 
   # =============================================
   # HTTP Sender Configuration
   # =============================================
   http:
-    url: ${LANGA_HTTP_URL:https://api.langa.com/collect}
+    url: ${LANGA_HTTP_URL:https://langa-production.up.railway.app/api/ingestion}
 
   # =============================================
   # Kafka Sender Configuration
