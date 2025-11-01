@@ -42,6 +42,10 @@ public class AgentInit {
                 e.printStackTrace();
             }
         }
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            log.debug("ShutDownHook Received : Terminating Langa Agent");
+            BuffersFactory.shutdownAll();
+        }));
     }
 
     private static void initSenderAndBuffers() {

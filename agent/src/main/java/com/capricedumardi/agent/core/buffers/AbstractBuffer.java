@@ -30,7 +30,7 @@ public abstract class AbstractBuffer<T> {
          mainQueue = new LinkedBlockingQueue<>();
          retryQueue = new LinkedBlockingQueue<>();
 
-        scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler = BuffersFactory.getScheduler();
         scheduler.scheduleAtFixedRate(this::flush, flushIntervalSeconds, flushIntervalSeconds, TimeUnit.SECONDS);
     }
 
@@ -49,7 +49,6 @@ public abstract class AbstractBuffer<T> {
      protected abstract void retryFlush();
 
     public void shutdown() {
-        scheduler.shutdown();
         flush();
     }
 }

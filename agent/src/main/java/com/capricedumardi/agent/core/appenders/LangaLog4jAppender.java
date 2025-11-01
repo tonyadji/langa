@@ -42,10 +42,4 @@ public class LangaLog4jAppender extends AbstractAppender {
             log.error("Error sending log to Langa: {}", e.getMessage(), e);
         }
     }
-
-    @Override
-    public void stop() {
-        super.stop();
-        logBuffer.shutdown();
-    }
 }

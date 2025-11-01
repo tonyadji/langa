@@ -36,12 +36,4 @@ public class LangaLogbackAppender extends AppenderBase<ILoggingEvent> {
             addError("Error sending log to Langa", e);
         }
     }
-
-    @Override
-    public void stop() {
-        super.stop();
-        if (logBuffer != null) {
-            logBuffer.shutdown();
-        }
-    }
 }
