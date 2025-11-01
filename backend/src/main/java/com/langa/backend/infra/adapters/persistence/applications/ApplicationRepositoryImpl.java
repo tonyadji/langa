@@ -84,6 +84,13 @@ public class ApplicationRepositoryImpl implements ApplicationRepository {
     }
 
     @Override
+    public Optional<Application> securedFindByIdAndOwner(String appId, String username) {
+        return mongoApplicationDao.findByIdAndOwner(appId, username)
+                .map(ApplicationDocument::toSecuredApplication)
+                .or(Optional::empty);
+    }
+
+    @Override
     public List<Application> findBySharedWithUser(String sharedWith) {
         return mongoApplicationDao.findBySharedWith_key(sharedWith)
                 .stream().map(ApplicationDocument::toApplication).toList();
@@ -94,4 +101,12 @@ public class ApplicationRepositoryImpl implements ApplicationRepository {
         return mongoApplicationDao.findBySharedWith_KeyIn(teamKeys)
                 .stream().map(ApplicationDocument::toApplication).toList();
     }
+
+    @Override
+    public Optional<Application> findSecuredAppByKeyAndAccountKey(String key, String accountKey) {
+        return mongoApplicationDao.findByKeyAndAccountKey(key, accountKey)
+                .map(ApplicationDocument::toSecuredApplication)
+                .or(Optional::empty);
+    }
+
 }

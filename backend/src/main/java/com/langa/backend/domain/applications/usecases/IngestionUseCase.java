@@ -43,7 +43,7 @@ public class IngestionUseCase {
 
     private void processLogIngestion(LogIngestionRequestDto logRequestDto, IngestionCredentials credentials) {
         final Application application = applicationRepository
-                .findByKeyAndAccountKey(logRequestDto.appKey(),
+                .findSecuredAppByKeyAndAccountKey(logRequestDto.appKey(),
                         logRequestDto.accountKey())
                 .orElseThrow(() -> new ApplicationException("Application not found with key: " + logRequestDto.appKey() + " and account key: " + logRequestDto.accountKey(), null, Errors.APPLICATION_NOT_FOUND));
 

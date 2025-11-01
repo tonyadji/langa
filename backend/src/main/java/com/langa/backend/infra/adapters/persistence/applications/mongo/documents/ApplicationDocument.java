@@ -17,11 +17,16 @@ public class ApplicationDocument {
     private String key;
     private String accountKey;
     private String secret;
+    private String ingestionUri;
     private String owner;
     private Set<ShareWith> sharedWith;
 
     public Application toApplication() {
-        return Application.populate(id, name, key, accountKey, secret, owner, sharedWith);
+        return Application.populate(id, name, key, accountKey, owner, sharedWith);
+    }
+
+    public Application toSecuredApplication() {
+        return Application.populateSecured(id, name, key, accountKey, secret, ingestionUri, owner, sharedWith);
     }
 
     public static ApplicationDocument of(Application application) {
@@ -33,6 +38,7 @@ public class ApplicationDocument {
         applicationDocument.setOwner(application.getOwner());
         applicationDocument.setSharedWith(application.getSharedWith());
         applicationDocument.setSecret(application.getSecret());
+        applicationDocument.setIngestionUri(application.getIngestionUri());
         return applicationDocument;
     }
 }
