@@ -5,61 +5,27 @@ import com.capricedumardi.agent.core.services.SenderService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 public class GenericBuffer<T, U extends SendableRequestDto> extends AbstractBuffer<T> {
-    private static final Logger log = LogManager.getLogger(GenericBuffer.class);
     private final Function<List<T>, U> mapSendableRequestDto;
 
     public GenericBuffer(Function<List<T>, U> mapSendableRequestDto,
                          SenderService senderService, String appKey, String accountKey,
-                     int batchSize, int flushIntervalSeconds) {
-        super(senderService, appKey, accountKey, batchSize, flushIntervalSeconds);
+                     int batchSize, int flushIntervalSeconds, String bufferName) {
+        super(senderService, appKey, accountKey, batchSize, flushIntervalSeconds, bufferName);
         this.mapSendableRequestDto = mapSendableRequestDto;
     }
 
     @Override
-    public void flush() {
-        log.debug("Flushing buffer (main queue)");
-        flushAndCheck(mainQueue);
+    protected SendableRequestDto mapToSendableRequest(List<T> entries) {
+        return mapSendableRequestDto.apply(entries);
     }
 
-    @Override
-    protected void retryFlush() {
-        log.trace("Flushing buffer (retry queue)");
-        flushAndCheck(retryQueue);
+    public void printStats() {
+        BufferStats stats = getStats();
+        System.out.println("\n" + stats.toString());
     }
 
-    private void flushAndCheck(BlockingQueue<T> processingQueue) {
-        if (processingQueue.isEmpty()) {
-            log.warn("Empty queue ! Nothing to flush");
-            return;
-        }
-
-        List<T> entries = new ArrayList<>();
-        processingQueue.drainTo(entries, batchSize);
-
-        if (!entries.isEmpty()) {
-            U dto = mapSendableRequestDto.apply(entries);
-            boolean isSendSuccess = senderService.send(dto);
-            if(!isSendSuccess) {
-                consecutiveSendingErrors++;
-                entries.forEach(entry -> {
-                    if (!retryQueue.offer(entry)) log.error("Entry lost {}", entry);
-                });
-                scheduleRetryFlush();
-            } else {
-                consecutiveSendingErrors = 0;
-            }
-        }
-    }
-
-    private void scheduleRetryFlush() {
-        int retryDelay = (int) Math.pow(2, consecutiveSendingErrors);
-        scheduler.schedule(this::retryFlush, retryDelay, TimeUnit.SECONDS);
-    }
 }
