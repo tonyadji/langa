@@ -6,23 +6,49 @@ import com.capricedumardi.agent.core.model.LogRequestDto;
 import com.capricedumardi.agent.core.model.MetricRequestDto;
 import com.capricedumardi.agent.core.model.SendableRequestDto;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class KafkaSenderService implements SenderService {
-    private static final Logger log = LogManager.getLogger(KafkaSenderService.class);
-    private static final Gson gson = new Gson();
+    // Configuration constants
+    private static final int DEFAULT_TIMEOUT_MS = 30000; // 30 seconds
+    private static final int PRODUCER_CLOSE_TIMEOUT_SECONDS = 10;
 
+    // Circuit breaker configuration
+    private static final int CIRCUIT_BREAKER_THRESHOLD = 5;
+    private static final long CIRCUIT_BREAKER_TIMEOUT_MS = 30000; // 30 seconds
+
+    // Send mode configuration (can be made configurable via env var)
+    private static final boolean ASYNC_SEND = getBooleanProperty("LANGA_KAFKA_ASYNC", true);
+
+    // Instance fields
     private final KafkaProducer<String, String> producer;
     private final String topic;
     private final CredentialsHelper credentialsHelper;
+    private final Gson gson;
+    private final CircuitBreaker circuitBreaker;
+    private final AtomicBoolean closed = new AtomicBoolean(false);
+
+    // Statistics
+    private final AtomicLong totalSent = new AtomicLong(0);
+    private final AtomicLong totalFailed = new AtomicLong(0);
+    private final AtomicLong totalAsyncFailed = new AtomicLong(0);
 
 
     /**
@@ -36,85 +62,196 @@ public class KafkaSenderService implements SenderService {
         CredentialsHelper credentialsHelper) {
         this.topic = topic;
         this.credentialsHelper = credentialsHelper;
+        this.gson = new Gson();
+        this.circuitBreaker = new CircuitBreaker("Kafka[" + topic + "]",
+                CIRCUIT_BREAKER_THRESHOLD,
+                CIRCUIT_BREAKER_TIMEOUT_MS);
 
+        // Configure producer properties
         Properties props = new Properties();
+
+        // Basic configuration
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServer);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
-        props.put(ProducerConfig.ACKS_CONFIG, "all");
-        props.put(ProducerConfig.RETRIES_CONFIG, 3);
+        // Reliability configuration
+        props.put(ProducerConfig.ACKS_CONFIG, "all"); // Wait for all replicas
+        props.put(ProducerConfig.RETRIES_CONFIG, 3); // Retry up to 3 times
         props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
-        props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
-        props.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384);
-        props.put(ProducerConfig.LINGER_MS_CONFIG, 10);
-        props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432); // 32MB
-        props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 30000);
-        props.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 120000);
 
+        // Performance configuration
+        props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy"); // Compress messages
+        props.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384); // 16KB batches
+        props.put(ProducerConfig.LINGER_MS_CONFIG, 10); // Wait 10ms for batching
+        props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432); // 32MB buffer
 
+        // Timeout configuration
+        props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, DEFAULT_TIMEOUT_MS);
+        props.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, DEFAULT_TIMEOUT_MS * 4); // 2 minutes
+
+        // Idempotence for exactly-once semantics
+        props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+
+        // Create producer
         this.producer = new KafkaProducer<>(props);
 
-        log.info("KafkaSenderService initialized with bootstrapServer={}, topic={}",
-                bootstrapServer, this.topic);
+        System.out.println("KafkaSenderService initialized:");
+        System.out.println("  Bootstrap: " + bootstrapServer);
+        System.out.println("  Topic: " + topic);
+        System.out.println("  Mode: " + (ASYNC_SEND ? "ASYNC" : "SYNC"));
     }
 
     @Override
     public boolean send(SendableRequestDto payload) {
+        // Check if closed
+        if (closed.get()) {
+            return false;
+        }
+
+        // Check circuit breaker
+        if (!circuitBreaker.allowRequest()) {
+            return false; // Circuit open - don't even try
+        }
+
         try {
+            // Serialize payload
             String key = generateKey(payload);
             String json = gson.toJson(payload);
 
-            ProducerRecord<String, String> messageRecord = new ProducerRecord<>(this.topic, key, json);
+            // Create producer record
+            ProducerRecord<String, String> record = new ProducerRecord<>(topic, key, json);
 
-            // Add authentication headers to the Kafka message
-            addCredentialHeaders(messageRecord.headers());
+            // Add authentication headers
+            addCredentialHeaders(record.headers());
 
-            // Envoi asynchrone avec callback
-            producer.send(messageRecord, (metadata, exception) -> {
-                if (exception != null) {
-                    log.error("KafkaSenderService - Async send failed for topic={}, key={}: {}",
-                            topic, key, exception.getMessage());
-                } else {
-                    log.debug("KafkaSenderService - Message sent to topic={}, partition={}, offset={}",
-                            metadata.topic(), metadata.partition(), metadata.offset());
-                }
-            });
-            return true; // On retourne true immédiatement en mode async
+            // Send based on mode
+            boolean success;
+            if (ASYNC_SEND) {
+                success = sendAsync(record);
+            } else {
+                success = sendSync(record);
+            }
 
+            // Update circuit breaker and stats
+            if (success) {
+                circuitBreaker.recordSuccess();
+                totalSent.incrementAndGet();
+            } else {
+                circuitBreaker.recordFailure();
+                totalFailed.incrementAndGet();
+            }
+
+            return success;
 
         } catch (Exception e) {
-            log.error("KafkaSenderService - Error sending payload: {}", e.getMessage(), e);
+            System.err.println("KafkaSenderService: Error sending payload: " +
+                    e.getClass().getSimpleName() + ": " + e.getMessage());
+            circuitBreaker.recordFailure();
+            totalFailed.incrementAndGet();
             return false;
         }
     }
 
     /**
-     * Add credential headers to Kafka message headers
+     * Send message asynchronously with callback tracking.
+     *
+     * IMPORTANT: Unlike the original implementation, this method uses a CountDownLatch
+     * to wait for the async callback, so we can return accurate success/failure status.
+     *
+     * This adds a small amount of blocking but ensures the buffer knows if send actually succeeded.
+     */
+    private boolean sendAsync(ProducerRecord<String, String> record) {
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicBoolean success = new AtomicBoolean(false);
+
+        try {
+            producer.send(record, (metadata, exception) -> {
+                try {
+                    if (exception != null) {
+                        System.err.println("KafkaSenderService: Async send failed for topic=" +
+                                record.topic() + ", key=" + record.key() +
+                                ": " + exception.getMessage());
+                        totalAsyncFailed.incrementAndGet();
+                        success.set(false);
+                    } else {
+                        success.set(true);
+                    }
+                } finally {
+                    latch.countDown();
+                }
+            });
+
+            boolean completed = latch.await(DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+
+            if (!completed) {
+                System.err.println("KafkaSenderService: Async send timeout after " +
+                        DEFAULT_TIMEOUT_MS + "ms");
+                return false;
+            }
+
+            return success.get();
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.err.println("KafkaSenderService: Interrupted while waiting for async send");
+            return false;
+        } catch (Exception e) {
+            System.err.println("KafkaSenderService: Exception during async send: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Send message synchronously (blocks until ack received).
+     *
+     * This is slower but guarantees we know the result before returning.
+     * Useful for critical data or when you need guaranteed ordering.
+     */
+    private boolean sendSync(ProducerRecord<String, String> record) {
+        try {
+            RecordMetadata metadata = producer.send(record).get(DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            return true;
+
+        } catch (TimeoutException e) {
+            System.err.println("KafkaSenderService: Sync send timeout after " + DEFAULT_TIMEOUT_MS + "ms");
+            return false;
+
+        } catch (ExecutionException e) {
+            System.err.println("KafkaSenderService: Sync send failed: " +
+                    e.getCause().getMessage());
+            return false;
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.err.println("KafkaSenderService: Interrupted during sync send");
+            return false;
+        }
+    }
+
+    /**
+     * Add credential headers to Kafka message headers.
      * Headers include: xUserAgent, xAppKey, xAccountKey, xAgentSignature, xTimestamp
      */
     private void addCredentialHeaders(Headers headers) {
         try {
             Map<String, String> credentials = credentialsHelper.getCredentials(
-                CredentialsHelper.CredentialType.KAFKA);
+                    CredentialsHelper.CredentialType.KAFKA);
 
             if (credentials != null) {
                 credentials.forEach((key, value) ->
-                    headers.add(key, value.getBytes(StandardCharsets.UTF_8))
+                        headers.add(key, value.getBytes(StandardCharsets.UTF_8))
                 );
-
-                log.trace("KafkaSenderService - Added {} credential headers to message",
-                    credentials.size());
             }
         } catch (Exception e) {
-            log.error("KafkaSenderService - Error adding credential headers: {}",
-                e.getMessage(), e);
+            System.err.println("KafkaSenderService: Error adding credential headers: " +
+                    e.getMessage());
         }
     }
 
     /**
-     * Generate a partition key for better distribution
-     * Using appKey as partition key to ensure messages from same app go to same partition
+     * Generate a partition key for better distribution.
+     * Using appKey as partition key ensures messages from same app go to same partition.
      */
     private String generateKey(SendableRequestDto payload) {
         if (payload instanceof LogRequestDto logRequest) {
@@ -125,30 +262,83 @@ public class KafkaSenderService implements SenderService {
         return "default";
     }
 
-    /**
-     * Flush pending messages and close producer
-     * Should be called on application shutdown
-     */
+    @Override
     public void close() {
-        try {
-            log.info("Closing KafkaSenderService - flushing pending messages");
-            producer.flush();
-            producer.close(java.time.Duration.ofSeconds(10));
-            log.info("KafkaSenderService closed successfully");
-        } catch (Exception e) {
-            log.error("Error closing KafkaSenderService: {}", e.getMessage(), e);
+        if (closed.compareAndSet(false, true)) {
+            System.out.println("Closing KafkaSenderService...");
+
+            try {
+                System.out.println("Flushing pending messages...");
+                producer.flush();
+
+                System.out.println("Closing Kafka producer...");
+                producer.close(Duration.ofSeconds(PRODUCER_CLOSE_TIMEOUT_SECONDS));
+
+                System.out.println("KafkaSenderService closed successfully");
+
+            } catch (Exception e) {
+                System.err.println("✗ Error closing KafkaSenderService: " + e.getMessage());
+                e.printStackTrace(System.err);
+            }
+        }
+    }
+
+    @Override
+    public String getDescription() {
+        return "Kafka[" + topic + ", mode=" + (ASYNC_SEND ? "ASYNC" : "SYNC") +
+                ", circuit=" + circuitBreaker.getState() + "]";
+    }
+
+    /**
+     * Manually flush pending messages.
+     * Useful for testing or ensuring messages are sent immediately.
+     */
+    public void flush() {
+        if (!closed.get()) {
+            try {
+                producer.flush();
+            } catch (Exception e) {
+                System.err.println("KafkaSenderService: Error flushing messages: " + e.getMessage());
+            }
         }
     }
 
     /**
-     * Flush all pending messages
+     * Get total number of successful sends.
      */
-    public void flush() {
-        try {
-            producer.flush();
-            log.debug("KafkaSenderService - Messages flushed");
-        } catch (Exception e) {
-            log.error("KafkaSenderService - Error flushing messages: {}", e.getMessage(), e);
+    public long getTotalSent() {
+        return totalSent.get();
+    }
+
+    /**
+     * Get total number of failed sends.
+     */
+    public long getTotalFailed() {
+        return totalFailed.get();
+    }
+
+    /**
+     * Get total number of async callback failures.
+     */
+    public long getTotalAsyncFailed() {
+        return totalAsyncFailed.get();
+    }
+
+    /**
+     * Get circuit breaker state.
+     */
+    public CircuitBreaker.State getCircuitBreakerState() {
+        return circuitBreaker.getState();
+    }
+
+    /**
+     * Helper to get boolean property from environment with default.
+     */
+    private static boolean getBooleanProperty(String key, boolean defaultValue) {
+        String value = System.getenv(key);
+        if (value != null) {
+            return Boolean.parseBoolean(value);
         }
+        return defaultValue;
     }
 }

@@ -12,6 +12,7 @@ public class BuffersFactory {
     private static volatile GenericBuffer<LogEntry, SendableRequestDto> logBufferInstance;
     private static volatile GenericBuffer<MetricEntry, SendableRequestDto> metricBufferInstance;
     private static volatile ScheduledExecutorService scheduler;
+    private static volatile SenderService senderServiceInstance;
 
     private static final Object LOG_BUFFER_LOCK = new Object();
     private static final Object METRIC_BUFFER_LOCK = new Object();
@@ -44,6 +45,7 @@ public class BuffersFactory {
             System.out.println("BuffersFactory already initialized, skipping re-initialization");
             return;
         }
+        senderServiceInstance = senderService;
         initScheduler();
 
         initLogBuffer(senderService, appKey, accountKey, batchSize, flushIntervalSeconds);
@@ -111,6 +113,8 @@ public class BuffersFactory {
             flushAllBuffers();
 
             shutdownScheduler();
+
+            closeSenderService();
 
             System.out.println("Bufferstory shutdown complete");
 
@@ -266,6 +270,22 @@ public class BuffersFactory {
             scheduler.shutdownNow();
             // Restore interrupt status
             Thread.currentThread().interrupt();
+        }
+    }
+
+    private static void closeSenderService() {
+        if (senderServiceInstance == null) {
+            return;
+        }
+
+        System.out.println("Closing sender service...");
+
+        try {
+            senderServiceInstance.close();
+            System.out.println("✓ Sender service closed");
+        } catch (Exception e) {
+            System.err.println("✗ Error closing sender service: " + e.getMessage());
+            e.printStackTrace(System.err);
         }
     }
 }

@@ -10,101 +10,170 @@ import java.util.Map;
 
 /**
  * Factory for creating SenderService instances
- * Supports both HTTP and Kafka implementations
+ * Supports both HTTP and Kafka implementations wit falling back to No-Op service
  */
 public class SenderServiceFactory {
-    private static final Logger log = LogManager.getLogger(SenderServiceFactory.class);
-    public static final String URL = "url";
-    public static final String KAFKA_BOOTSTRAP_SERVER = "bootstrapServer";
-    public static final String TOPIC = "topic";
 
     private SenderServiceFactory() {
     }
 
-
     public static SenderService create(final IngestionParamsResolver resolver) {
+        System.out.println("Creating SenderService from configuration...");
+
         try {
-            final String ingestionUrl = resolver.ingestionUrl();
-            final String secret = resolver.resolveSecret();
-            if (ingestionUrl == null || ingestionUrl.isEmpty()) {
-                log.warn("LANGA_URL environment variable or property langa.url is not set, using default value {}", ingestionUrl);
-                return new NoOpSenderService("LANGA_URL environment variable or property langa.url is not set");
-            }
-            if (secret == null || secret.isEmpty()) {
-                log.warn("LANGA_SECRET environment variable or property langa.secret is not set{}", secret);
-                return new NoOpSenderService("LANGA_SECRET environment variable or property langa.secret is not set");
-            }
+            validateConfiguration(resolver);
+
             SenderType senderType = resolver.resolveSenderType();
 
-            Map<String, String> config = switch (senderType) {
-                case HTTP -> Map.of(
-                        URL, resolver.resolveHttpUrl()
-                );
-                case KAFKA -> Map.of(
-                        KAFKA_BOOTSTRAP_SERVER, resolver.resolveBootStrapServer(),
-                        TOPIC, resolver.resolveTopic()
-                );
-            };
-            log.trace("Creating SenderService from environment: type={}", senderType);
-            return create(senderType, config, CredentialsHelper.of(resolver.resolveAppKey(), resolver.resolveAccountKey(), resolver.resolveSecret()));
+            CredentialsHelper credentialsHelper = createCredentialsHelper(resolver);
+
+            SenderService sender = createSender(senderType, resolver, credentialsHelper);
+
+            System.out.println("SenderService created successfully: " + sender.getDescription());
+            return sender;
+
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            System.err.println("FATAL: Failed to create SenderService");
+
+            return createNoOp("Falling back to No-Op service because : " + e.getMessage());
+
         } catch (Exception e) {
-            return new NoOpSenderService(e.getMessage());
+            System.err.println("FATAL: Unexpected error creating SenderService");
+            System.err.println("Error: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            e.printStackTrace(System.err);
+
+            return createNoOp("Falling back to No-Op service because : " + e.getMessage());
         }
     }
 
     /**
-     * Create a SenderService based on type
+     * Validate configuration before attempting to create sender.
      *
-     * @param type              The type of sender (HTTP or KAFKA)
-     * @param config            Configuration map with required parameters
-     * @param credentialsHelper
-     * @return SenderService instance
+     * @throws IllegalArgumentException if any required parameter is missing/invalid
      */
-    private static SenderService create(SenderType type, Map<String, String> config,
-                                        CredentialsHelper credentialsHelper) {
-        switch (type) {
-            case HTTP -> {
-                return createHttpSender(config, credentialsHelper);
-            }
-            case KAFKA -> {
-                return createKafkaSender(config, credentialsHelper);
-            }
-            default -> throw new IllegalArgumentException("Unknown sender type: " + type);
+    private static void validateConfiguration(IngestionParamsResolver resolver) {
+        String ingestionUrl = resolver.ingestionUrl();
+        if (ingestionUrl == null || ingestionUrl.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "LANGA_URL is required but not configured. " +
+                            "Set environment variable: LANGA_URL=<your-ingestion-url>"
+            );
         }
+
+        String secret = resolver.resolveSecret();
+        if (secret == null || secret.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "LANGA_SECRET is required but not configured. " +
+                            "Set environment variable: LANGA_SECRET=<your-secret>"
+            );
+        }
+
+        String appKey = resolver.resolveAppKey();
+        if (appKey == null || appKey.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "AppKey could not be extracted from LANGA_URL. " +
+                            "Check URL format: .../api/ingestion/{type}/{base64_credentials}"
+            );
+        }
+
+        String accountKey = resolver.resolveAccountKey();
+        if (accountKey == null || accountKey.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "AccountKey could not be extracted from LANGA_URL. " +
+                            "Check URL format: .../api/ingestion/{type}/{base64_credentials}"
+            );
+        }
+
+        System.out.println("  Configuration validated successfully");
     }
 
     /**
-     * Create HTTP sender
-     * Required config keys: url, appKey, accountKey, appSecret
+     * Create credentials helper with validated parameters.
      */
-    private static SenderService createHttpSender(Map<String, String> config,
+    private static CredentialsHelper createCredentialsHelper(IngestionParamsResolver resolver) {
+        String appKey = resolver.resolveAppKey();
+        String accountKey = resolver.resolveAccountKey();
+        String secret = resolver.resolveSecret();
+
+        return CredentialsHelper.of(appKey, accountKey, secret);
+    }
+
+    /**
+     * Create sender based on type.
+     */
+    private static SenderService createSender(SenderType type,
+                                              IngestionParamsResolver resolver,
+                                              CredentialsHelper credentialsHelper) {
+        return switch (type) {
+            case HTTP -> createHttpSender(resolver, credentialsHelper);
+            case KAFKA -> createKafkaSender(resolver, credentialsHelper);
+        };
+    }
+
+    /**
+     * Create HTTP sender with configuration validation.
+     *
+     * @throws IllegalArgumentException if HTTP-specific configuration is invalid
+     */
+    private static SenderService createHttpSender(IngestionParamsResolver resolver,
                                                   CredentialsHelper credentialsHelper) {
-        String url = config.get(URL);
-        log.trace("Creating HttpSenderService with url={}", url);
+        String url = resolver.resolveHttpUrl();
+
+        if (url == null || url.trim().isEmpty()) {
+            throw new IllegalArgumentException("HTTP URL could not be resolved from configuration");
+        }
+
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            throw new IllegalArgumentException(
+                    "Invalid HTTP URL format: " + url + ". Must start with http:// or https://"
+            );
+        }
+
+        System.out.println("  HTTP URL: " + url);
         return new HttpSenderService(url, credentialsHelper);
     }
 
     /**
-     * Create Kafka sender
-     * Required config keys: bootstrapServers, topic
-     * Optional: asyncSend (default: true)
+     * Create Kafka sender with configuration validation.
+     *
+     * @throws IllegalArgumentException if Kafka-specific configuration is invalid
      */
-    private static SenderService createKafkaSender(Map<String, String> config,
+    private static SenderService createKafkaSender(IngestionParamsResolver resolver,
                                                    CredentialsHelper credentialsHelper) {
-        String bootstrapServers = config.get(KAFKA_BOOTSTRAP_SERVER);
-        String topic = config.get(TOPIC);
+        String bootstrapServer = resolver.resolveBootStrapServer();
+        String topic = resolver.resolveTopic();
 
-        if (bootstrapServers == null || bootstrapServers.isEmpty()) {
-            return new NoOpSenderService("Kafka sender requires 'bootstrapServers' parameter");
+        if (bootstrapServer == null || bootstrapServer.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Kafka bootstrap server could not be resolved from configuration"
+            );
         }
-        if (topic == null || topic.isEmpty()) {
-            return new NoOpSenderService("Kafka sender requires 'topic' parameter");
+
+        if (topic == null || topic.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Kafka topic could not be resolved from configuration"
+            );
         }
 
-        log.trace("Creating KafkaSenderService with bootstrapServer={}, topic={}",
-                bootstrapServers, topic);
+        if (!bootstrapServer.contains(":")) {
+            System.err.println("WARNING: Bootstrap server might be missing port: " + bootstrapServer);
+            System.err.println("Expected format: host:port (e.g., localhost:9092)");
+        }
 
-        return new KafkaSenderService(bootstrapServers, topic, credentialsHelper);
+        System.out.println("Bootstrap Server: " + bootstrapServer);
+        System.out.println("Topic: " + topic);
+
+        return new KafkaSenderService(bootstrapServer, topic, credentialsHelper);
+    }
+
+    /**
+     * Create a no-op sender for testing or fallback scenarios.
+     *
+     * @param reason Human-readable reason why no-op sender is being used
+     * @return NoOpSenderService instance
+     */
+    public static SenderService createNoOp(String reason) {
+        return new NoOpSenderService(reason);
     }
 }
 

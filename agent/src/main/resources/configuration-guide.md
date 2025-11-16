@@ -1,8 +1,8 @@
-# Langa Agent - MVP Configuration Guide
+# Langa Agent (MVP) - Configuration Guide
 
 ## Overview
 
-The Langa Agent MVP uses **explicit configuration** via environment variables to determine which logging framework to use. This approach is simple, predictable, and gives users full control.
+The Langa Agent uses **explicit configuration** via environment variables to determine which logging framework to use. This approach is simple, predictable, and gives users full control.
 
 ---
 
