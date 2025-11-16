@@ -3,6 +3,7 @@ package com.langa.backend.domain.applications.usecases;
 import com.langa.backend.domain.applications.Application;
 import com.langa.backend.domain.applications.repositories.ApplicationRepository;
 import com.langa.backend.domain.applications.valueobjects.ApplicationInfo;
+import com.langa.backend.domainexchange.user.UserAccountService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -23,6 +24,9 @@ class GetApplicationsUseCaseTest {
     @Mock
     private ApplicationRepository applicationRepository;
 
+    @Mock
+    UserAccountService userAccountService;
+
     @InjectMocks
     private GetApplicationsUseCase useCase;
 
@@ -30,6 +34,7 @@ class GetApplicationsUseCaseTest {
     @Test
     void getApplications_shouldReturnEmptyList() {
         when(applicationRepository.findByOwner(OWNER)).thenReturn(Collections.emptyList());
+        when(userAccountService.getAccountKey(OWNER)).thenReturn("accountKey");
 
         List<ApplicationInfo> result = useCase.getApplications(OWNER);
 
@@ -39,10 +44,11 @@ class GetApplicationsUseCaseTest {
 
     @Test
     void getApplicationsByOwner_shouldReturnApps() {
-        Application app1 = new Application().setName("Langa1").setOwner(OWNER).setKey("key1");
-        Application app2 = new Application().setName("Lang2").setOwner(OWNER).setKey("key2");
+        Application app1 = Application.createNew("Langa1", "key1", OWNER);
+        Application app2 = Application.createNew("Lang2","key2", OWNER);
 
         when(applicationRepository.findByOwner(OWNER)).thenReturn(List.of(app1, app2));
+        when(userAccountService.getAccountKey(OWNER)).thenReturn("accountKey");
 
         List<ApplicationInfo> result = useCase.getApplications(OWNER);
 
