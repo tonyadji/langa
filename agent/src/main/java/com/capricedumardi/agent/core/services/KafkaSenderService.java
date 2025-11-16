@@ -42,13 +42,12 @@ public class KafkaSenderService implements SenderService {
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
-        // Performance et reliability settings
-        props.put(ProducerConfig.ACKS_CONFIG, "1"); // Leader acknowledge
+        props.put(ProducerConfig.ACKS_CONFIG, "all");
         props.put(ProducerConfig.RETRIES_CONFIG, 3);
         props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
-        props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy"); // Compression pour optimiser le réseau
+        props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
         props.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384);
-        props.put(ProducerConfig.LINGER_MS_CONFIG, 10); // Petite latence pour batch
+        props.put(ProducerConfig.LINGER_MS_CONFIG, 10);
         props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432); // 32MB
         props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 30000);
         props.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 120000);
