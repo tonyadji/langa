@@ -16,14 +16,17 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
-
 @Configuration
 public class SecurityConfig {
 
+
+    private final SecurityEndpoints securityEndpoints;
+    private final SecurityCors securityCors;
     private final JwtAuthenticationFilter jwtFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtFilter) {
+    public SecurityConfig(SecurityEndpoints securityEndpoints, SecurityCors securityCors, JwtAuthenticationFilter jwtFilter) {
+        this.securityEndpoints = securityEndpoints;
+        this.securityCors = securityCors;
         this.jwtFilter = jwtFilter;
     }
 
@@ -33,8 +36,7 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authorizer -> authorizer
-                .requestMatchers("/api/logs/**").permitAll()
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers(securityEndpoints.getUnsecured()).permitAll()
                 .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, BasicAuthenticationFilter.class);
 
@@ -49,13 +51,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
+        configuration.setAllowedOrigins(securityCors.getAllowedOrigins());
+        configuration.setAllowedMethods(securityCors.getAllowedMethods());
+        configuration.setAllowedHeaders(securityCors.getAllowedHeaders());
+        configuration.setAllowCredentials(securityCors.isAllowCredentials());
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration(securityCors.getPatternRegistry(), configuration);
         return source;
     }
 

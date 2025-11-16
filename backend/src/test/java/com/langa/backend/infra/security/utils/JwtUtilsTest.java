@@ -22,8 +22,7 @@ class JwtUtilsTest {
 
     @Test
     void generateToken_shouldContainSubject() {
-        User user = new User();
-        user.setEmail("user@example.com");
+        User user = User.createNew("user@example.com", "encodedPassword");
 
         String token = jwtUtils.generateToken(user);
         assertNotNull(token);
@@ -34,8 +33,7 @@ class JwtUtilsTest {
 
     @Test
     void validateToken_shouldReturnTrueForValidToken() {
-        User user = new User();
-        user.setEmail("user@example.com");
+        User user = User.createNew("user@example.com", "encodedPassword");
 
         String token = jwtUtils.generateToken(user);
         assertTrue(jwtUtils.validateToken(token));

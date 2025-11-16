@@ -4,6 +4,7 @@
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3-green?logo=springboot&logoColor=white)
 ![React](https://img.shields.io/badge/React-18-blue?logo=react&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/Database-MongoDB-brightgreen?logo=mongodb&logoColor=white)
+[![Maven Central](https://img.shields.io/maven-central/v/com.capricedumardi/langa-agent.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/com.capricedumardi/langa-agent)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Status](https://img.shields.io/badge/Status-Work%20in%20Progress-lightgrey)
 
@@ -49,7 +50,7 @@ This repository contains a full-stack monitoring platform composed of three main
 
 ### 1️⃣ Clone the repo
 ```bash
-git clone https://github.com/tonyadji/langa.git
+git clone https://github.com/langa-org/langa.git
 cd <langa>---
 
 ## 🌟 Features
@@ -66,7 +67,7 @@ cd <langa>---
 
 ### 1️⃣ Clone the repo
 ```bash
-git clone https://github.com/tonyadji/langa.git
+git clone https://github.com/langa-org/langa.git
 cd <langa>
 
 2️⃣ Start each service

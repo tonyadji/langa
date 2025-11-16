@@ -1,15 +1,15 @@
 package com.langa.backend.domain.users.usecases;
 
+import com.langa.backend.common.annotations.UseCase;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.users.User;
 import com.langa.backend.domain.users.exceptions.UserException;
 import com.langa.backend.domain.users.repositories.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
 
 import java.util.Objects;
 
-@Component
+@UseCase
 public class RegisterUseCase {
 
     private final UserRepository userRepository;
@@ -29,7 +29,7 @@ public class RegisterUseCase {
             throw new UserException("Password do not match", null, Errors.PASSWORDS_MISMATCH);
         }
 
-        User user = User.createNew(username, passwordEncoder.encode(password));
+        User user = User.createActive(username, passwordEncoder.encode(password));
         userRepository.save(user);
     }
 }
