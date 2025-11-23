@@ -1,5 +1,6 @@
 package com.langa.backend.domain.applications.usecases;
 
+import com.langa.backend.common.annotations.UseCase;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.applications.Application;
 import com.langa.backend.domain.applications.exceptions.ApplicationException;
@@ -8,24 +9,28 @@ import com.langa.backend.domain.applications.repositories.LogEntryRepository;
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
 import com.langa.backend.domain.applications.valueobjects.LogFilter;
 import com.langa.backend.domain.applications.valueobjects.PaginatedResult;
-import org.springframework.stereotype.Component;
+import com.langa.backend.domainexchange.user.UserAccountService;
 
 import java.util.List;
+import java.util.Set;
 
-@Component
+@UseCase
 public class GetLogUseCase {
 
+    public static final String APPLICATION_NOT_FOUND_WITH_ID = "Application not found with id: ";
     private final LogEntryRepository logRepository;
     private final ApplicationRepository applicationRepository;
+    private final UserAccountService userAccountService;
 
-    public GetLogUseCase(LogEntryRepository logRepository, ApplicationRepository applicationRepository) {
+    public GetLogUseCase(LogEntryRepository logRepository, ApplicationRepository applicationRepository, UserAccountService userAccountService) {
         this.logRepository = logRepository;
         this.applicationRepository = applicationRepository;
+        this.userAccountService = userAccountService;
     }
 
     public List<LogEntry> getLogs(String appId) {
         Application app = applicationRepository.findById(appId)
-                .orElseThrow(() -> new ApplicationException("Application not found with id: " + appId, null, Errors.APPLICATION_NOT_FOUND));
+                .orElseThrow(() -> new ApplicationException(APPLICATION_NOT_FOUND_WITH_ID + appId, null, Errors.APPLICATION_NOT_FOUND));
 
         return logRepository.findByAppKeyAndAccountKeyOrderByTimestampDesc(app.getKey(), app.getAccountKey())
                 .stream()
@@ -34,9 +39,10 @@ public class GetLogUseCase {
 
     public List<LogEntry> getLogs(String appId, String username) {
         final Application app = applicationRepository.findById(appId)
-                .orElseThrow(() -> new ApplicationException("Application not found with id: " + appId, null, Errors.APPLICATION_NOT_FOUND));
+                .orElseThrow(() -> new ApplicationException(APPLICATION_NOT_FOUND_WITH_ID + appId, null, Errors.APPLICATION_NOT_FOUND));
 
-        app.checkOwnership(username);
+        Set<String> accountKeys = userAccountService.getAllAccountKeys(username);
+        app.authorizedToAccess(username, accountKeys);
 
         return logRepository.findByAppKeyAndAccountKeyOrderByTimestampDesc(app.getKey(), app.getAccountKey())
                 .stream()
@@ -51,10 +57,10 @@ public class GetLogUseCase {
             int size
     ) {
         final Application app = applicationRepository.findById(appId)
-                .orElseThrow(() -> new ApplicationException("Application not found with id: " + appId, null, Errors.APPLICATION_NOT_FOUND));
+                .orElseThrow(() -> new ApplicationException(APPLICATION_NOT_FOUND_WITH_ID + appId, null, Errors.APPLICATION_NOT_FOUND));
 
-        app.checkOwnership(userEmail);
-
+        Set<String> accountKeys = userAccountService.getAllAccountKeys(userEmail);
+        app.authorizedToAccess(userEmail, accountKeys);
 
         PaginatedResult<LogEntry> pageResult = logRepository.findFiltered(app.getKey(), app.getAccountKey(), filter, page, size);
 
