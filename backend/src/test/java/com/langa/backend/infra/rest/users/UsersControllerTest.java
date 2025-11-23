@@ -1,8 +1,9 @@
 package com.langa.backend.infra.rest.users;
 
-import com.langa.backend.domain.users.usecases.GetUserUseCase;
+import com.langa.backend.domain.users.usecases.getinfo.GetUserUseCase;
 import com.langa.backend.domain.users.valueobjects.UserInfo;
-import com.langa.backend.infra.rest.users.dto.UserDto;
+import com.langa.backend.infra.adapters.in.rest.users.UsersController;
+import com.langa.backend.infra.adapters.in.rest.users.dto.UserDto;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

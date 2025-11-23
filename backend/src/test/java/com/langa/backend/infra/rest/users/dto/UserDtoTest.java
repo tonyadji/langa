@@ -1,6 +1,7 @@
 package com.langa.backend.infra.rest.users.dto;
 
 import com.langa.backend.domain.users.valueobjects.UserInfo;
+import com.langa.backend.infra.adapters.in.rest.users.dto.UserDto;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

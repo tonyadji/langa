@@ -5,9 +5,10 @@ import com.langa.backend.domain.applications.usecases.GetApplicationsUseCase;
 import com.langa.backend.domain.applications.usecases.GetLogUseCase;
 import com.langa.backend.domain.applications.valueobjects.ApplicationInfo;
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
-import com.langa.backend.infra.rest.applications.dto.ApplicationDto;
-import com.langa.backend.infra.rest.applications.dto.CreateApplicationRequestDto;
-import com.langa.backend.infra.rest.common.dto.LogDto;
+import com.langa.backend.infra.adapters.in.rest.applications.ApplicationController;
+import com.langa.backend.infra.adapters.in.rest.applications.dto.ApplicationDto;
+import com.langa.backend.infra.adapters.in.rest.applications.dto.CreateApplicationRequestDto;
+import com.langa.backend.infra.adapters.in.rest.common.dto.LogDto;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -82,13 +84,13 @@ class ApplicationControllerTest {
                 .setAccountKey("accountKey1")
                 .setLevel("INFO")
                 .setMessage("message1")
-                .setTimestamp(LocalDateTime.now());
+                .setTimestamp(Instant.now());
         LogEntry log2 = new LogEntry()
                 .setAppKey("appKey1")
                 .setAccountKey("accountKey1")
                 .setLevel("ERROR")
                 .setMessage("message2")
-                .setTimestamp(LocalDateTime.now());
+                .setTimestamp(Instant.now());
 
         when(getLogUseCase.getLogs("app1", "user@example.com")).thenReturn(List.of(log1, log2));
 

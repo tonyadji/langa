@@ -16,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -95,9 +96,9 @@ class GetLogUseCaseTest {
         String userEmail = "owner@example.com";
 
         LogEntry log1 = new LogEntry().setMessage("message1")
-                .setLevel("INFO").setLoggerName("logger1").setTimestamp(LocalDateTime.now());
+                .setLevel("INFO").setLoggerName("logger1").setTimestamp(Instant.now());
         LogEntry log2 = new LogEntry().setMessage("message2")
-                .setLevel("ERROR").setLoggerName("logger2").setTimestamp(LocalDateTime.now());
+                .setLevel("ERROR").setLoggerName("logger2").setTimestamp(Instant.now());
 
         PaginatedResult<LogEntry> paginatedResult = new PaginatedResult<>(
                 List.of(log1, log2),

@@ -27,6 +27,6 @@ public record FirstConnectionMailEvent(
     }
 
     public static FirstConnectionMailEvent of(User user) {
-        return new FirstConnectionMailEvent(user.getAccountKey(), user.getEmail(), user.getFirstConnectionToken());
+        return new FirstConnectionMailEvent(user.getAccountKey().value(), user.getUserId().email(), user.getFirstConnectionToken().token());
     }
 }

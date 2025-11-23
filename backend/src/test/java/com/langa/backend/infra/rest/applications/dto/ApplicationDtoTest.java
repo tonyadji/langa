@@ -1,6 +1,7 @@
 package com.langa.backend.infra.rest.applications.dto;
 
 import com.langa.backend.domain.applications.valueobjects.ApplicationInfo;
+import com.langa.backend.infra.adapters.in.rest.applications.dto.ApplicationDto;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

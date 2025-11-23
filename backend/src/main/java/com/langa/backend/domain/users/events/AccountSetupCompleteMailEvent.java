@@ -26,6 +26,6 @@ public record AccountSetupCompleteMailEvent(
     }
 
     public static AccountSetupCompleteMailEvent of(User user) {
-        return new AccountSetupCompleteMailEvent(user.getId(), user.getEmail());
+        return new AccountSetupCompleteMailEvent(user.getUserId().id(), user.getUserId().email());
     }
 }

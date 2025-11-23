@@ -1,6 +1,7 @@
 package com.langa.backend.infra.rest.users.dto;
 
-import com.langa.backend.domain.users.valueobjects.AuthRequest;
+import com.langa.backend.domain.users.valueobjects.LoginCommand;
+import com.langa.backend.infra.adapters.in.rest.users.dto.LoginRequestDto;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -11,13 +12,13 @@ class LoginRequestDtoTest {
     private static final String PASSWORD = "secret-password";
 
     @Test
-    void toAuthRequest_shouldMapCorrectly() {
+    void toCommand_shouldMapCorrectly() {
         LoginRequestDto dto = new LoginRequestDto(EMAIL, PASSWORD);
 
-        AuthRequest authRequest = dto.toAuthRequest();
+        LoginCommand loginCommand = dto.toCommand();
 
-        assertThat(authRequest.username()).isEqualTo("test@example.com");
-        assertThat(authRequest.password()).isEqualTo("secret-password");
+        assertThat(loginCommand.username()).isEqualTo("test@example.com");
+        assertThat(loginCommand.password()).isEqualTo("secret-password");
     }
 
     @Test

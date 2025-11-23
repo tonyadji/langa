@@ -2,6 +2,8 @@ package com.langa.backend.infra.rest.advice;
 
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.common.model.errors.GenericException;
+import com.langa.backend.infra.adapters.in.rest.advice.ApiError;
+import com.langa.backend.infra.adapters.in.rest.advice.ControllerAdvice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;

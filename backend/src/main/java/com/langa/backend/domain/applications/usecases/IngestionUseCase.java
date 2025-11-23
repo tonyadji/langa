@@ -15,9 +15,9 @@ import com.langa.backend.domain.applications.services.IngestionSizeCalculator;
 import com.langa.backend.domain.applications.valueobjects.IngestionType;
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
 import com.langa.backend.domain.applications.valueobjects.MetricEntry;
-import com.langa.backend.infra.rest.ingest.dto.IngestionRequestDto;
-import com.langa.backend.infra.rest.ingest.dto.LogIngestionRequestDto;
-import com.langa.backend.infra.rest.ingest.dto.MetricIngestionRequestDto;
+import com.langa.backend.infra.adapters.in.rest.ingest.dto.IngestionRequestDto;
+import com.langa.backend.infra.adapters.in.rest.ingest.dto.LogIngestionRequestDto;
+import com.langa.backend.infra.adapters.in.rest.ingest.dto.MetricIngestionRequestDto;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;

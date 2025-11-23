@@ -23,7 +23,7 @@ public class JwtUtils implements TokenProvider {
     @Override
     public String generateToken(User user) {
         return Jwts.builder()
-                .setSubject(user.getEmail())
+                .setSubject(user.getUserId().email())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtConfig.getExpirationMs()))
                 .setHeaderParam("kid", jwtConfig.getKid())

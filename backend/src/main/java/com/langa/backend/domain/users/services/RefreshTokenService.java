@@ -1,8 +1,8 @@
 package com.langa.backend.domain.users.services;
 
 import com.langa.backend.common.model.errors.Errors;
-import com.langa.backend.common.model.errors.GenericException;
 import com.langa.backend.domain.users.RefreshToken;
+import com.langa.backend.domain.users.exceptions.TokenException;
 import com.langa.backend.domain.users.repositories.RefreshTokenRepository;
 
 import java.security.SecureRandom;
@@ -30,9 +30,9 @@ public class RefreshTokenService {
 
     public String validateAndGetUserEmail(String token) {
         RefreshToken rt = repository.findByToken(token).orElseThrow(() ->
-                new GenericException("Refresh token not found", null, Errors.INVALID_CREDENTIALS));
+                new TokenException("Refresh token not found", null, Errors.INVALID_CREDENTIALS));
         if (rt.isRevoked() || rt.isExpired()) {
-            throw new GenericException("Refresh token invalid or expired", null, Errors.INVALID_CREDENTIALS);
+            throw new TokenException("Refresh token invalid or expired", null, Errors.INVALID_CREDENTIALS);
         }
         return rt.getUserEmail();
     }

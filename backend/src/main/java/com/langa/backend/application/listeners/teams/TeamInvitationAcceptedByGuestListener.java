@@ -37,9 +37,9 @@ public class TeamInvitationAcceptedByGuestListener {
         log.debug("Event received: {}", teamInvitationAcceptedByGuestEvent);
         try {
             User user = userService.findOrCreateUserByEmail(teamInvitationAcceptedByGuestEvent.guest());
-            Team team = teamMemberShipService.addMemberToTeam(teamInvitationAcceptedByGuestEvent.team(), user.getEmail());
+            Team team = teamMemberShipService.addMemberToTeam(teamInvitationAcceptedByGuestEvent.team(), user.getUserId().email());
 
-            outboxEventService.storeOutboxEvent(InvitationAcceptedMailEvent.of(team, user.getEmail()));
+            outboxEventService.storeOutboxEvent(InvitationAcceptedMailEvent.of(team, user.getUserId().email()));
             outboxEventService.storeOutboxEvent(FirstConnectionMailEvent.of(user));
         } catch (Exception e) {
             log.error("Error handling event: {}", teamInvitationAcceptedByGuestEvent, e);

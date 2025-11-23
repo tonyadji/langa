@@ -1,7 +1,7 @@
 package com.langa.backend.infra.rest.applications.dto;
 
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
-import com.langa.backend.infra.rest.common.dto.LogDto;
+import com.langa.backend.infra.adapters.in.rest.common.dto.LogDto;
 import org.junit.jupiter.api.Test;
 
 import jakarta.validation.Validation;
@@ -9,6 +9,7 @@ import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import jakarta.validation.ConstraintViolation;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -26,15 +27,15 @@ class LogDtoTest {
 
     @Test
     void toLogEntry_shouldMapCorrectly() {
-        String now = LocalDateTime.now().toString();
-        LogDto dto = new LogDto("Message", "INFO", "MyLogger", now);
+        String now = Instant.now().toString();
+        LogDto dto = new LogDto("Message", "INFO", "MyLogger", now,null, null, null);
 
         LogEntry entry = dto.toLogEntry();
 
         assertThat(entry.getMessage()).isEqualTo("Message");
         assertThat(entry.getLevel()).isEqualTo("INFO");
         assertThat(entry.getLoggerName()).isEqualTo("MyLogger");
-        assertThat(entry.getTimestamp()).isEqualTo(LocalDateTime.parse(now));
+        assertThat(entry.getTimestamp()).isEqualTo(Instant.parse(now));
     }
 
     @Test
@@ -43,7 +44,7 @@ class LogDtoTest {
                 .setMessage("Hello")
                 .setLevel("DEBUG")
                 .setLoggerName("TestLogger")
-                .setTimestamp(LocalDateTime.of(2024, 1, 1, 12, 0));
+                .setTimestamp(Instant.parse(LocalDateTime.of(2024, 1, 1, 12, 0).toString()));
 
         LogDto dto = LogDto.of(entry);
 
@@ -55,7 +56,7 @@ class LogDtoTest {
 
     @Test
     void toLogEntry_shouldThrow_whenTimestampIsInvalid() {
-        LogDto dto = new LogDto("Message", "ERROR", "MyLogger", "invalid-timestamp");
+        LogDto dto = new LogDto("Message", "ERROR", "MyLogger", "invalid-timestamp",null, null, null);
 
         assertThatThrownBy(dto::toLogEntry)
                 .isInstanceOf(RuntimeException.class);
@@ -63,7 +64,7 @@ class LogDtoTest {
 
     @Test
     void validation_shouldFail_whenFieldsAreBlankOrTooLong() {
-        LogDto dto = new LogDto("", "", "", ""); // all blank
+        LogDto dto = new LogDto("", "", "", "", null, null, null); // all blank
 
         Set<ConstraintViolation<LogDto>> violations = validator.validate(dto);
 

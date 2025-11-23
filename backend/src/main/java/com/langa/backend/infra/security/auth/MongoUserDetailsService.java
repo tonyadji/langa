@@ -24,7 +24,7 @@ public class MongoUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
+                user.getUserId().email(),
                 user.getPassword(),
                 Collections.emptyList());
     }

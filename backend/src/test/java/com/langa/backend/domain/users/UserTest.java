@@ -13,7 +13,7 @@ class UserTest {
 
         User user = User.createActive(email, password);
 
-        assertEquals(email, user.getEmail());
+        assertEquals(email, user.getUserId().email());
         assertEquals(password, user.getPassword());
         assertNotNull(user.getAccountKey(), "Account key should be generated");
     }
