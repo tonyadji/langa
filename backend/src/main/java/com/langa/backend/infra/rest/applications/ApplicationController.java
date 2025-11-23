@@ -89,7 +89,10 @@ public class ApplicationController {
                         log.getMessage(),
                         log.getLevel(),
                         log.getLoggerName(),
-                        log.getTimestamp().toString()
+                        log.getTimestamp().toString(),
+                        log.getThreadName(),
+                        log.getStackTrace(),
+                        log.getMdc()
                 ))
                 .toList();
 
