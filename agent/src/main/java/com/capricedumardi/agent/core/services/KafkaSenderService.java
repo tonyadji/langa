@@ -17,6 +17,7 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -26,13 +27,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class KafkaSenderService implements SenderService {
-    // Configuration constants
-    private static final int DEFAULT_TIMEOUT_MS = 30000; // 30 seconds
-    private static final int PRODUCER_CLOSE_TIMEOUT_SECONDS = 10;
-
-    // Circuit breaker configuration
-    private static final int CIRCUIT_BREAKER_THRESHOLD = 5;
-    private static final long CIRCUIT_BREAKER_TIMEOUT_MS = 30000; // 30 seconds
 
     // Send mode configuration (can be made configurable via env var)
     private static final boolean ASYNC_SEND = getBooleanProperty("LANGA_KAFKA_ASYNC", true);
@@ -50,7 +44,7 @@ public class KafkaSenderService implements SenderService {
     private final AtomicLong totalFailed = new AtomicLong(0);
     private final AtomicLong totalAsyncFailed = new AtomicLong(0);
 
-    private final AgentConfig agentConfig;
+    private static final AgentConfig agentConfig = ConfigLoader.getConfigInstance();
     /**
      * Constructor for KafkaSenderService
      *
@@ -62,7 +56,6 @@ public class KafkaSenderService implements SenderService {
         CredentialsHelper credentialsHelper) {
         this.topic = topic;
         this.credentialsHelper = credentialsHelper;
-        this.agentConfig = ConfigLoader.getConfigInstance();
         this.gson = new Gson();
         this.circuitBreaker = new CircuitBreaker("Kafka[" + topic + "]",
                 agentConfig.getCircuitBreakerFailureThreshold(),
@@ -265,7 +258,7 @@ public class KafkaSenderService implements SenderService {
                 producer.flush();
 
                 System.out.println("Closing Kafka producer...");
-                producer.close(Duration.ofSeconds(PRODUCER_CLOSE_TIMEOUT_SECONDS));
+                producer.close(Duration.ofSeconds(agentConfig.getKafkaProducerCloseTimeoutSeconds()));
 
                 System.out.println("KafkaSenderService closed successfully");
 
@@ -332,6 +325,6 @@ public class KafkaSenderService implements SenderService {
         if (value != null) {
             return Boolean.parseBoolean(value);
         }
-        return defaultValue;
+        return Optional.ofNullable(agentConfig).map(AgentConfig::isKafkaAsyncSend).orElse(defaultValue);
     }
 }

@@ -6,8 +6,8 @@ public class EnvironmentUtils {
     }
 
     public static IngestionParamsResolver getIngestionParamsResolver() {
-        String ingestionUrl = getEnvOrProperty("LANGA_URL", "langa.url", null);
-        String secret = getEnvOrProperty("LANGA_SECRET", "langa.secret", null);
+        String ingestionUrl = getEnvOrProperty("LANGA_INGESTION_URL", "langa.ingestion.url", null);
+        String secret = getEnvOrProperty("LANGA_INGESTION_SECRET", "langa.ingestion.secret", null);
         return new IngestionParamsResolver(ingestionUrl, secret);
     }
 

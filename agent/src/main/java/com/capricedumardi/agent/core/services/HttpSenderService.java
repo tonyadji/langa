@@ -26,22 +26,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPOutputStream;
 
 public class HttpSenderService implements SenderService {
-    // Configuration constants
-    private static final int MAX_CONNECTIONS_TOTAL = 100;
-    private static final int MAX_CONNECTIONS_PER_ROUTE = 20;
-    private static final int CONNECT_TIMEOUT_MILLIS = 5000;      // 5 seconds
-    private static final int SOCKET_TIMEOUT_MILLIS = 10000;      // 10 seconds
-    private static final int CONNECTION_REQUEST_TIMEOUT = 30000; // 30 seconds
-    private static final int COMPRESSION_THRESHOLD_BYTES = 1024; // 1 KB
-
-    // Retry configuration
-    private static final int MAX_RETRY_ATTEMPTS = 3;
-    private static final int BASE_RETRY_DELAY_MS = 100;
-    private static final int MAX_RETRY_DELAY_MS = 5000;
-
-    // Circuit breaker configuration
-    private static final int CIRCUIT_BREAKER_THRESHOLD = 5;
-    private static final long CIRCUIT_BREAKER_TIMEOUT_MS = 30000; // 30 seconds
 
     // Instance fields
     private final String url;

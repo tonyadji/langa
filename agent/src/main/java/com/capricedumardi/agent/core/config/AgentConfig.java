@@ -7,6 +7,9 @@ package com.capricedumardi.agent.core.config;
  * Immutable once loaded - all fields are final.
  */
 public class AgentConfig {
+    // ========== Buffer Configuration ==========
+    private final String ingestionUrl;
+    private final String secret;
 
     // ========== Buffer Configuration ==========
 
@@ -127,6 +130,10 @@ public class AgentConfig {
      * Package-private constructor - use ConfigLoader.getConfigInstance()
      */
     AgentConfig(Builder builder) {
+        // Backend
+        this.ingestionUrl = builder.ingestionUrl;
+        this.secret = builder.secret;
+
         // Buffer
         this.batchSize = builder.batchSize;
         this.flushIntervalSeconds = builder.flushIntervalSeconds;
@@ -176,6 +183,10 @@ public class AgentConfig {
     }
 
     // ========== Getters ==========
+
+    // Backend
+    public String getIngestionUrl() { return ingestionUrl; }
+    public String getSecret() { return secret; }
 
     // Buffer
     public int getBatchSize() { return batchSize; }
@@ -230,6 +241,10 @@ public class AgentConfig {
      * Builder for AgentConfig with default values.
      */
     public static class Builder {
+        // Backend defaults
+        private String ingestionUrl = "https://api.langa.capricedumardi.com/ingest";
+        private String secret = "";
+
         // Buffer defaults
         private int batchSize = 50;
         private int flushIntervalSeconds = 5;

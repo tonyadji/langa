@@ -31,17 +31,12 @@ public abstract class AbstractBuffer<T> {
     private final AtomicBoolean flushScheduled = new AtomicBoolean(false);
 
     protected final AtomicInteger consecutiveSendingErrors = new AtomicInteger(0);
-    private static final int MAX_RETRY_DELAY_SECONDS = 180;
-    private static final int MAX_CONSECUTIVE_ERRORS = 10;
 
     private final AtomicLong totalAdded = new AtomicLong(0);
     private final AtomicLong totalFlushed = new AtomicLong(0);
     private final AtomicLong totalDropped = new AtomicLong(0);
     private final AtomicLong totalRetried = new AtomicLong(0);
     private final AtomicLong totalSendFailures = new AtomicLong(0);
-
-    private static final int DEFAULT_MAIN_QUEUE_CAPACITY = 10000;
-    private static final int DEFAULT_RETRY_QUEUE_CAPACITY = 5000;
 
     private static final AgentConfig agentConfig = ConfigLoader.getConfigInstance();
 
