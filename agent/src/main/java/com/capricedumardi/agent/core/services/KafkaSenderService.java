@@ -1,10 +1,19 @@
 package com.capricedumardi.agent.core.services;
 
-import com.google.gson.Gson;
+import com.capricedumardi.agent.core.config.AgentConfig;
+import com.capricedumardi.agent.core.config.ConfigLoader;
 import com.capricedumardi.agent.core.helpers.CredentialsHelper;
 import com.capricedumardi.agent.core.model.LogRequestDto;
 import com.capricedumardi.agent.core.model.MetricRequestDto;
 import com.capricedumardi.agent.core.model.SendableRequestDto;
+import com.google.gson.Gson;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.serialization.StringSerializer;
+
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
@@ -15,15 +24,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.kafka.common.header.Headers;
-import org.apache.kafka.common.serialization.StringSerializer;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class KafkaSenderService implements SenderService {
     // Configuration constants
@@ -50,7 +50,7 @@ public class KafkaSenderService implements SenderService {
     private final AtomicLong totalFailed = new AtomicLong(0);
     private final AtomicLong totalAsyncFailed = new AtomicLong(0);
 
-
+    private final AgentConfig agentConfig;
     /**
      * Constructor for KafkaSenderService
      *
@@ -62,12 +62,12 @@ public class KafkaSenderService implements SenderService {
         CredentialsHelper credentialsHelper) {
         this.topic = topic;
         this.credentialsHelper = credentialsHelper;
+        this.agentConfig = ConfigLoader.getConfigInstance();
         this.gson = new Gson();
         this.circuitBreaker = new CircuitBreaker("Kafka[" + topic + "]",
-                CIRCUIT_BREAKER_THRESHOLD,
-                CIRCUIT_BREAKER_TIMEOUT_MS);
+                agentConfig.getCircuitBreakerFailureThreshold(),
+                agentConfig.getCircuitBreakerOpenDurationMillis());
 
-        // Configure producer properties
         Properties props = new Properties();
 
         // Basic configuration
@@ -76,56 +76,50 @@ public class KafkaSenderService implements SenderService {
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
         // Reliability configuration
-        props.put(ProducerConfig.ACKS_CONFIG, "all"); // Wait for all replicas
-        props.put(ProducerConfig.RETRIES_CONFIG, 3); // Retry up to 3 times
-        props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
+        props.put(ProducerConfig.ACKS_CONFIG, agentConfig.getKafkaAcks()); // Wait for all replicas
+        props.put(ProducerConfig.RETRIES_CONFIG, agentConfig.getKafkaRetries()); // Retry up to 3 times
+        props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, agentConfig.getKafkaMaxInFlightRequests());
 
         // Performance configuration
-        props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy"); // Compress messages
-        props.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384); // 16KB batches
-        props.put(ProducerConfig.LINGER_MS_CONFIG, 10); // Wait 10ms for batching
-        props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432); // 32MB buffer
+        props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, agentConfig.getKafkaCompressionType()); // Compress messages
+        props.put(ProducerConfig.BATCH_SIZE_CONFIG, agentConfig.getKafkaBatchSizeBytes()); // 16KB batches
+        props.put(ProducerConfig.LINGER_MS_CONFIG, agentConfig.getKafkaLingerMillis()); // Wait 10ms for batching
+        props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, agentConfig.getKafkaBufferMemoryBytes()); // 32MB buffer
 
         // Timeout configuration
-        props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, DEFAULT_TIMEOUT_MS);
-        props.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, DEFAULT_TIMEOUT_MS * 4); // 2 minutes
+        props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, agentConfig.getKafkaRequestTimeoutMillis());
+        props.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, agentConfig.getKafkaRequestTimeoutMillis() * 4); // 2 minutes
 
         // Idempotence for exactly-once semantics
-        props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+        props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, agentConfig.isKafkaEnableIdempotence());
 
         // Create producer
         this.producer = new KafkaProducer<>(props);
 
         System.out.println("KafkaSenderService initialized:");
-        System.out.println("  Bootstrap: " + bootstrapServer);
-        System.out.println("  Topic: " + topic);
-        System.out.println("  Mode: " + (ASYNC_SEND ? "ASYNC" : "SYNC"));
+        System.out.println("Bootstrap: " + bootstrapServer);
+        System.out.println("Topic: " + topic);
+        System.out.println("Mode: " + (agentConfig.isKafkaAsyncSend() ? "ASYNC" : "SYNC"));
     }
 
     @Override
     public boolean send(SendableRequestDto payload) {
-        // Check if closed
         if (closed.get()) {
             return false;
         }
 
-        // Check circuit breaker
         if (!circuitBreaker.allowRequest()) {
-            return false; // Circuit open - don't even try
+            return false;
         }
 
         try {
-            // Serialize payload
             String key = generateKey(payload);
             String json = gson.toJson(payload);
 
-            // Create producer record
             ProducerRecord<String, String> record = new ProducerRecord<>(topic, key, json);
 
-            // Add authentication headers
             addCredentialHeaders(record.headers());
 
-            // Send based on mode
             boolean success;
             if (ASYNC_SEND) {
                 success = sendAsync(record);
@@ -133,7 +127,6 @@ public class KafkaSenderService implements SenderService {
                 success = sendSync(record);
             }
 
-            // Update circuit breaker and stats
             if (success) {
                 circuitBreaker.recordSuccess();
                 totalSent.incrementAndGet();
@@ -182,11 +175,11 @@ public class KafkaSenderService implements SenderService {
                 }
             });
 
-            boolean completed = latch.await(DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            boolean completed = latch.await(agentConfig.getKafkaRequestTimeoutMillis(), TimeUnit.MILLISECONDS);
 
             if (!completed) {
                 System.err.println("KafkaSenderService: Async send timeout after " +
-                        DEFAULT_TIMEOUT_MS + "ms");
+                        agentConfig.getKafkaRequestTimeoutMillis() + "ms");
                 return false;
             }
 
@@ -210,11 +203,11 @@ public class KafkaSenderService implements SenderService {
      */
     private boolean sendSync(ProducerRecord<String, String> record) {
         try {
-            RecordMetadata metadata = producer.send(record).get(DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            RecordMetadata metadata = producer.send(record).get(agentConfig.getKafkaRequestTimeoutMillis(), TimeUnit.MILLISECONDS);
             return true;
 
         } catch (TimeoutException e) {
-            System.err.println("KafkaSenderService: Sync send timeout after " + DEFAULT_TIMEOUT_MS + "ms");
+            System.err.println("KafkaSenderService: Sync send timeout after " + agentConfig.getKafkaRequestTimeoutMillis() + "ms");
             return false;
 
         } catch (ExecutionException e) {

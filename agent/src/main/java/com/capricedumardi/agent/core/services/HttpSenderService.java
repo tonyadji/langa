@@ -1,8 +1,10 @@
 package com.capricedumardi.agent.core.services;
 
-import com.google.gson.Gson;
+import com.capricedumardi.agent.core.config.AgentConfig;
+import com.capricedumardi.agent.core.config.ConfigLoader;
 import com.capricedumardi.agent.core.helpers.CredentialsHelper;
 import com.capricedumardi.agent.core.model.SendableRequestDto;
+import com.google.gson.Gson;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.config.RequestConfig;
@@ -10,14 +12,10 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicHeader;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -58,23 +56,25 @@ public class HttpSenderService implements SenderService {
     private final AtomicLong totalFailed = new AtomicLong(0);
     private final AtomicLong totalCompressed = new AtomicLong(0);
 
+    private final AgentConfig agentConfig;
 
     public HttpSenderService(String url, CredentialsHelper credentialsHelper) {
         this.url = url;
         this.credentialsHelper = credentialsHelper;
+        agentConfig = ConfigLoader.getConfigInstance();
         this.gson = new Gson();
         this.circuitBreaker = new CircuitBreaker("HTTP[" + url + "]",
-                CIRCUIT_BREAKER_THRESHOLD,
-                CIRCUIT_BREAKER_TIMEOUT_MS);
+                agentConfig.getCircuitBreakerFailureThreshold(),
+                agentConfig.getCircuitBreakerOpenDurationMillis());
 
         PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
-        connectionManager.setMaxTotal(MAX_CONNECTIONS_TOTAL);
-        connectionManager.setDefaultMaxPerRoute(MAX_CONNECTIONS_PER_ROUTE);
+        connectionManager.setMaxTotal(agentConfig.getHttpMaxConnectionsTotal());
+        connectionManager.setDefaultMaxPerRoute(agentConfig.getHttpMaxConnectionsPerRoute());
 
         RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(CONNECT_TIMEOUT_MILLIS)
-                .setSocketTimeout(SOCKET_TIMEOUT_MILLIS)
-                .setConnectionRequestTimeout(CONNECTION_REQUEST_TIMEOUT)
+                .setConnectTimeout(agentConfig.getHttpConnectTimeoutMillis())
+                .setSocketTimeout(agentConfig.getHttpSocketTimeoutMillis())
+                .setConnectionRequestTimeout(agentConfig.getHttpConnectionRequestTimeoutMillis())
                 .build();
 
         this.httpClient = HttpClients.custom()
@@ -120,8 +120,8 @@ public class HttpSenderService implements SenderService {
     private boolean sendWithRetry(SendableRequestDto payload) {
         int attempt = 0;
         Exception lastException = null;
-
-        while (attempt < MAX_RETRY_ATTEMPTS) {
+        final int maxRetryAttempts = agentConfig.getHttpMaxRetryAttempts();
+        while (attempt < maxRetryAttempts) {
             try {
                 return sendOnce(payload);
 
@@ -129,10 +129,10 @@ public class HttpSenderService implements SenderService {
                 lastException = e;
                 attempt++;
 
-                if (attempt < MAX_RETRY_ATTEMPTS) {
+                if (attempt < maxRetryAttempts) {
                     int delay = calculateRetryDelay(attempt);
                     System.err.println("HttpSenderService: Send failed (attempt " + attempt +
-                            "/" + MAX_RETRY_ATTEMPTS + "), retrying in " + delay + "ms: " +
+                            "/" + maxRetryAttempts + "), retrying in " + delay + "ms: " +
                             e.getMessage());
 
                     try {
@@ -150,7 +150,7 @@ public class HttpSenderService implements SenderService {
             }
         }
 
-        System.err.println("HttpSenderService: All " + MAX_RETRY_ATTEMPTS +
+        System.err.println("HttpSenderService: All " + maxRetryAttempts +
                 " retry attempts failed. Last error: " +
                 (lastException != null ? lastException.getMessage() : "unknown"));
         return false;
@@ -170,7 +170,7 @@ public class HttpSenderService implements SenderService {
         addCredentialHeaders(httpPost);
 
         HttpEntity entity;
-        if (json.length() > COMPRESSION_THRESHOLD_BYTES) {
+        if (json.length() > agentConfig.getHttpCompressionThresholdBytes()) {
             entity = createCompressedEntity(json);
             httpPost.addHeader("Content-Encoding", "gzip");
             totalCompressed.incrementAndGet();
@@ -247,11 +247,11 @@ public class HttpSenderService implements SenderService {
      * Calculate retry delay with exponential backoff and jitter.
      */
     private int calculateRetryDelay(int attempt) {
-        int delay = BASE_RETRY_DELAY_MS * (int) Math.pow(2, attempt - 1);
+        int delay = agentConfig.getHttpBaseRetryDelayMillis() * (int) Math.pow(2, attempt);
 
-        int jitter = (int) (delay * 0.25 * Math.random());
+        int jitter = (int) (delay * 0.5 * Math.random());
 
-        return Math.min(delay + jitter, MAX_RETRY_DELAY_MS);
+        return Math.min(delay + jitter, agentConfig.getHttpMaxRetryDelayMillis());
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.capricedumardi.agent.core.buffers;
 
+import com.capricedumardi.agent.core.config.AgentConfig;
+import com.capricedumardi.agent.core.config.ConfigLoader;
 import com.capricedumardi.agent.core.model.*;
 import com.capricedumardi.agent.core.services.SenderService;
 
@@ -23,6 +25,8 @@ public class BuffersFactory {
 
     private static final int SHUTDOWN_TIMEOUT_SECONDS = 30;
     private static final int FORCED_SHUTDOWN_TIMEOUT_SECONDS = 10;
+
+    private static final AgentConfig  agentConfig = ConfigLoader.getConfigInstance();
 
     private BuffersFactory() {
     }

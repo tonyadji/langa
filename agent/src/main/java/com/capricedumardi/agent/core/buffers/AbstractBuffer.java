@@ -1,5 +1,7 @@
 package com.capricedumardi.agent.core.buffers;
 
+import com.capricedumardi.agent.core.config.AgentConfig;
+import com.capricedumardi.agent.core.config.ConfigLoader;
 import com.capricedumardi.agent.core.model.SendableRequestDto;
 import com.capricedumardi.agent.core.services.SenderService;
 import org.apache.logging.log4j.LogManager;
@@ -40,6 +42,8 @@ public abstract class AbstractBuffer<T> {
 
     private static final int DEFAULT_MAIN_QUEUE_CAPACITY = 10000;
     private static final int DEFAULT_RETRY_QUEUE_CAPACITY = 5000;
+
+    private static final AgentConfig agentConfig = ConfigLoader.getConfigInstance();
 
      AbstractBuffer(SenderService senderService, String appKey, String accountKey,
                           int batchSize, int flushIntervalSeconds, String bufferName) {
@@ -175,13 +179,13 @@ public abstract class AbstractBuffer<T> {
     }
 
     private void scheduleRetryFlush() {
-        int cappedErrors = Math.min(consecutiveSendingErrors.get(), MAX_CONSECUTIVE_ERRORS);
+        int cappedErrors = Math.min(consecutiveSendingErrors.get(), agentConfig.getMaxConsecutiveErrors());
 
         int baseDelay = (int) Math.pow(2, cappedErrors);
 
         int jitter = ThreadLocalRandom.current().nextInt(0, baseDelay / 2 + 1);
 
-        int retryDelay = Math.min(baseDelay + jitter, MAX_RETRY_DELAY_SECONDS);
+        int retryDelay = Math.min(baseDelay + jitter, agentConfig.getMaxRetryDelaySeconds());
 
         System.out.println(bufferName + " scheduling retry in " + retryDelay +
                 " seconds (consecutive errors: " + consecutiveSendingErrors.get() + ")");
@@ -214,7 +218,7 @@ public abstract class AbstractBuffer<T> {
                 System.err.println("Invalid LANGA_MAIN_QUEUE_CAPACITY: " + envVar);
             }
         }
-        return DEFAULT_MAIN_QUEUE_CAPACITY;
+        return agentConfig.getMainQueueCapacity();
     }
 
     protected int getRetryQueueCapacity() {
@@ -226,7 +230,7 @@ public abstract class AbstractBuffer<T> {
                 System.err.println("Invalid LANGA_RETRY_QUEUE_CAPACITY: " + envVar);
             }
         }
-        return DEFAULT_RETRY_QUEUE_CAPACITY;
+        return agentConfig.getRetryQueueCapacity();
     }
 
     protected abstract SendableRequestDto mapToSendableRequest(java.util.List<T> entries);
