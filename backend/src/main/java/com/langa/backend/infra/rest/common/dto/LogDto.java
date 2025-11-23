@@ -26,7 +26,10 @@ public record LogDto(
                     .setMessage(message)
                     .setLevel(level)
                     .setLoggerName(loggerName)
-                    .setTimestamp(Instant.parse(timestamp));
+                    .setTimestamp(Instant.parse(timestamp))
+                    .setThreadName(threadName)
+                    .setStackTrace(stackTrace)
+                    .setMdc(mdc);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
