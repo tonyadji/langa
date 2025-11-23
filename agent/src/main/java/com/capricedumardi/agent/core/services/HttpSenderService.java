@@ -149,7 +149,7 @@ public class HttpSenderService implements SenderService {
         addCredentialHeaders(httpPost);
 
         HttpEntity entity;
-        if (json.length() > agentConfig.getHttpCompressionThresholdBytes()) {
+        if (agentConfig.isHttpCompressionEnabled() && json.length() > agentConfig.getHttpCompressionThresholdBytes()) {
             entity = createCompressedEntity(json);
             httpPost.addHeader("Content-Encoding", "gzip");
             totalCompressed.incrementAndGet();

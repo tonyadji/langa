@@ -99,6 +99,7 @@ public class ConfigLoader {
         builder.httpConnectTimeoutMillis(getIntProperty("langa.http.connect.timeout.millis", fileProps, 5000));
         builder.httpSocketTimeoutMillis(getIntProperty("langa.http.socket.timeout.millis", fileProps, 10000));
         builder.httpConnectionRequestTimeoutMillis(getIntProperty("langa.http.connection.request.timeout.millis", fileProps, 30000));
+        builder.httpCompressionEnabled(getBooleanProperty("langa.http.compression.enabled", fileProps, false));
         builder.httpCompressionThresholdBytes(getIntProperty("langa.http.compression.threshold.bytes", fileProps, 1024));
         builder.httpMaxRetryAttempts(getIntProperty("langa.http.max.retry.attempts", fileProps, 3));
         builder.httpBaseRetryDelayMillis(getIntProperty("langa.http.base.retry.delay.millis", fileProps, 100));

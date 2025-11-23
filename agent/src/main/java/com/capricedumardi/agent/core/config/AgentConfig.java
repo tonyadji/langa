@@ -50,6 +50,9 @@ public class AgentConfig {
     /** HTTP connection request timeout in milliseconds */
     private final int httpConnectionRequestTimeoutMillis;
 
+    /** Wether or not the HTTP request should be compressed */
+    private final boolean httpCompressionEnabled;
+
     /** Threshold in bytes for HTTP compression (compress if payload > this) */
     private final int httpCompressionThresholdBytes;
 
@@ -150,6 +153,7 @@ public class AgentConfig {
         this.httpConnectTimeoutMillis = builder.httpConnectTimeoutMillis;
         this.httpSocketTimeoutMillis = builder.httpSocketTimeoutMillis;
         this.httpConnectionRequestTimeoutMillis = builder.httpConnectionRequestTimeoutMillis;
+        this.httpCompressionEnabled = builder.httpCompressionEnabled;
         this.httpCompressionThresholdBytes = builder.httpCompressionThresholdBytes;
         this.httpMaxRetryAttempts = builder.httpMaxRetryAttempts;
         this.httpBaseRetryDelayMillis = builder.httpBaseRetryDelayMillis;
@@ -204,6 +208,7 @@ public class AgentConfig {
     public int getHttpConnectTimeoutMillis() { return httpConnectTimeoutMillis; }
     public int getHttpSocketTimeoutMillis() { return httpSocketTimeoutMillis; }
     public int getHttpConnectionRequestTimeoutMillis() { return httpConnectionRequestTimeoutMillis; }
+    public boolean isHttpCompressionEnabled() { return httpCompressionEnabled; }
     public int getHttpCompressionThresholdBytes() { return httpCompressionThresholdBytes; }
     public int getHttpMaxRetryAttempts() { return httpMaxRetryAttempts; }
     public int getHttpBaseRetryDelayMillis() { return httpBaseRetryDelayMillis; }
@@ -261,6 +266,7 @@ public class AgentConfig {
         private int httpConnectTimeoutMillis = 5000;
         private int httpSocketTimeoutMillis = 10000;
         private int httpConnectionRequestTimeoutMillis = 30000;
+        private boolean httpCompressionEnabled = false;
         private int httpCompressionThresholdBytes = 1024;
         private int httpMaxRetryAttempts = 3;
         private int httpBaseRetryDelayMillis = 100;
@@ -308,6 +314,7 @@ public class AgentConfig {
         public Builder httpConnectTimeoutMillis(int httpConnectTimeoutMillis) { this.httpConnectTimeoutMillis = httpConnectTimeoutMillis; return this; }
         public Builder httpSocketTimeoutMillis(int httpSocketTimeoutMillis) { this.httpSocketTimeoutMillis = httpSocketTimeoutMillis; return this; }
         public Builder httpConnectionRequestTimeoutMillis(int httpConnectionRequestTimeoutMillis) { this.httpConnectionRequestTimeoutMillis = httpConnectionRequestTimeoutMillis; return this; }
+        public Builder httpCompressionEnabled(boolean httpCompressionEnabled) { this.httpCompressionEnabled = httpCompressionEnabled; return this; }
         public Builder httpCompressionThresholdBytes(int httpCompressionThresholdBytes) { this.httpCompressionThresholdBytes = httpCompressionThresholdBytes; return this; }
         public Builder httpMaxRetryAttempts(int httpMaxRetryAttempts) { this.httpMaxRetryAttempts = httpMaxRetryAttempts; return this; }
         public Builder httpBaseRetryDelayMillis(int httpBaseRetryDelayMillis) { this.httpBaseRetryDelayMillis = httpBaseRetryDelayMillis; return this; }

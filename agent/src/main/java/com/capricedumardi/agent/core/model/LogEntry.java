@@ -50,4 +50,16 @@ public class LogEntry {
     
     public Map<String, String> getMdc() { return mdc; }
 
+    @Override
+    public String toString() {
+        return "LogEntry{" +
+                "message='" + message + '\'' +
+                ", level='" + level + '\'' +
+                ", loggerName='" + loggerName + '\'' +
+                ", threadName='" + threadName + '\'' +
+                ", stackTrace='" + stackTrace + '\'' +
+                ", mdc=" + mdc +
+                ", timestamp='" + timestamp + '\'' +
+                '}';
+    }
 }
