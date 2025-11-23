@@ -2,6 +2,7 @@ package com.capricedumardi.agent.core.buffers;
 
 import com.capricedumardi.agent.core.config.AgentConfig;
 import com.capricedumardi.agent.core.config.ConfigLoader;
+import com.capricedumardi.agent.core.config.LangaPrinter;
 import com.capricedumardi.agent.core.model.*;
 import com.capricedumardi.agent.core.services.SenderService;
 
@@ -46,7 +47,7 @@ public class BuffersFactory {
         }
 
         if (initialized.get()) {
-            System.out.println("BuffersFactory already initialized, skipping re-initialization");
+            LangaPrinter.printTrace("BuffersFactory already initialized, skipping re-initialization");
             return;
         }
         senderServiceInstance = senderService;
@@ -56,7 +57,7 @@ public class BuffersFactory {
         initMetricBuffer(senderService, appKey, accountKey, batchSize, flushIntervalSeconds);
 
         initialized.set(true);
-        System.out.println("BuffersFactory initialized successfully");
+        LangaPrinter.printTrace("BuffersFactory initialized successfully");
     }
 
     /**
@@ -107,11 +108,11 @@ public class BuffersFactory {
      */
     public static void shutdownAll() {
         if (!shuttingDown.compareAndSet(false, true)) {
-            System.out.println("BuffersFactory already shutting down, skipping duplicate shutdown");
+            LangaPrinter.printTrace("BuffersFactory already shutting down, skipping duplicate shutdown");
             return;
         }
 
-        System.out.println("BuffersFactory: Starting graceful shutdown...");
+        LangaPrinter.printTrace("BuffersFactory: Starting graceful shutdown...");
 
         try {
             flushAllBuffers();
@@ -120,10 +121,10 @@ public class BuffersFactory {
 
             closeSenderService();
 
-            System.out.println("Bufferstory shutdown complete");
+            LangaPrinter.printTrace("Bufferstory shutdown complete");
 
         } catch (Exception e) {
-            System.err.println("✗ Error during BuffersFactory shutdown: " + e.getMessage());
+            LangaPrinter.printError("✗ Error during BuffersFactory shutdown: " + e.getMessage());
             e.printStackTrace(System.err);
         } finally {
             initialized.set(false);
@@ -162,23 +163,23 @@ public class BuffersFactory {
         return metricBufferInstance != null ? metricBufferInstance.getStats() : null;
     }
     private static void flushAllBuffers() {
-        System.out.println("Flushing all buffers...");
+        LangaPrinter.printTrace("Flushing all buffers...");
 
         if (logBufferInstance != null) {
             try {
                 logBufferInstance.flush();
-                System.out.println("Log buffer flushed");
+                LangaPrinter.printTrace("Log buffer flushed");
             } catch (Exception e) {
-                System.err.println("Error flushing log buffer: " + e.getMessage());
+                LangaPrinter.printError("Error flushing log buffer: " + e.getMessage());
             }
         }
 
         if (metricBufferInstance != null) {
             try {
                 metricBufferInstance.flush();
-                System.out.println("Metric buffer flushed");
+                LangaPrinter.printTrace("Metric buffer flushed");
             } catch (Exception e) {
-                System.err.println("Error flushing metric buffer: " + e.getMessage());
+                LangaPrinter.printError("Error flushing metric buffer: " + e.getMessage());
             }
         }
     }
@@ -198,7 +199,7 @@ public class BuffersFactory {
                             }
                     );
 
-                    System.out.println("Scheduler initialized with " + threadPoolSize + " threads");
+                    LangaPrinter.printTrace("Scheduler initialized with " + threadPoolSize + " threads");
                 }
             }
         }
@@ -218,7 +219,7 @@ public class BuffersFactory {
                             flushIntervalSeconds,
                             "logBuffer"
                     );
-                    System.out.println("Log buffer initialized");
+                    LangaPrinter.printTrace("Log buffer initialized");
                 }
             }
         }
@@ -238,7 +239,7 @@ public class BuffersFactory {
                             flushIntervalSeconds,
                             "metricBuffer"
                     );
-                    System.out.println("Metric buffer initialized");
+                    LangaPrinter.printTrace("Metric buffer initialized");
                 }
             }
         }
@@ -249,28 +250,28 @@ public class BuffersFactory {
             return;
         }
 
-        System.out.println("Shutting down scheduler...");
+        LangaPrinter.printTrace("Shutting down scheduler...");
 
         try {
             scheduler.shutdown();
 
             if (!scheduler.awaitTermination(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                System.err.println("Scheduler did not terminate gracefully within " +
+                LangaPrinter.printError("Scheduler did not terminate gracefully within " +
                         SHUTDOWN_TIMEOUT_SECONDS + " seconds, forcing shutdown");
 
                 scheduler.shutdownNow();
 
                 if (!scheduler.awaitTermination(FORCED_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                    System.err.println("Scheduler did not terminate after forced shutdown");
+                    LangaPrinter.printError("Scheduler did not terminate after forced shutdown");
                 } else {
-                    System.out.println("Scheduler forcefully shutdown");
+                    LangaPrinter.printTrace("Scheduler forcefully shutdown");
                 }
             } else {
-                System.out.println("✓ Scheduler shutdown gracefully");
+                LangaPrinter.printTrace("✓ Scheduler shutdown gracefully");
             }
 
         } catch (InterruptedException e) {
-            System.err.println("Interrupted during scheduler shutdown");
+            LangaPrinter.printError("Interrupted during scheduler shutdown");
             scheduler.shutdownNow();
             // Restore interrupt status
             Thread.currentThread().interrupt();
@@ -282,13 +283,13 @@ public class BuffersFactory {
             return;
         }
 
-        System.out.println("Closing sender service...");
+        LangaPrinter.printTrace("Closing sender service...");
 
         try {
             senderServiceInstance.close();
-            System.out.println("✓ Sender service closed");
+            LangaPrinter.printTrace("✓ Sender service closed");
         } catch (Exception e) {
-            System.err.println("✗ Error closing sender service: " + e.getMessage());
+            LangaPrinter.printError("✗ Error closing sender service: " + e.getMessage());
             e.printStackTrace(System.err);
         }
     }

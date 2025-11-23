@@ -1,12 +1,9 @@
 package com.capricedumardi.agent.core.services;
 
+import com.capricedumardi.agent.core.config.LangaPrinter;
 import com.capricedumardi.agent.core.helpers.CredentialsHelper;
 import com.capricedumardi.agent.core.helpers.IngestionParamsResolver;
 import com.capricedumardi.agent.core.model.SenderType;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.Map;
 
 /**
  * Factory for creating SenderService instances
@@ -18,7 +15,7 @@ public class SenderServiceFactory {
     }
 
     public static SenderService create(final IngestionParamsResolver resolver) {
-        System.out.println("Creating SenderService from configuration...");
+        LangaPrinter.printTrace("Creating SenderService from configuration...");
 
         try {
             validateConfiguration(resolver);
@@ -29,17 +26,17 @@ public class SenderServiceFactory {
 
             SenderService sender = createSender(senderType, resolver, credentialsHelper);
 
-            System.out.println("SenderService created successfully: " + sender.getDescription());
+            LangaPrinter.printTrace("SenderService created successfully: " + sender.getDescription());
             return sender;
 
         } catch (IllegalArgumentException | IllegalStateException e) {
-            System.err.println("FATAL: Failed to create SenderService");
+            LangaPrinter.printError("FATAL: Failed to create SenderService");
 
             return createNoOp("Falling back to No-Op service because : " + e.getMessage());
 
         } catch (Exception e) {
-            System.err.println("FATAL: Unexpected error creating SenderService");
-            System.err.println("Error: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            LangaPrinter.printError("FATAL: Unexpected error creating SenderService");
+            LangaPrinter.printError("Error: " + e.getClass().getSimpleName() + ": " + e.getMessage());
             e.printStackTrace(System.err);
 
             return createNoOp("Falling back to No-Op service because : " + e.getMessage());
@@ -84,7 +81,7 @@ public class SenderServiceFactory {
             );
         }
 
-        System.out.println("  Configuration validated successfully");
+        LangaPrinter.printTrace("  Configuration validated successfully");
     }
 
     /**
@@ -129,7 +126,7 @@ public class SenderServiceFactory {
             );
         }
 
-        System.out.println("  HTTP URL: " + url);
+        LangaPrinter.printTrace("  HTTP URL: " + url);
         return new HttpSenderService(url, credentialsHelper);
     }
 
@@ -156,12 +153,12 @@ public class SenderServiceFactory {
         }
 
         if (!bootstrapServer.contains(":")) {
-            System.err.println("WARNING: Bootstrap server might be missing port: " + bootstrapServer);
-            System.err.println("Expected format: host:port (e.g., localhost:9092)");
+            LangaPrinter.printError("WARNING: Bootstrap server might be missing port: " + bootstrapServer);
+            LangaPrinter.printError("Expected format: host:port (e.g., localhost:9092)");
         }
 
-        System.out.println("Bootstrap Server: " + bootstrapServer);
-        System.out.println("Topic: " + topic);
+        LangaPrinter.printTrace("Bootstrap Server: " + bootstrapServer);
+        LangaPrinter.printTrace("Topic: " + topic);
 
         return new KafkaSenderService(bootstrapServer, topic, credentialsHelper);
     }

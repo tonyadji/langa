@@ -2,6 +2,7 @@ package com.capricedumardi.agent.core.services;
 
 import com.capricedumardi.agent.core.config.AgentConfig;
 import com.capricedumardi.agent.core.config.ConfigLoader;
+import com.capricedumardi.agent.core.config.LangaPrinter;
 import com.capricedumardi.agent.core.helpers.CredentialsHelper;
 import com.capricedumardi.agent.core.model.SendableRequestDto;
 import com.google.gson.Gson;
@@ -20,6 +21,7 @@ import org.apache.http.message.BasicHeader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -68,14 +70,7 @@ public class HttpSenderService implements SenderService {
                 .disableAutomaticRetries()
                 .build();
 
-        System.out.println("HttpSenderService initialized: " + url);
-    }
-
-    private List<? extends Header> getCredentials() {
-        return this.credentialsHelper.getCredentials(CredentialsHelper.CredentialType.HTTP)
-                .entrySet()
-                .stream().map(entry -> new BasicHeader(entry.getKey(), entry.getValue()))
-                .toList();
+        LangaPrinter.printTrace("HttpSenderService initialized: " + url);
     }
 
     @Override
@@ -115,7 +110,7 @@ public class HttpSenderService implements SenderService {
 
                 if (attempt < maxRetryAttempts) {
                     int delay = calculateRetryDelay(attempt);
-                    System.err.println("HttpSenderService: Send failed (attempt " + attempt +
+                    LangaPrinter.printError("HttpSenderService: Send failed (attempt " + attempt +
                             "/" + maxRetryAttempts + "), retrying in " + delay + "ms: " +
                             e.getMessage());
 
@@ -128,13 +123,13 @@ public class HttpSenderService implements SenderService {
                 }
 
             } catch (Exception e) {
-                System.err.println("HttpSenderService: Unexpected error sending payload: " +
+                LangaPrinter.printError("HttpSenderService: Unexpected error sending payload: " +
                         e.getClass().getSimpleName() + ": " + e.getMessage());
                 return false;
             }
         }
 
-        System.err.println("HttpSenderService: All " + maxRetryAttempts +
+        LangaPrinter.printError("HttpSenderService: All " + maxRetryAttempts +
                 " retry attempts failed. Last error: " +
                 (lastException != null ? lastException.getMessage() : "unknown"));
         return false;
@@ -174,19 +169,19 @@ public class HttpSenderService implements SenderService {
                 return true;
 
             } else if (statusCode == 429) {
-                System.err.println("HttpSenderService: Rate limited (429), will retry");
+                LangaPrinter.printError("HttpSenderService: Rate limited (429), will retry");
                 throw new IOException("Rate limited");
 
             } else if (statusCode >= 500) {
-                System.err.println("HttpSenderService: Server error (" + statusCode + "), will retry");
+                LangaPrinter.printError("HttpSenderService: Server error (" + statusCode + "), will retry");
                 throw new IOException("Server error: " + statusCode);
 
             } else if (statusCode >= 400) {
-                System.err.println("HttpSenderService: Client error (" + statusCode + "), not retrying");
+                LangaPrinter.printError("HttpSenderService: Client error (" + statusCode + "), not retrying");
                 return false;
 
             } else {
-                System.err.println("HttpSenderService: Unexpected status code: " + statusCode);
+                LangaPrinter.printError("HttpSenderService: Unexpected status code: " + statusCode);
                 return false;
             }
         }
@@ -208,7 +203,7 @@ public class HttpSenderService implements SenderService {
             headers.forEach(httpPost::addHeader);
 
         } catch (Exception e) {
-            System.err.println("HttpSenderService: Error adding credential headers: " + e.getMessage());
+            LangaPrinter.printError("HttpSenderService: Error adding credential headers: " + e.getMessage());
         }
     }
 
@@ -233,7 +228,7 @@ public class HttpSenderService implements SenderService {
     private int calculateRetryDelay(int attempt) {
         int delay = agentConfig.getHttpBaseRetryDelayMillis() * (int) Math.pow(2, attempt);
 
-        int jitter = (int) (delay * 0.5 * Math.random());
+        int jitter = (int) (delay * 0.5 * new Random().nextInt());
 
         return Math.min(delay + jitter, agentConfig.getHttpMaxRetryDelayMillis());
     }
@@ -241,14 +236,14 @@ public class HttpSenderService implements SenderService {
     @Override
     public void close() {
         if (closed.compareAndSet(false, true)) {
-            System.out.println("Closing HttpSenderService: " + url);
+            LangaPrinter.printTrace("Closing HttpSenderService: " + url);
 
             try {
                 httpClient.close();
-                System.out.println("HttpSenderService closed successfully");
+                LangaPrinter.printTrace("HttpSenderService closed successfully");
 
             } catch (IOException e) {
-                System.err.println("Error closing HttpSenderService: " + e.getMessage());
+                LangaPrinter.printError("Error closing HttpSenderService: " + e.getMessage());
             }
         }
     }

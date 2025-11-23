@@ -2,6 +2,7 @@ package com.capricedumardi.agent.core.appenders;
 
 import com.capricedumardi.agent.core.buffers.BuffersFactory;
 import com.capricedumardi.agent.core.buffers.GenericBuffer;
+import com.capricedumardi.agent.core.config.LangaPrinter;
 import com.capricedumardi.agent.core.model.LogEntry;
 import com.capricedumardi.agent.core.model.SendableRequestDto;
 import org.apache.logging.log4j.LogManager;
@@ -29,7 +30,7 @@ public class LangaLog4jAppender extends AbstractAppender {
         try {
             this.logBuffer = BuffersFactory.getLogBufferInstance();
         } catch (Exception e) {
-            System.err.println("FATAL: LangaLog4jAppender failed to initialize: " + e.getMessage());
+            LangaPrinter.printError("FATAL: LangaLog4jAppender failed to initialize: " + e.getMessage());
             e.printStackTrace(System.err);
             throw new IllegalStateException("Failed to initialize LangaLog4jAppender", e);
         }
@@ -41,13 +42,9 @@ public class LangaLog4jAppender extends AbstractAppender {
         if (isAgentLog(event)) {
             return;
         }
-        String message = event.getMessage().getFormattedMessage();
-        String level = event.getLevel().toString();
-        String loggerName = event.getLoggerName();
-        String timestamp = String.valueOf(event.getTimeMillis());
 
         try {
-            LogEntry entry = new LogEntry(message, level, loggerName, timestamp);
+            LogEntry entry = createLogEntry(event);
             log.trace("Adding entry to log buffer");
             logBuffer.add(entry);
 
@@ -63,7 +60,7 @@ public class LangaLog4jAppender extends AbstractAppender {
                 logBuffer.flush();
             }
         } catch (Exception e) {
-            System.err.println("LangaLog4jAppender: Error flushing buffer during stop: " + e.getMessage());
+            LangaPrinter.printError("LangaLog4jAppender: Error flushing buffer during stop: " + e.getMessage());
         }
         super.stop();
     }

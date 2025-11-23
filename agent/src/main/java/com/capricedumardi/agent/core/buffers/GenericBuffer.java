@@ -1,9 +1,8 @@
 package com.capricedumardi.agent.core.buffers;
 
+import com.capricedumardi.agent.core.config.LangaPrinter;
 import com.capricedumardi.agent.core.model.SendableRequestDto;
 import com.capricedumardi.agent.core.services.SenderService;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 import java.util.function.Function;
@@ -25,7 +24,7 @@ public class GenericBuffer<T, U extends SendableRequestDto> extends AbstractBuff
 
     public void printStats() {
         BufferStats stats = getStats();
-        System.out.println("\n" + stats.toString());
+        LangaPrinter.printTrace("\n" + stats.toString());
     }
 
 }

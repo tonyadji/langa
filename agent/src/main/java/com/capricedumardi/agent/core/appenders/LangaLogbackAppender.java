@@ -6,10 +6,9 @@ import ch.qos.logback.classic.spi.StackTraceElementProxy;
 import ch.qos.logback.core.AppenderBase;
 import com.capricedumardi.agent.core.buffers.BuffersFactory;
 import com.capricedumardi.agent.core.buffers.GenericBuffer;
+import com.capricedumardi.agent.core.config.LangaPrinter;
 import com.capricedumardi.agent.core.model.LogEntry;
 import com.capricedumardi.agent.core.model.SendableRequestDto;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -17,14 +16,13 @@ import java.util.Map;
 
 public class LangaLogbackAppender extends AppenderBase<ILoggingEvent> {
     private static final String AGENT_PACKAGE_PREFIX = "com.capricedumardi.agent";
-    private static final Logger log = LogManager.getLogger(LangaLogbackAppender.class);
     private GenericBuffer<LogEntry, SendableRequestDto> logBuffer;
 
     @Override
     public void start() {
         this.logBuffer = BuffersFactory.getLogBufferInstance();
         super.start();
-        log.info("== LangaLogbackAppender started ==");
+        LangaPrinter.printTrace("== LangaLogbackAppender started ==");
     }
 
     @Override
@@ -36,9 +34,8 @@ public class LangaLogbackAppender extends AppenderBase<ILoggingEvent> {
         try {
             LogEntry entry = createLogEntry(loggingEvent);
             logBuffer.add(entry);
-
         } catch (Exception e) {
-            log.error("Error sending log to Langa: {}", e.getMessage(), e);
+            LangaPrinter.printError("Error sending log to Langa: "+ e.getMessage());
         }
     }
 
@@ -49,7 +46,7 @@ public class LangaLogbackAppender extends AppenderBase<ILoggingEvent> {
                 logBuffer.flush();
             }
         } catch (Exception e) {
-            System.err.println("LangaLog4jAppender: Error flushing buffer during stop: " + e.getMessage());
+            LangaPrinter.printError("LangaLog4jAppender: Error flushing buffer during stop: " + e.getMessage());
         }
         super.stop();
     }
@@ -59,10 +56,9 @@ public class LangaLogbackAppender extends AppenderBase<ILoggingEvent> {
         String level = event.getLevel().toString();
         String loggerName = event.getLoggerName();
 
-        // Use ISO-8601 timestamp for better observability backend compatibility
         String timestamp = Instant.ofEpochMilli(event.getTimeStamp()).toString();
 
-        String threadName = event.getThreadName();
+        String threadName = event.getThreadName() == null ? Thread.currentThread().getName() : event.getThreadName();
 
         String stackTrace = null;
         IThrowableProxy throwableProxy = event.getThrowableProxy();

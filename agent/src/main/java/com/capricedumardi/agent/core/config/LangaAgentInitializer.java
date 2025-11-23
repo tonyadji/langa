@@ -18,15 +18,13 @@ public class LangaAgentInitializer {
     private LangaAgentInitializer() {}
 
     public static void premain(String agentArgs, Instrumentation inst) {
-        System.out.println("========================================");
-        System.out.println("  Langa Agent Starting");
-        System.out.println("========================================");
+        LangaPrinter.agentStarting();
 
         try {
             initSenderAndBuffers();
-            System.out.println("Buffers and sender initialized");
+            LangaPrinter.printTrace("Buffers and sender initialized");
         } catch (Exception e) {
-            System.err.println("FATAL: Could not initialize sender/buffers. Agent disabled.");
+            LangaPrinter.printError("FATAL: Could not initialize sender/buffers. Agent disabled.");
             e.printStackTrace(System.err);
             return;
         }
@@ -35,39 +33,40 @@ public class LangaAgentInitializer {
 
         switch (framework) {
             case LOGBACK:
-                System.out.println("Using Logback for log collection");
+                LangaPrinter.printTrace("Using Logback for log collection");
                 AppenderBinding.withLogBackAppender().bind();
                 break;
 
             case LOG4J2:
-                System.out.println("Using Log4j2 for log collection");
+                LangaPrinter.printTrace("Using Log4j2 for log collection");
                 AppenderBinding.withLog4jAppender().bind();
                 break;
 
             case NONE:
-                System.out.println("Log collection disabled (no logging framework configured)");
-                System.out.println("  Metrics collection will still work");
-                System.out.println("  To enable logs, set environment variable:");
-                System.out.println("    LOGGING_FRAMEWORK=logback  (or log4j2)");
+                LangaPrinter.printTrace("Log collection disabled (no logging framework configured)");
+                LangaPrinter.printTrace("Metrics collection will still work");
+                LangaPrinter.printTrace("To enable logs, set environment variable:");
+                LangaPrinter.printTrace("LOGGING_FRAMEWORK=logback  (or log4j2)");
                 break;
         }
 
         if (!isSpringPresent()) {
-            System.out.println("Spring NOT detected → using AspectJ weaver for metrics");
+            LangaPrinter.printTrace("Spring NOT detected → using AspectJ weaver for metrics");
             initAspectJWeaver(agentArgs, inst);
         } else {
-            System.out.println("✓ Spring detected → expecting @EnableAspectJAutoProxy for metrics");
+            LangaPrinter.printTrace("✓ Spring detected → expecting @EnableAspectJAutoProxy for metrics");
         }
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.out.println("Langa Agent: Shutdown initiated");
+            LangaPrinter.printTrace("Langa Agent: Shutdown initiated");
             BuffersFactory.shutdownAll();
-            System.out.println("Langa Agent: Shutdown complete");
+            AppenderBinding.shutdown();
+            LangaPrinter.printTrace("Langa Agent: Shutdown complete");
         }, "langa-agent-shutdown"));
 
-        System.out.println("========================================");
-        System.out.println("  Langa Agent Initialization Complete");
-        System.out.println("========================================");
+        LangaPrinter.printTrace("========================================");
+        LangaPrinter.printTrace("  Langa Agent Initialization Complete");
+        LangaPrinter.printTrace("========================================");
     }
 
     private static LoggingFramework determineLoggingFramework() {
@@ -79,50 +78,50 @@ public class LangaAgentInitializer {
             switch (framework) {
                 case "logback":
                     if (isClassPresent("ch.qos.logback.classic.LoggerContext")) {
-                        System.out.println("Using logging configured framework: Logback");
+                        LangaPrinter.printTrace("Using logging configured framework: Logback");
                         return LoggingFramework.LOGBACK;
                     } else {
-                        System.err.println("ERROR: LOGGING_FRAMEWORK=logback but Logback not found on classpath!");
-                        System.err.println("Falling back to classpath detection...");
+                        LangaPrinter.printError("ERROR: LOGGING_FRAMEWORK=logback but Logback not found on classpath!");
+                        LangaPrinter.printError("Falling back to classpath detection...");
                     }
                     break;
 
                 case "log4j2", "log4j":
                     if (isClassPresent("org.apache.logging.log4j.core.LoggerContext")) {
-                        System.out.println("  Using logging configured framework: Log4j2");
+                        LangaPrinter.printTrace("  Using logging configured framework: Log4j2");
                         return LoggingFramework.LOG4J2;
                     } else {
-                        System.err.println("ERROR: LOGGING_FRAMEWORK=log4j2 but Log4j2 not found on classpath!");
-                        System.err.println("Falling back to classpath detection...");
+                        LangaPrinter.printError("ERROR: LOGGING_FRAMEWORK=log4j2 but Log4j2 not found on classpath!");
+                        LangaPrinter.printError("Falling back to classpath detection...");
                     }
                     break;
 
                 case "none","disabled":
-                    System.out.println("  Log collection explicitly disabled via LOGGING_FRAMEWORK=" + framework);
+                    LangaPrinter.printTrace("  Log collection explicitly disabled via LOGGING_FRAMEWORK=" + framework);
                     return LoggingFramework.NONE;
 
                 default:
-                    System.err.println("WARNING: Unknown LOGGING_FRAMEWORK value: '" + envFramework + "'");
-                    System.err.println("Valid values: logback, log4j2, none");
-                    System.err.println("Falling back to classpath detection...");
+                    LangaPrinter.printError("WARNING: Unknown LOGGING_FRAMEWORK value: '" + envFramework + "'");
+                    LangaPrinter.printError("Valid values: logback, log4j2, none");
+                    LangaPrinter.printError("Falling back to classpath detection...");
             }
         }
 
-        System.out.println("LOGGING_FRAMEWORK not set, attempting classpath detection...");
+        LangaPrinter.printTrace("LOGGING_FRAMEWORK not set, attempting classpath detection...");
 
         if (isClassPresent("ch.qos.logback.classic.LoggerContext") &&
                 isClassPresent("org.slf4j.LoggerFactory")) {
-            System.out.println("Detected Logback on classpath");
+            LangaPrinter.printTrace("Detected Logback on classpath");
             return LoggingFramework.LOGBACK;
         }
 
         if (isClassPresent("org.apache.logging.log4j.core.LoggerContext") &&
                 isClassPresent("org.apache.logging.log4j.LogManager")) {
-            System.out.println("  Detected Log4j2 on classpath");
+            LangaPrinter.printTrace("  Detected Log4j2 on classpath");
             return LoggingFramework.LOG4J2;
         }
 
-        System.out.println("  No supported logging framework found on classpath");
+        LangaPrinter.printTrace("  No supported logging framework found on classpath");
         return LoggingFramework.NONE;
     }
 
@@ -159,7 +158,7 @@ public class LangaAgentInitializer {
         try {
             Agent.premain(agentArgs, inst);
         } catch (Exception e) {
-            System.err.println("✗ Unable to initialize AspectJ weaver: " + e.getMessage());
+            LangaPrinter.printError("✗ Unable to initialize AspectJ weaver: " + e.getMessage());
             e.printStackTrace(System.err);
         }
     }
@@ -170,7 +169,7 @@ public class LangaAgentInitializer {
             try {
                 return Integer.parseInt(envVar.trim());
             } catch (NumberFormatException e) {
-                System.err.println("Invalid value for " + envKey + ": " + envVar +
+                LangaPrinter.printError("Invalid value for " + envKey + ": " + envVar +
                         " (using default: " + defaultValue + ")");
             }
         }

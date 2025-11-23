@@ -2,6 +2,7 @@ package com.capricedumardi.agent.core.buffers;
 
 import com.capricedumardi.agent.core.config.AgentConfig;
 import com.capricedumardi.agent.core.config.ConfigLoader;
+import com.capricedumardi.agent.core.config.LangaPrinter;
 import com.capricedumardi.agent.core.model.SendableRequestDto;
 import com.capricedumardi.agent.core.services.SenderService;
 import org.apache.logging.log4j.LogManager;
@@ -61,7 +62,7 @@ public abstract class AbstractBuffer<T> {
             totalDropped.incrementAndGet();
             return;
         }
-        //why before the offer method?
+
         totalAdded.incrementAndGet();
         if(mainQueue.offer(entry)) {
             if (mainQueue.size() >= batchSize && flushScheduled.compareAndSet(false, true)) {
@@ -86,11 +87,11 @@ public abstract class AbstractBuffer<T> {
     }
 
     public void shutdown() {
-        System.out.println(bufferName + " buffer shutting down...");
+        LangaPrinter.printTrace(bufferName + " buffer shutting down...");
         flush();
 
         if (!retryQueue.isEmpty()) {
-            System.out.println(bufferName + " flushing retry queue...");
+            LangaPrinter.printTrace(bufferName + " flushing retry queue...");
             retryFlush();
         }
     }
@@ -128,7 +129,7 @@ public abstract class AbstractBuffer<T> {
                 consecutiveSendingErrors.set(0);
 
                 if (isRetry) {
-                    System.out.println(bufferName + " retry flush succeeded (" +
+                    LangaPrinter.printTrace(bufferName + " retry flush succeeded (" +
                             entries.size() + " entries)");
                 }
             } else {
@@ -136,7 +137,7 @@ public abstract class AbstractBuffer<T> {
             }
 
         } catch (Exception e) {
-            System.err.println(bufferName + " flush error: " + e.getMessage());
+            LangaPrinter.printError(bufferName + " flush error: " + e.getMessage());
             handleSendFailure(entries, isRetry);
         }
     }
@@ -147,7 +148,7 @@ public abstract class AbstractBuffer<T> {
 
         if (isRetry) {
             totalDropped.addAndGet(entries.size());
-            System.err.println(bufferName + " retry failed, dropping " +
+            LangaPrinter.printError(bufferName + " retry failed, dropping " +
                     entries.size() + " entries (consecutive errors: " + errors + ")");
         } else {
             int moved = 0;
@@ -165,7 +166,7 @@ public abstract class AbstractBuffer<T> {
             totalRetried.addAndGet(moved);
 
             if (dropped > 0) {
-                System.err.println( bufferName + " retry queue full: dropped " +
+                LangaPrinter.printError( bufferName + " retry queue full: dropped " +
                         dropped + " of " + entries.size() + " entries");
             }
 
@@ -182,7 +183,7 @@ public abstract class AbstractBuffer<T> {
 
         int retryDelay = Math.min(baseDelay + jitter, agentConfig.getMaxRetryDelaySeconds());
 
-        System.out.println(bufferName + " scheduling retry in " + retryDelay +
+        LangaPrinter.printTrace(bufferName + " scheduling retry in " + retryDelay +
                 " seconds (consecutive errors: " + consecutiveSendingErrors.get() + ")");
 
         scheduler.schedule(this::retryFlush, retryDelay, TimeUnit.SECONDS);
@@ -210,7 +211,7 @@ public abstract class AbstractBuffer<T> {
             try {
                 return Integer.parseInt(envVar);
             } catch (NumberFormatException e) {
-                System.err.println("Invalid LANGA_MAIN_QUEUE_CAPACITY: " + envVar);
+                LangaPrinter.printError("Invalid LANGA_MAIN_QUEUE_CAPACITY: " + envVar);
             }
         }
         return agentConfig.getMainQueueCapacity();
@@ -222,7 +223,7 @@ public abstract class AbstractBuffer<T> {
             try {
                 return Integer.parseInt(envVar);
             } catch (NumberFormatException e) {
-                System.err.println("Invalid LANGA_RETRY_QUEUE_CAPACITY: " + envVar);
+                LangaPrinter.printError("Invalid LANGA_RETRY_QUEUE_CAPACITY: " + envVar);
             }
         }
         return agentConfig.getRetryQueueCapacity();

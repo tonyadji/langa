@@ -6,16 +6,21 @@ import com.capricedumardi.agent.core.appenders.AppenderType;
 import com.capricedumardi.agent.core.appenders.LangaLog4jAppender;
 import com.capricedumardi.agent.core.appenders.LangaLogbackAppender;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.slf4j.LoggerFactory;
 
-public class AppenderBinding {
-    private static final org.apache.logging.log4j.Logger log = LogManager.getLogger(AppenderBinding.class);
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+public class AppenderBinding {
     private final AppenderType selectedAppender;
+    private static final AtomicBoolean watcher = new AtomicBoolean(false);
+    private static ScheduledExecutorService watchScheduler;
+
     private AppenderBinding(AppenderType selectedAppender){
         this.selectedAppender = selectedAppender;
     }
@@ -33,28 +38,24 @@ public class AppenderBinding {
         switch (selectedAppender) {
             case LANGA_LOG4J_APPENDER -> bindLog4jAppender();
             case LANGA_LOGBACK_APPENDER -> bindLogBackAppender();
-            default -> log.warn("No appender selected.");
+            default -> LangaPrinter.printError("No appender selected.");
         }
+        startWatch();
     }
 
     public static void bindLogBackAppender() {
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
 
-        if (rootLogger.getAppender(AppenderType.LANGA_LOGBACK_APPENDER.name()) != null) {
-            log.info("Appender '{}' already bound to Logback root logger — skipping rebind.",
-                    AppenderType.LANGA_LOGBACK_APPENDER.name());
-            return;
+        final LogbackContextListener listener = new LogbackContextListener(AppenderBinding::bindLangaLogbackAppender);
+        loggerContext.addListener(listener);
+        bindLangaLogbackAppender(loggerContext);
+    }
+
+    public static void shutdown() {
+        if (watchScheduler != null && !watchScheduler.isShutdown()) {
+            LangaPrinter.printTrace("Shutting down watcher...");
+            watchScheduler.shutdownNow();
         }
-
-        LangaLogbackAppender langaAppender = new LangaLogbackAppender();
-        langaAppender.setContext(loggerContext);
-        langaAppender.setName(AppenderType.LANGA_LOGBACK_APPENDER.name());
-
-        langaAppender.start();
-        rootLogger.addAppender(langaAppender);
-
-        log.info("Appender binding : LangaLogbackAppender bound successfully.");
     }
 
     private static void bindLog4jAppender() {
@@ -63,7 +64,7 @@ public class AppenderBinding {
         final String appenderName = AppenderType.LANGA_LOG4J_APPENDER.name();
 
         if (config.getAppender(appenderName) != null) {
-            log.debug("Appender '{}' already bound to Log4j2 root logger — skipping rebind.", appenderName);
+            LangaPrinter.printTrace("Appender"+appenderName+" already bound to Log4j2 root logger — skipping rebind.");
             return;
         }
 
@@ -77,7 +78,7 @@ public class AppenderBinding {
         rootLoggerConfig.addAppender(langaLog4jAppender, Level.ALL, null);
 
         ctx.updateLoggers();
-        log.info("Appender binding : LangaLog4jAppender bound successfully.");
+        LangaPrinter.printTrace("Appender binding : LangaLog4jAppender bound successfully.");
     }
 
     //TODO: make configurable (via a config loader class that could read several sources)
@@ -85,5 +86,58 @@ public class AppenderBinding {
         return PatternLayout.newBuilder()
                 .withPattern("[%d{ISO8601}] [%t] %-5level %logger{36} - %msg%n")
                 .build();
+    }
+
+    private static void bindLangaLogbackAppender(LoggerContext loggerContext) {
+        Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+
+        if (rootLogger.getAppender(AppenderType.LANGA_LOGBACK_APPENDER.name()) != null) {
+            LangaPrinter.printTrace("Appender "+AppenderType.LANGA_LOGBACK_APPENDER.name()+" already bound to Logback root logger — skipping rebind.");
+            return;
+        }
+
+        LangaLogbackAppender langaAppender = new LangaLogbackAppender();
+        langaAppender.setContext(loggerContext);
+        langaAppender.setName(AppenderType.LANGA_LOGBACK_APPENDER.name());
+
+        langaAppender.start();
+        rootLogger.addAppender(langaAppender);
+
+        LangaPrinter.printTrace("Appender binding : LangaLogbackAppender bound successfully.");
+    }
+
+    private void startWatch() {
+        LangaPrinter.printTrace("Starting watcher...");
+        if (watcher.getAndSet(true)) {
+            return;
+        }
+
+        watchScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "Langa-Appender-Watcher");
+            t.setDaemon(true);
+            return t;
+        });
+
+        watchScheduler.scheduleAtFixedRate(() -> {
+            try {
+                if (selectedAppender == AppenderType.LANGA_LOGBACK_APPENDER) {
+                    ensureLogbackBinding();
+                } else if (selectedAppender == AppenderType.LANGA_LOG4J_APPENDER) {
+                    // relevant code for Log4j can be added here
+                }
+            } catch (Exception e) {
+                LangaPrinter.printConditionalError("Error while binding appender: " + e.getMessage());
+            }
+        }, 3, 3, TimeUnit.SECONDS);
+    }
+
+    private static void ensureLogbackBinding() {
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+
+        if (rootLogger.getAppender(AppenderType.LANGA_LOGBACK_APPENDER.name()) == null) {
+            LangaPrinter.printTrace("[Langa AppenderBinding] Appender detached. Re-binding to current context...");
+            bindLogBackAppender();
+        }
     }
 }

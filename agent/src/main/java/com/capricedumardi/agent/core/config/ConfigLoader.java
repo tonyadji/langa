@@ -131,7 +131,7 @@ public class ConfigLoader {
     }
 
     private static void loadMetadataConfig(AgentConfig.Builder builder, Properties fileProps) {
-        builder.agentVersion(getStringProperty("langa.agent.version", fileProps, "1.0.0"));
+        builder.agentVersion(getStringProperty("langa.agent.version", fileProps, "langa-agent-v1.0.0"));
         builder.debugMode(getBooleanProperty("langa.debug.mode", fileProps, false));
     }
 
@@ -146,7 +146,7 @@ public class ConfigLoader {
             try {
                 return Integer.parseInt(value);
             } catch (NumberFormatException e) {
-                System.err.println("Invalid integer value for " + key + ": " + value +
+                LangaPrinter.printError("Invalid integer value for " + key + ": " + value +
                         " (using default: " + defaultValue + ")");
             }
         }
@@ -162,7 +162,7 @@ public class ConfigLoader {
             try {
                 return Long.parseLong(value);
             } catch (NumberFormatException e) {
-                System.err.println("Invalid long value for " + key + ": " + value +
+                LangaPrinter.printError("Invalid long value for " + key + ": " + value +
                         " (using default: " + defaultValue + ")");
             }
         }

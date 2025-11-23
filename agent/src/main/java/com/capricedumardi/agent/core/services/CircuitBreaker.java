@@ -1,23 +1,25 @@
 package com.capricedumardi.agent.core.services;
 
+import com.capricedumardi.agent.core.config.LangaPrinter;
+
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Circuit breaker implementation to prevent wasting time on failed backends.
- *
+ * <p>
  * States:
  * - CLOSED: Normal operation, requests pass through
  * - OPEN: Too many failures, requests are immediately rejected
  * - HALF_OPEN: Testing if backend recovered, limited requests allowed
- *
+ * <p>
  * Transitions:
  * CLOSED -> OPEN: After N consecutive failures
  * OPEN -> HALF_OPEN: After timeout period
  * HALF_OPEN -> CLOSED: After successful test request
  * HALF_OPEN -> OPEN: If test request fails
- *
+ * <p>
  * Thread-safe using atomic operations.
  */
 public class CircuitBreaker {
@@ -54,12 +56,10 @@ public class CircuitBreaker {
 
             case OPEN:
                 long timeSinceLastFailure = System.currentTimeMillis() - lastFailureTime.get();
-                if (timeSinceLastFailure >= openDurationMillis) {
-                    if (state.compareAndSet(State.OPEN, State.HALF_OPEN)) {
-                        lastStateChangeTime.set(System.currentTimeMillis());
-                        System.out.println("CircuitBreaker[" + name + "]: OPEN -> HALF_OPEN (testing recovery)");
-                        return true;
-                    }
+                if (timeSinceLastFailure >= openDurationMillis && state.compareAndSet(State.OPEN, State.HALF_OPEN)) {
+                    lastStateChangeTime.set(System.currentTimeMillis());
+                    LangaPrinter.printTrace("CircuitBreaker[" + name + "]: OPEN -> HALF_OPEN (testing recovery)");
+                    return true;
                 }
                 return false;
 
@@ -78,7 +78,7 @@ public class CircuitBreaker {
         if (currentState == State.HALF_OPEN) {
             if (state.compareAndSet(State.HALF_OPEN, State.CLOSED)) {
                 lastStateChangeTime.set(System.currentTimeMillis());
-                System.out.println("CircuitBreaker[" + name + "]: HALF_OPEN -> CLOSED (recovery confirmed)");
+                LangaPrinter.printTrace("CircuitBreaker[" + name + "]: HALF_OPEN -> CLOSED (recovery confirmed)");
             }
         }
     }
@@ -92,12 +92,12 @@ public class CircuitBreaker {
         if (currentState == State.HALF_OPEN) {
             if (state.compareAndSet(State.HALF_OPEN, State.OPEN)) {
                 lastStateChangeTime.set(System.currentTimeMillis());
-                System.err.println("CircuitBreaker[" + name + "]: HALF_OPEN -> OPEN (test failed)");
+                LangaPrinter.printError("CircuitBreaker[" + name + "]: HALF_OPEN -> OPEN (test failed)");
             }
         } else if (currentState == State.CLOSED && failures >= failureThreshold) {
             if (state.compareAndSet(State.CLOSED, State.OPEN)) {
                 lastStateChangeTime.set(System.currentTimeMillis());
-                System.err.println("CircuitBreaker[" + name + "]: CLOSED -> OPEN (threshold exceeded: " +
+                LangaPrinter.printError("CircuitBreaker[" + name + "]: CLOSED -> OPEN (threshold exceeded: " +
                         failures + " failures)");
             }
         }
@@ -123,7 +123,7 @@ public class CircuitBreaker {
         state.set(State.CLOSED);
         consecutiveFailures.set(0);
         lastStateChangeTime.set(System.currentTimeMillis());
-        System.out.println("CircuitBreaker[" + name + "]: Manually reset to CLOSED");
+        LangaPrinter.printTrace("CircuitBreaker[" + name + "]: Manually reset to CLOSED");
     }
 
     public long getTimeSinceLastStateChange() {

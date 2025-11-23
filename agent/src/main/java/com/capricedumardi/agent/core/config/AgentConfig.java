@@ -289,7 +289,7 @@ public class AgentConfig {
         private int maxConsecutiveErrors = 10;
 
         // Metadata defaults
-        private String agentVersion = "1.0.0";
+        private String agentVersion = "langa-agent-v1.0.0";
         private boolean debugMode = false;
 
         // Buffer

@@ -2,6 +2,7 @@ package com.capricedumardi.agent.core.services;
 
 import com.capricedumardi.agent.core.config.AgentConfig;
 import com.capricedumardi.agent.core.config.ConfigLoader;
+import com.capricedumardi.agent.core.config.LangaPrinter;
 import com.capricedumardi.agent.core.helpers.CredentialsHelper;
 import com.capricedumardi.agent.core.model.LogRequestDto;
 import com.capricedumardi.agent.core.model.MetricRequestDto;
@@ -89,10 +90,10 @@ public class KafkaSenderService implements SenderService {
         // Create producer
         this.producer = new KafkaProducer<>(props);
 
-        System.out.println("KafkaSenderService initialized:");
-        System.out.println("Bootstrap: " + bootstrapServer);
-        System.out.println("Topic: " + topic);
-        System.out.println("Mode: " + (agentConfig.isKafkaAsyncSend() ? "ASYNC" : "SYNC"));
+        LangaPrinter.printTrace("KafkaSenderService initialized:");
+        LangaPrinter.printTrace("Bootstrap: " + bootstrapServer);
+        LangaPrinter.printTrace("Topic: " + topic);
+        LangaPrinter.printTrace("Mode: " + (agentConfig.isKafkaAsyncSend() ? "ASYNC" : "SYNC"));
     }
 
     @Override
@@ -109,15 +110,15 @@ public class KafkaSenderService implements SenderService {
             String key = generateKey(payload);
             String json = gson.toJson(payload);
 
-            ProducerRecord<String, String> record = new ProducerRecord<>(topic, key, json);
+            ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topic, key, json);
 
-            addCredentialHeaders(record.headers());
+            addCredentialHeaders(producerRecord.headers());
 
             boolean success;
             if (ASYNC_SEND) {
-                success = sendAsync(record);
+                success = sendAsync(producerRecord);
             } else {
-                success = sendSync(record);
+                success = sendSync(producerRecord);
             }
 
             if (success) {
@@ -131,7 +132,7 @@ public class KafkaSenderService implements SenderService {
             return success;
 
         } catch (Exception e) {
-            System.err.println("KafkaSenderService: Error sending payload: " +
+            LangaPrinter.printError("KafkaSenderService: Error sending payload: " +
                     e.getClass().getSimpleName() + ": " + e.getMessage());
             circuitBreaker.recordFailure();
             totalFailed.incrementAndGet();
@@ -147,16 +148,16 @@ public class KafkaSenderService implements SenderService {
      *
      * This adds a small amount of blocking but ensures the buffer knows if send actually succeeded.
      */
-    private boolean sendAsync(ProducerRecord<String, String> record) {
+    private boolean sendAsync(ProducerRecord<String, String> producerRecord) {
         CountDownLatch latch = new CountDownLatch(1);
         AtomicBoolean success = new AtomicBoolean(false);
 
         try {
-            producer.send(record, (metadata, exception) -> {
+            producer.send(producerRecord, (metadata, exception) -> {
                 try {
                     if (exception != null) {
-                        System.err.println("KafkaSenderService: Async send failed for topic=" +
-                                record.topic() + ", key=" + record.key() +
+                        LangaPrinter.printError("KafkaSenderService: Async send failed for topic=" +
+                                producerRecord.topic() + ", key=" + producerRecord.key() +
                                 ": " + exception.getMessage());
                         totalAsyncFailed.incrementAndGet();
                         success.set(false);
@@ -171,7 +172,7 @@ public class KafkaSenderService implements SenderService {
             boolean completed = latch.await(agentConfig.getKafkaRequestTimeoutMillis(), TimeUnit.MILLISECONDS);
 
             if (!completed) {
-                System.err.println("KafkaSenderService: Async send timeout after " +
+                LangaPrinter.printError("KafkaSenderService: Async send timeout after " +
                         agentConfig.getKafkaRequestTimeoutMillis() + "ms");
                 return false;
             }
@@ -180,10 +181,10 @@ public class KafkaSenderService implements SenderService {
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            System.err.println("KafkaSenderService: Interrupted while waiting for async send");
+            LangaPrinter.printError("KafkaSenderService: Interrupted while waiting for async send");
             return false;
         } catch (Exception e) {
-            System.err.println("KafkaSenderService: Exception during async send: " + e.getMessage());
+            LangaPrinter.printError("KafkaSenderService: Exception during async send: " + e.getMessage());
             return false;
         }
     }
@@ -200,17 +201,17 @@ public class KafkaSenderService implements SenderService {
             return true;
 
         } catch (TimeoutException e) {
-            System.err.println("KafkaSenderService: Sync send timeout after " + agentConfig.getKafkaRequestTimeoutMillis() + "ms");
+            LangaPrinter.printError("KafkaSenderService: Sync send timeout after " + agentConfig.getKafkaRequestTimeoutMillis() + "ms");
             return false;
 
         } catch (ExecutionException e) {
-            System.err.println("KafkaSenderService: Sync send failed: " +
+            LangaPrinter.printError("KafkaSenderService: Sync send failed: " +
                     e.getCause().getMessage());
             return false;
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            System.err.println("KafkaSenderService: Interrupted during sync send");
+            LangaPrinter.printError("KafkaSenderService: Interrupted during sync send");
             return false;
         }
     }
@@ -230,7 +231,7 @@ public class KafkaSenderService implements SenderService {
                 );
             }
         } catch (Exception e) {
-            System.err.println("KafkaSenderService: Error adding credential headers: " +
+            LangaPrinter.printError("KafkaSenderService: Error adding credential headers: " +
                     e.getMessage());
         }
     }
@@ -251,19 +252,19 @@ public class KafkaSenderService implements SenderService {
     @Override
     public void close() {
         if (closed.compareAndSet(false, true)) {
-            System.out.println("Closing KafkaSenderService...");
+            LangaPrinter.printTrace("Closing KafkaSenderService...");
 
             try {
-                System.out.println("Flushing pending messages...");
+                LangaPrinter.printTrace("Flushing pending messages...");
                 producer.flush();
 
-                System.out.println("Closing Kafka producer...");
+                LangaPrinter.printTrace("Closing Kafka producer...");
                 producer.close(Duration.ofSeconds(agentConfig.getKafkaProducerCloseTimeoutSeconds()));
 
-                System.out.println("KafkaSenderService closed successfully");
+                LangaPrinter.printTrace("KafkaSenderService closed successfully");
 
             } catch (Exception e) {
-                System.err.println("✗ Error closing KafkaSenderService: " + e.getMessage());
+                LangaPrinter.printError("✗ Error closing KafkaSenderService: " + e.getMessage());
                 e.printStackTrace(System.err);
             }
         }
@@ -284,7 +285,7 @@ public class KafkaSenderService implements SenderService {
             try {
                 producer.flush();
             } catch (Exception e) {
-                System.err.println("KafkaSenderService: Error flushing messages: " + e.getMessage());
+                LangaPrinter.printError("KafkaSenderService: Error flushing messages: " + e.getMessage());
             }
         }
     }
