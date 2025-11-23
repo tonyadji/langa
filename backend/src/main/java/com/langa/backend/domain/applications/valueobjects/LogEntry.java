@@ -3,7 +3,8 @@ package com.langa.backend.domain.applications.valueobjects;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.util.Map;
 
 @Data
 @Accessors(chain = true)
@@ -13,7 +14,10 @@ public class LogEntry implements Entry {
     private String message;
     private String level;
     private String loggerName;
-    private LocalDateTime timestamp;
+    private Instant timestamp;
+    private String threadName;
+    private String stackTrace;
+    private Map<String, String> mdc;
 
     @Override
     public long getSizeInBytes() {

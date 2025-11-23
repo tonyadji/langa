@@ -32,6 +32,7 @@ public class IngestionSecurityImpl implements IngestionSecurity {
     @Override
     public boolean isAuthorized(IngestionCredentials credentials, Application app) {
         if(!Objects.equals(agentVersion, credentials.userAgent())) {
+            log.error("Expected {} - received {}", agentVersion, credentials.userAgent());
             throw new IngestionSecurityException("Invalid agent version", null, Errors.ILLEGAL_INGESTION_REQUEST);
         }
         if(!Objects.equals(credentials.appKey(), app.getKey()) || !Objects.equals(credentials.accountKey(), app.getAccountKey())) {

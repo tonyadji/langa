@@ -5,7 +5,8 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.util.Map;
 
 @Data
 @Document(collection = "c_logs")
@@ -17,7 +18,10 @@ public class LogEntryDocument {
     private String message;
     private String level;
     private String loggerName;
-    private LocalDateTime timestamp;
+    private Instant timestamp;
+    private String threadName;
+    private String stackTrace;
+    private Map<String, String> mdc;
 
     public LogEntry toLogEntry() {
         return new LogEntry()
@@ -26,7 +30,10 @@ public class LogEntryDocument {
                 .setMessage(message)
                 .setLevel(level)
                 .setLoggerName(loggerName)
-                .setTimestamp(timestamp);
+                .setTimestamp(timestamp)
+                .setThreadName(threadName)
+                .setStackTrace(stackTrace)
+                .setMdc(mdc);
     }
 
     public static LogEntryDocument of(LogEntry logEntry) {
@@ -37,6 +44,9 @@ public class LogEntryDocument {
         logEntryDocument.setLevel(logEntry.getLevel());
         logEntryDocument.setLoggerName(logEntry.getLoggerName());
         logEntryDocument.setTimestamp(logEntry.getTimestamp());
+        logEntryDocument.setThreadName(logEntry.getThreadName());
+        logEntryDocument.setStackTrace(logEntry.getStackTrace());
+        logEntryDocument.setMdc(logEntry.getMdc());
         return logEntryDocument;
     }
 }

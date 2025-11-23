@@ -46,7 +46,6 @@ public class IngestionUseCase {
                 .findSecuredAppByKeyAndAccountKey(logRequestDto.appKey(),
                         logRequestDto.accountKey())
                 .orElseThrow(() -> new ApplicationException("Application not found with key: " + logRequestDto.appKey() + " and account key: " + logRequestDto.accountKey(), null, Errors.APPLICATION_NOT_FOUND));
-
         if (!ingestionSecurity.isAuthorized(credentials, application)) {
             throw new ApplicationException("Ingestion unauthorized", null, Errors.ILLEGAL_INGESTION_REQUEST);
         }
@@ -58,7 +57,7 @@ public class IngestionUseCase {
 
     private void processMetricIngestion(MetricIngestionRequestDto metricIngestionRequestDto, IngestionCredentials credentials) {
         final Application application = applicationRepository
-                .findByKeyAndAccountKey(metricIngestionRequestDto.appKey(),
+                .findSecuredAppByKeyAndAccountKey(metricIngestionRequestDto.appKey(),
                         metricIngestionRequestDto.accountKey())
                 .orElseThrow(() -> new ApplicationException("Application not found with key: " + metricIngestionRequestDto.appKey() + " and account key: " + metricIngestionRequestDto.accountKey(), null, Errors.APPLICATION_NOT_FOUND));
 

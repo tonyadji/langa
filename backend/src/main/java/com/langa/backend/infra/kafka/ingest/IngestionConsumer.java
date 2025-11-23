@@ -94,7 +94,10 @@ public class IngestionConsumer {
         (String) logMap.get("message"),
         (String) logMap.get("level"),
         (String) logMap.get("loggerName"),
-        (String) logMap.get("timestamp")
+        (String) logMap.get("timestamp"),
+        (String) logMap.get("threadName"),
+        (String) logMap.get("stackTrace"),
+        (Map) logMap.get("mdc")
     );
   }
 

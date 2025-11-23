@@ -1,10 +1,12 @@
 package com.langa.backend.infra.rest.common.dto;
 
-import com.langa.backend.common.utils.DateUtils;
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+
 import java.io.Serializable;
+import java.time.Instant;
+import java.util.Map;
 
 public record LogDto(
         @NotBlank(message = "Log message is required")
@@ -13,7 +15,10 @@ public record LogDto(
         @NotBlank(message = "Log level is required") String level,
         @NotBlank(message = "Logger name is required") String loggerName,
         @NotBlank(message = "Timestamp is required")
-        String timestamp) implements Serializable {
+        String timestamp,
+        String threadName,
+        String stackTrace,
+        Map<String, String> mdc) implements Serializable {
 
     public LogEntry toLogEntry() {
         try {
@@ -21,7 +26,7 @@ public record LogDto(
                     .setMessage(message)
                     .setLevel(level)
                     .setLoggerName(loggerName)
-                    .setTimestamp(DateUtils.fromTimestamp(timestamp));
+                    .setTimestamp(Instant.parse(timestamp));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -32,6 +37,9 @@ public record LogDto(
                 logEntry.getMessage(),
                 logEntry.getLevel(),
                 logEntry.getLoggerName(),
-                logEntry.getTimestamp().toString());
+                logEntry.getTimestamp().toString(),
+                logEntry.getThreadName(),
+                logEntry.getStackTrace(),
+                logEntry.getMdc());
     }
 }
