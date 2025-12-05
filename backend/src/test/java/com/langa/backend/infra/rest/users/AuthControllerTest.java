@@ -1,8 +1,7 @@
 package com.langa.backend.infra.rest.users;
 
 import com.langa.backend.domain.users.usecases.LoginUseCase;
-import com.langa.backend.domain.users.usecases.RegisterUseCase;
-import com.langa.backend.domain.users.valueobjects.AuthToken;
+import com.langa.backend.domain.users.usecases.register.RegisterUseCase;
 import com.langa.backend.domain.users.valueobjects.AuthTokens;
 import com.langa.backend.infra.rest.users.dto.LoginRequestDto;
 import com.langa.backend.infra.rest.users.dto.LoginResponseDto;
@@ -14,7 +13,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,13 +34,13 @@ class AuthControllerTest {
     void register_shouldReturnOk() {
         RegisterRequestDto dto = new RegisterRequestDto("test@example.com", "password", "password");
 
-        doNothing().when(registerUseCase).register(dto.username(), dto.password(), dto.confirmationPassword());
+        doNothing().when(registerUseCase).register(dto.toCommand());
 
         ResponseEntity<String> response = authController.register(dto);
 
         assertEquals(200, response.getStatusCodeValue());
         assertEquals("User registered", response.getBody());
-        verify(registerUseCase, times(1)).register(dto.username(), dto.password(), dto.confirmationPassword());
+        verify(registerUseCase, times(1)).register(dto.toCommand());
     }
 
     @Test

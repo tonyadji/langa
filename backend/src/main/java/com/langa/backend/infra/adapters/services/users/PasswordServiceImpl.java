@@ -25,6 +25,11 @@ public class PasswordServiceImpl implements PasswordService {
         throw new UserException("Illegal password", null, Errors.PASSWORDS_MISMATCH);
     }
 
+    @Override
+    public String encode(String password) {
+        return passwordEncoder.encode(password);
+    }
+
     private boolean isLegalPassword(String password) {
         return !(Objects.isNull(password) || password.isBlank());
     }

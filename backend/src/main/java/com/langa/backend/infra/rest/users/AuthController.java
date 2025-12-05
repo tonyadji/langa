@@ -2,7 +2,7 @@ package com.langa.backend.infra.rest.users;
 
 import com.langa.backend.domain.users.usecases.LoginUseCase;
 import com.langa.backend.domain.users.usecases.RefreshAccessTokenUseCase;
-import com.langa.backend.domain.users.usecases.RegisterUseCase;
+import com.langa.backend.domain.users.usecases.register.RegisterUseCase;
 import com.langa.backend.infra.rest.users.dto.LoginRequestDto;
 import com.langa.backend.infra.rest.users.dto.LoginResponseDto;
 import com.langa.backend.infra.rest.users.dto.RefreshRequestDto;
@@ -30,7 +30,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody @Valid RegisterRequestDto registerRequestDto) {
         log.info("Register request: {}", registerRequestDto.username());
-        registerUseCase.register(registerRequestDto.username(), registerRequestDto.password(), registerRequestDto.confirmationPassword());
+        registerUseCase.register(registerRequestDto.toCommand());
         return ResponseEntity.ok("User registered");
     }
 
