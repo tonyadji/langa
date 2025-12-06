@@ -52,7 +52,7 @@ public class User extends AbstractModel {
     }
 
 
-    public AccountSetupCompleteMailEvent completeFirstConnection(String encodedPassword) {
+    public void completeFirstConnection(String encodedPassword) {
         if(UserStatus.ACTIVE.equals(status)) {
             throw new UserException("User is already active", null, Errors.USER_ILLEGAL_STATUS);
         }
@@ -60,7 +60,7 @@ public class User extends AbstractModel {
             this.password = encodedPassword;
         }
         this.status = UserStatus.ACTIVE;
-        return AccountSetupCompleteMailEvent.of(this);
+        this.registerDomainEvent(AccountSetupCompleteMailEvent.of(this));
     }
 
     public String getEmail() {

@@ -4,6 +4,7 @@ import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.users.User;
 import com.langa.backend.domain.users.exceptions.UserException;
 import com.langa.backend.domain.users.repositories.UserRepository;
+import com.langa.backend.domain.users.usecases.fetch.GetUserUseCase;
 import com.langa.backend.domain.users.valueobjects.UserInfo;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

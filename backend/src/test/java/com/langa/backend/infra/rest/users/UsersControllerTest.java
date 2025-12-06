@@ -1,6 +1,6 @@
 package com.langa.backend.infra.rest.users;
 
-import com.langa.backend.domain.users.usecases.GetUserUseCase;
+import com.langa.backend.domain.users.usecases.fetch.GetUserUseCase;
 import com.langa.backend.domain.users.valueobjects.UserInfo;
 import com.langa.backend.infra.rest.users.dto.UserDto;
 import org.junit.jupiter.api.Test;

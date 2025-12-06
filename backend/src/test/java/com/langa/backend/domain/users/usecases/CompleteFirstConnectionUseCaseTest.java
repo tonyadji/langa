@@ -6,6 +6,7 @@ import com.langa.backend.domain.users.User;
 import com.langa.backend.domain.users.exceptions.UserException;
 import com.langa.backend.domain.users.repositories.UserRepository;
 import com.langa.backend.domain.users.services.PasswordService;
+import com.langa.backend.domain.users.usecases.completefirstconnection.CompleteFirstConnectionUseCase;
 import com.langa.backend.domain.users.valueobjects.UpdatePassword;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -37,15 +37,14 @@ public class RegisterUseCase implements IRegisterUseCase, CommandHandler<Registe
         handleDomainEvents(user);
     }
 
-    private void handleDomainEvents(User user) {
-        user.getEvents().forEach(outboxEventService::storeOutboxEvent);
-
-        user.clearEvents();
-    }
-
     @Override
     public String handle(RegisterUserCommand command) {
         execute(command);
         return "User Registered";
+    }
+
+    private void handleDomainEvents(User user) {
+        user.getEvents().forEach(outboxEventService::storeOutboxEvent);
+        user.clearEvents();
     }
 }
