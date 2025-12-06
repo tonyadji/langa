@@ -1,6 +1,7 @@
 package com.langa.backend.domain.users.usecases.refreshtoken;
 
 import com.langa.backend.common.annotations.UseCase;
+import com.langa.backend.common.commands.CommandHandler;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.users.exceptions.UserException;
 import com.langa.backend.domain.users.repositories.UserRepository;
@@ -9,7 +10,7 @@ import com.langa.backend.domain.users.services.TokenProvider;
 import com.langa.backend.domain.users.valueobjects.AuthTokens;
 
 @UseCase
-public class RefreshAccessAccessTokenUseCase implements IRefreshAccessTokenUseCase {
+public class RefreshAccessAccessTokenUseCase implements IRefreshAccessTokenUseCase, CommandHandler<RefreshAccessTokenCommand, AuthTokens> {
 
     private final RefreshTokenService refreshTokenService;
     private final TokenProvider tokenProvider;
@@ -35,5 +36,10 @@ public class RefreshAccessAccessTokenUseCase implements IRefreshAccessTokenUseCa
         String newRefreshToken = refreshTokenService.issue(userEmail).getToken();
 
         return new AuthTokens(newAccessToken, newRefreshToken);
+    }
+
+    @Override
+    public AuthTokens handle(RefreshAccessTokenCommand command) {
+        return execute(command);
     }
 }

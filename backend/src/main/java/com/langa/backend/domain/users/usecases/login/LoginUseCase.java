@@ -1,6 +1,7 @@
 package com.langa.backend.domain.users.usecases.login;
 
 import com.langa.backend.common.annotations.UseCase;
+import com.langa.backend.common.commands.CommandHandler;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.users.User;
 import com.langa.backend.domain.users.exceptions.UserException;
@@ -11,7 +12,7 @@ import com.langa.backend.domain.users.valueobjects.AuthTokens;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @UseCase
-public class LoginUseCase implements ILoginUseCase {
+public class LoginUseCase implements ILoginUseCase, CommandHandler<LoginCommand, AuthTokens> {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -41,5 +42,10 @@ public class LoginUseCase implements ILoginUseCase {
         String refreshToken = refreshTokenService.issue(user.getEmail()).getToken();
 
         return new AuthTokens(accessToken, refreshToken);
+    }
+
+    @Override
+    public AuthTokens handle(LoginCommand command) {
+        return execute(command);
     }
 }

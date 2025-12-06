@@ -1,9 +1,6 @@
 package com.langa.backend.infra.rest.users;
 
 import com.langa.backend.common.commands.CommandBusDispatcher;
-import com.langa.backend.domain.users.usecases.login.ILoginUseCase;
-import com.langa.backend.domain.users.usecases.refreshtoken.IRefreshAccessTokenUseCase;
-import com.langa.backend.domain.users.usecases.register.IRegisterUseCase;
 import com.langa.backend.infra.rest.users.dto.LoginRequestDto;
 import com.langa.backend.infra.rest.users.dto.LoginResponseDto;
 import com.langa.backend.infra.rest.users.dto.RefreshRequestDto;
@@ -21,15 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class AuthController {
 
-    private final ILoginUseCase loginUseCase;
-    private final IRegisterUseCase registerUseCase;
-    private final IRefreshAccessTokenUseCase refreshAccessTokenUseCase;
     private final CommandBusDispatcher commandBusDispatcher;
 
-    public AuthController(ILoginUseCase loginUseCase, IRegisterUseCase registerUseCase, IRefreshAccessTokenUseCase refreshAccessTokenUseCase, CommandBusDispatcher commandBusDispatcher) {
-        this.loginUseCase = loginUseCase;
-        this.registerUseCase = registerUseCase;
-        this.refreshAccessTokenUseCase = refreshAccessTokenUseCase;
+    public AuthController(CommandBusDispatcher commandBusDispatcher) {
         this.commandBusDispatcher = commandBusDispatcher;
     }
 
@@ -42,13 +33,12 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> login(@RequestBody @Valid LoginRequestDto loginRequestDto) {
-
-        return ResponseEntity.ok(LoginResponseDto.of(loginUseCase.execute(loginRequestDto.toCommand())));
+        return ResponseEntity.ok(LoginResponseDto.of(commandBusDispatcher.dispatch(loginRequestDto.toCommand())));
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<LoginResponseDto> refresh(@RequestBody RefreshRequestDto body) {
-        var tokens = refreshAccessTokenUseCase.execute(body.toCommand());
+        var tokens = commandBusDispatcher.dispatch(body.toCommand());
         return ResponseEntity.ok(LoginResponseDto.of(tokens));
     }
 }
