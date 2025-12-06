@@ -7,6 +7,7 @@ import com.langa.backend.domain.teams.events.TeamInvitationAcceptedByGuestEvent;
 import com.langa.backend.domain.teams.events.TeamInvitationAcceptedForHostEvent;
 import com.langa.backend.domain.teams.events.TeamInvitationEmailEvent;
 import com.langa.backend.domain.users.events.AccountSetupCompleteMailEvent;
+import com.langa.backend.domain.users.events.ActiveUserRegisteredEvent;
 import com.langa.backend.domain.users.events.FirstConnectionMailEvent;
 import lombok.Getter;
 
@@ -20,7 +21,8 @@ public enum EventTypeRegistry {
     OUTBOX_EVENT(OutboxEvent.class),
     TEAM_INVITATION_EMAIL(TeamInvitationEmailEvent.class),
     TEAM_INVITATION_EMAIL_ACCEPTED_FOR_HOST(TeamInvitationAcceptedForHostEvent.class),
-    TEAM_INVITATION_EMAIL_ACCEPTED_BY_GUEST(TeamInvitationAcceptedByGuestEvent.class);
+    TEAM_INVITATION_EMAIL_ACCEPTED_BY_GUEST(TeamInvitationAcceptedByGuestEvent.class),
+    ACTIVE_USER_REGISTERED(ActiveUserRegisteredEvent.class);
 
     private final Class<?> eventClass;
 

@@ -1,13 +1,14 @@
 package com.langa.backend.domain.users.usecases.register;
 
 import com.langa.backend.common.model.errors.Errors;
+import com.langa.backend.common.commands.Command;
 import com.langa.backend.domain.users.exceptions.UserException;
 
 import java.util.Objects;
 
 public record RegisterUserCommand(
         String username, String password, String confirmationPassword
-) {
+) implements Command<String> {
 
     public RegisterUserCommand {
 

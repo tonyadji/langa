@@ -1,6 +1,7 @@
 package com.langa.backend.infra.adapters.persistence.users.mongo;
 
 import com.langa.backend.domain.users.User;
+import com.langa.backend.domain.users.valueobjects.UserId;
 import com.langa.backend.domain.users.valueobjects.UserStatus;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
@@ -18,7 +19,7 @@ public class UserDocument {
     private String firstConnectionToken;
 
     public User toUser() {
-        return User.populate(id, email, password, accountKey, userStatus, firstConnectionToken);
+        return User.populate(UserId.of(id, email, accountKey), password, userStatus, firstConnectionToken);
     }
 
     public static UserDocument of(User user) {

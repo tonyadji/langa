@@ -1,4 +1,4 @@
-package com.langa.backend.domain.users.usecases;
+package com.langa.backend.domain.users.usecases.login;
 
 import com.langa.backend.common.annotations.UseCase;
 import com.langa.backend.common.model.errors.Errors;
@@ -7,13 +7,11 @@ import com.langa.backend.domain.users.exceptions.UserException;
 import com.langa.backend.domain.users.repositories.UserRepository;
 import com.langa.backend.domain.users.services.RefreshTokenService;
 import com.langa.backend.domain.users.services.TokenProvider;
-import com.langa.backend.domain.users.valueobjects.AuthRequest;
 import com.langa.backend.domain.users.valueobjects.AuthTokens;
-import jakarta.validation.Valid;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @UseCase
-public class LoginUseCase {
+public class LoginUseCase implements ILoginUseCase {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -30,11 +28,12 @@ public class LoginUseCase {
         this.refreshTokenService = refreshTokenService;
     }
 
-    public AuthTokens login(@Valid AuthRequest loginRequest) {
-        final User user = userRepository.findByEmail(loginRequest.username())
+    @Override
+    public AuthTokens execute(LoginCommand command) {
+        final User user = userRepository.findByEmail(command.username())
                 .orElseThrow(() -> new UserException("User not found", null, Errors.USER_NOT_FOUND));
 
-        if (!passwordEncoder.matches(loginRequest.password(), user.getPassword())) {
+        if (!passwordEncoder.matches(command.password(), user.getPassword())) {
             throw new UserException("Invalid password", null, Errors.INVALID_CREDENTIALS);
         }
 
