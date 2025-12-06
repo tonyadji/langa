@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AbstractModel {
-    private List<DomainEvent> events;
+    private final List<DomainEvent> events;
 
     protected AbstractModel() {
         events = new ArrayList<>();

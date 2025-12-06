@@ -54,7 +54,7 @@ class GetApplicationsUseCaseTest {
         List<ApplicationInfo> result = useCase.getApplications(OWNER);
 
         assertEquals(2, result.size());
-        assertEquals("Langa1", result.get(0).name());
+        assertEquals("Langa1", result.getFirst().name());
         verify(applicationRepository, times(1)).findByOwner(OWNER);
     }
 }

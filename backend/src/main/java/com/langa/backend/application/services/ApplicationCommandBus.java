@@ -33,7 +33,7 @@ public class ApplicationCommandBus implements CommandBusDispatcher {
         return handler.handle(command);
     }
 
-    private CommandHandler resolveHandler(Command command) {
+    private <R> CommandHandler resolveHandler(Command<R> command) {
         return registry.get(command.getClass());
     }
 

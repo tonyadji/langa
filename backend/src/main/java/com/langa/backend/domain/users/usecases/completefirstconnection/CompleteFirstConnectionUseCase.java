@@ -2,14 +2,12 @@ package com.langa.backend.domain.users.usecases.completefirstconnection;
 
 import com.langa.backend.common.annotations.UseCase;
 import com.langa.backend.common.commands.CommandHandler;
-import com.langa.backend.common.eda.model.DomainEvent;
 import com.langa.backend.common.eda.services.OutboxEventService;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.users.User;
 import com.langa.backend.domain.users.exceptions.UserException;
 import com.langa.backend.domain.users.repositories.UserRepository;
 import com.langa.backend.domain.users.services.PasswordService;
-import com.langa.backend.domain.users.valueobjects.UpdatePassword;
 
 @UseCase
 public class CompleteFirstConnectionUseCase implements ICompleteFirstConnection, CommandHandler<CompleteFirstConnectionCommand, String> {

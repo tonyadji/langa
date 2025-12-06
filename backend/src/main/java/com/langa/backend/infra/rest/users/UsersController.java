@@ -1,6 +1,5 @@
 package com.langa.backend.infra.rest.users;
 
-import com.langa.backend.domain.users.usecases.fetch.GetUserUseCase;
 import com.langa.backend.domain.users.usecases.fetch.IGetUserUseCase;
 import com.langa.backend.infra.rest.users.dto.UserDto;
 import org.springframework.http.ResponseEntity;

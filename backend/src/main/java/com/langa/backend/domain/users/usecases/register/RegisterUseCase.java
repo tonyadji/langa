@@ -9,8 +9,6 @@ import com.langa.backend.domain.users.exceptions.UserException;
 import com.langa.backend.domain.users.repositories.UserRepository;
 import com.langa.backend.domain.users.services.PasswordService;
 
-import java.util.List;
-
 @UseCase
 public class RegisterUseCase implements IRegisterUseCase, CommandHandler<RegisterUserCommand, String> {
 
