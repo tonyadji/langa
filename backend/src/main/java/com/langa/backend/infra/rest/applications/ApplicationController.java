@@ -1,7 +1,11 @@
 package com.langa.backend.infra.rest.applications;
 
 import com.langa.backend.domain.applications.Application;
-import com.langa.backend.domain.applications.usecases.*;
+import com.langa.backend.domain.applications.usecases.create.CreateApplicationUseCase;
+import com.langa.backend.domain.applications.usecases.fetch.GetApplicationsUseCase;
+import com.langa.backend.domain.applications.usecases.fetch.GetLogUseCase;
+import com.langa.backend.domain.applications.usecases.fetch.GetMetricsUseCase;
+import com.langa.backend.domain.applications.usecases.fetch.GetUsageUseCase;
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
 import com.langa.backend.domain.applications.valueobjects.MetricEntry;
 import com.langa.backend.domain.applications.valueobjects.PaginatedResult;
@@ -9,8 +13,6 @@ import com.langa.backend.infra.config.LangaApplicationProperties;
 import com.langa.backend.infra.rest.applications.dto.*;
 import com.langa.backend.infra.rest.common.dto.LogDto;
 import com.langa.backend.infra.rest.common.dto.MetricDto;
-import jakarta.validation.Valid;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -39,12 +41,6 @@ public class ApplicationController {
         this.getUsageUseCase = getUsageUseCase;
     }
 
-    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApplicationDto> createApplication(@AuthenticationPrincipal UserDetails userDetails,
-                                                            @Valid @RequestBody CreateApplicationRequestDto applicationRequestDto) {
-
-        return ResponseEntity.ok(ApplicationDto.of(createApplicationUseCase.create(applicationRequestDto.name(), userDetails.getUsername())));
-    }
 
     @GetMapping()
     public ResponseEntity<List<ApplicationDto>> getAllApplications(@AuthenticationPrincipal UserDetails userDetails) {

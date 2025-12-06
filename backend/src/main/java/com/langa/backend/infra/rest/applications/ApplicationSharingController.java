@@ -1,6 +1,6 @@
 package com.langa.backend.infra.rest.applications;
 
-import com.langa.backend.domain.applications.usecases.RevokeSharingUseCase;
+import com.langa.backend.domain.applications.usecases.sharing.revoke.RevokeSharingUseCase;
 import com.langa.backend.domain.applications.valueobjects.ShareWith;
 import com.langa.backend.infra.rest.applications.dto.ShareAppRequestDto;
 import com.langa.backend.infra.adapters.services.applications.ShareApplicationService;

@@ -2,6 +2,7 @@ package com.langa.backend.domain.applications.usecases;
 
 import com.langa.backend.domain.applications.Application;
 import com.langa.backend.domain.applications.repositories.ApplicationRepository;
+import com.langa.backend.domain.applications.usecases.fetch.GetApplicationsUseCase;
 import com.langa.backend.domain.applications.valueobjects.ApplicationInfo;
 import com.langa.backend.domainexchange.user.UserAccountService;
 import org.junit.jupiter.api.Test;

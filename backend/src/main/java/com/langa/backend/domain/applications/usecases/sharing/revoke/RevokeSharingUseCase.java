@@ -1,4 +1,4 @@
-package com.langa.backend.domain.applications.usecases;
+package com.langa.backend.domain.applications.usecases.sharing.revoke;
 
 import com.langa.backend.common.annotations.UseCase;
 import com.langa.backend.common.model.ShareWithInfo;

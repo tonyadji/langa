@@ -1,6 +1,7 @@
 package com.langa.backend.infra.adapters.persistence.applications.mongo.documents;
 
 import com.langa.backend.domain.applications.Application;
+import com.langa.backend.domain.applications.valueobjects.ApplicationId;
 import com.langa.backend.domain.applications.valueobjects.ShareWith;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
@@ -22,11 +23,11 @@ public class ApplicationDocument {
     private Set<ShareWith> sharedWith;
 
     public Application toApplication() {
-        return Application.populate(id, name, key, accountKey, owner, sharedWith);
+        return Application.populate(ApplicationId.of(id, key), name, accountKey, owner, sharedWith);
     }
 
     public Application toSecuredApplication() {
-        return Application.populateSecured(id, name, key, accountKey, secret, ingestionUri, owner, sharedWith);
+        return Application.populateSecured(ApplicationId.of(id, key), name, accountKey, secret, ingestionUri, owner, sharedWith);
     }
 
     public static ApplicationDocument of(Application application) {

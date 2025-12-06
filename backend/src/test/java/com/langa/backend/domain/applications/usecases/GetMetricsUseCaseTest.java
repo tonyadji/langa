@@ -5,6 +5,7 @@ import com.langa.backend.domain.applications.Application;
 import com.langa.backend.domain.applications.exceptions.ApplicationException;
 import com.langa.backend.domain.applications.repositories.ApplicationRepository;
 import com.langa.backend.domain.applications.repositories.MetricEntryRepository;
+import com.langa.backend.domain.applications.usecases.fetch.GetMetricsUseCase;
 import com.langa.backend.domain.applications.valueobjects.MetricEntry;
 import com.langa.backend.domain.applications.valueobjects.MetricFilter;
 import com.langa.backend.domain.applications.valueobjects.PaginatedResult;

@@ -1,6 +1,7 @@
 package com.langa.backend.common.eda.registry;
 
 import com.langa.backend.common.eda.model.OutboxEvent;
+import com.langa.backend.domain.applications.events.ApplicationCreatedEvent;
 import com.langa.backend.domain.applications.events.ApplicationSharedEvent;
 import com.langa.backend.domain.teams.events.InvitationAcceptedMailEvent;
 import com.langa.backend.domain.teams.events.TeamInvitationAcceptedByGuestEvent;
@@ -14,15 +15,23 @@ import lombok.Getter;
 @Getter
 public enum EventTypeRegistry {
 
-    ACCOUNT_SETUP_COMPLETE_MAIL(AccountSetupCompleteMailEvent.class),
+    //Application Events
+    APPLICATION_CREATED_EVENT(ApplicationCreatedEvent.class),
     APPLICATION_SHARED_EVENT(ApplicationSharedEvent.class),
-    FIRST_CONNECTION_MAIL(FirstConnectionMailEvent.class),
-    INVITATION_ACCEPTED_EMAIL(InvitationAcceptedMailEvent.class),
-    OUTBOX_EVENT(OutboxEvent.class),
+
+    //Team Events
     TEAM_INVITATION_EMAIL(TeamInvitationEmailEvent.class),
     TEAM_INVITATION_EMAIL_ACCEPTED_FOR_HOST(TeamInvitationAcceptedForHostEvent.class),
     TEAM_INVITATION_EMAIL_ACCEPTED_BY_GUEST(TeamInvitationAcceptedByGuestEvent.class),
-    ACTIVE_USER_REGISTERED(ActiveUserRegisteredEvent.class);
+    INVITATION_ACCEPTED_EMAIL(InvitationAcceptedMailEvent.class),
+
+    //User Events
+    FIRST_CONNECTION_MAIL(FirstConnectionMailEvent.class),
+    ACCOUNT_SETUP_COMPLETE_MAIL(AccountSetupCompleteMailEvent.class),
+    ACTIVE_USER_REGISTERED(ActiveUserRegisteredEvent.class),
+
+
+    OUTBOX_EVENT(OutboxEvent.class);
 
     private final Class<?> eventClass;
 

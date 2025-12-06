@@ -1,6 +1,6 @@
 package com.langa.backend.infra.adapters.services.applications;
 
-import com.langa.backend.domain.applications.usecases.ShareApplicationUseCase;
+import com.langa.backend.domain.applications.usecases.sharing.share.ShareApplicationUseCase;
 import com.langa.backend.domain.applications.valueobjects.ShareWith;
 import com.langa.backend.domain.applications.valueobjects.SharedWithProfile;
 import org.springframework.stereotype.Service;

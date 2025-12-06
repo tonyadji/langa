@@ -1,7 +1,7 @@
 package com.langa.backend.infra.adapters.services.applications;
 
 import com.langa.backend.domain.applications.services.IngestionCredentials;
-import com.langa.backend.domain.applications.usecases.IngestionUseCase;
+import com.langa.backend.domain.applications.usecases.ingest.IngestionUseCase;
 import com.langa.backend.infra.rest.ingest.dto.IngestionRequestDto;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,4 +1,4 @@
-package com.langa.backend.domain.applications.usecases;
+package com.langa.backend.domain.applications.usecases.sharing.share;
 
 import com.langa.backend.common.annotations.UseCase;
 import com.langa.backend.common.eda.services.OutboxEventService;

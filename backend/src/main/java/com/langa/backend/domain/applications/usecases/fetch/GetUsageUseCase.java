@@ -1,4 +1,4 @@
-package com.langa.backend.domain.applications.usecases;
+package com.langa.backend.domain.applications.usecases.fetch;
 
 import com.langa.backend.common.annotations.UseCase;
 import com.langa.backend.common.model.errors.Errors;
