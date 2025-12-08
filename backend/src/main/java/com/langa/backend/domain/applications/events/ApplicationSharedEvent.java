@@ -2,6 +2,7 @@ package com.langa.backend.domain.applications.events;
 
 import com.langa.backend.common.eda.model.DomainEvent;
 import com.langa.backend.common.eda.registry.EventTypeRegistry;
+import com.langa.backend.domain.applications.Application;
 
 public record ApplicationSharedEvent(
         String aggregateId,
@@ -9,6 +10,7 @@ public record ApplicationSharedEvent(
         String sharedWithEmail,
         String appName
 ) implements DomainEvent {
+
     @Override
     public EventTypeRegistry getEventType() {
         return EventTypeRegistry.APPLICATION_SHARED_EVENT;

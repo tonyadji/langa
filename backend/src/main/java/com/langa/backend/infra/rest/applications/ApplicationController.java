@@ -29,15 +29,17 @@ public class ApplicationController {
     private final GetApplicationsUseCase getApplicationsUseCase;
     private final GetLogUseCase getLogUseCase;
     private final GetMetricsUseCase getMetricsUseCase;
-    private final CreateApplicationUseCase createApplicationUseCase;
     private final GetUsageUseCase getUsageUseCase;
 
-    public ApplicationController(LangaApplicationProperties applicationProperties, GetApplicationsUseCase getApplicationsUseCase, GetLogUseCase getLogUseCase, GetMetricsUseCase getMetricsUseCase, CreateApplicationUseCase createApplicationUseCase, GetUsageUseCase getUsageUseCase) {
+    public ApplicationController(LangaApplicationProperties applicationProperties,
+                                 GetApplicationsUseCase getApplicationsUseCase,
+                                 GetLogUseCase getLogUseCase,
+                                 GetMetricsUseCase getMetricsUseCase,
+                                 GetUsageUseCase getUsageUseCase) {
         this.applicationProperties = applicationProperties;
         this.getApplicationsUseCase = getApplicationsUseCase;
         this.getLogUseCase = getLogUseCase;
         this.getMetricsUseCase = getMetricsUseCase;
-        this.createApplicationUseCase = createApplicationUseCase;
         this.getUsageUseCase = getUsageUseCase;
     }
 

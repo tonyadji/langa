@@ -32,6 +32,17 @@ public class JwtUtils implements TokenProvider {
     }
 
     @Override
+    public String generateToken(String user) {
+        return Jwts.builder()
+                .setSubject(user)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + jwtConfig.getExpirationMs()))
+                .setHeaderParam("kid", jwtConfig.getKid())
+                .signWith(jwtConfig.getKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    @Override
     public String getUsernameFromToken(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(jwtConfig.getKey())

@@ -4,6 +4,7 @@ import com.langa.backend.common.model.AbstractModel;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.common.utils.KeyGenerator;
 import com.langa.backend.domain.applications.events.ApplicationCreatedEvent;
+import com.langa.backend.domain.applications.events.ApplicationSharedEvent;
 import com.langa.backend.domain.applications.exceptions.ApplicationException;
 import com.langa.backend.domain.applications.valueobjects.*;
 import lombok.Getter;
