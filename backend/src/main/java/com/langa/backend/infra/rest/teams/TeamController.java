@@ -1,7 +1,7 @@
 package com.langa.backend.infra.rest.teams;
 
+import com.langa.backend.common.commands.CommandBusDispatcher;
 import com.langa.backend.domain.teams.Team;
-import com.langa.backend.domain.teams.usecases.CreateTeamUseCase;
 import com.langa.backend.infra.rest.teams.dto.CreateTeamRequestDto;
 import com.langa.backend.infra.rest.teams.dto.CreateTeamResponseDto;
 import jakarta.validation.Valid;
@@ -16,16 +16,16 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*")
 public class TeamController {
 
-    private final CreateTeamUseCase createTeamUseCase;
+    private final CommandBusDispatcher commandBusDispatcher;
 
-    public TeamController(CreateTeamUseCase createTeamUseCase) {
-        this.createTeamUseCase = createTeamUseCase;
+    public TeamController(CommandBusDispatcher commandBusDispatcher) {
+        this.commandBusDispatcher = commandBusDispatcher;
     }
 
     @PostMapping
     public ResponseEntity<CreateTeamResponseDto> createTeam(@AuthenticationPrincipal UserDetails userDetails,
                                                             @RequestBody @Valid CreateTeamRequestDto createTeamRequestDto) {
-        final Team team = createTeamUseCase.createTeam(createTeamRequestDto.name(), userDetails.getUsername());
+        final Team team = commandBusDispatcher.dispatch(createTeamRequestDto.toCommand(userDetails.getUsername()));
         return ResponseEntity.status(HttpStatus.CREATED).body(CreateTeamResponseDto.of(team));
     }
 }

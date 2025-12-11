@@ -4,6 +4,7 @@ import com.langa.backend.domain.teams.Team;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface TeamRepository {
 
@@ -16,4 +17,6 @@ public interface TeamRepository {
     Optional<Team> findById(String id);
 
     List<Team> findByOwner(String owner);
+
+    Set<String> findTeamsKeysByMemberUsername(String username);
 }

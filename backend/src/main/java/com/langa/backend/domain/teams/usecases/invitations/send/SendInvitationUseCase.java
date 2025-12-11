@@ -1,4 +1,4 @@
-package com.langa.backend.domain.teams.usecases;
+package com.langa.backend.domain.teams.usecases.invitations.send;
 
 import com.langa.backend.common.annotations.UseCase;
 import com.langa.backend.common.eda.services.OutboxEventService;

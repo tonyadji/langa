@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
@@ -46,5 +47,10 @@ public class TeamRepositoryImpl implements TeamRepository {
                 .stream()
                 .map(TeamDocument::toTeam)
                 .toList();
+    }
+
+    @Override
+    public Set<String> findTeamsKeysByMemberUsername(String username) {
+        return Set.of();
     }
 }

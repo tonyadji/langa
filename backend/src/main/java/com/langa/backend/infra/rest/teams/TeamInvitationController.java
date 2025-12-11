@@ -1,8 +1,8 @@
 package com.langa.backend.infra.rest.teams;
 
 
-import com.langa.backend.domain.teams.usecases.AcceptInvitationUseCase;
-import com.langa.backend.domain.teams.usecases.GetInvitationUseCase;
+import com.langa.backend.domain.teams.usecases.invitations.accept.AcceptInvitationUseCase;
+import com.langa.backend.domain.teams.usecases.invitations.fetch.GetInvitationUseCase;
 import com.langa.backend.infra.rest.teams.dto.AcceptInvitationRequest;
 import com.langa.backend.infra.rest.teams.dto.GetInvitationResponseDto;
 import jakarta.validation.Valid;

@@ -92,13 +92,13 @@ public class ApplicationRepositoryImpl implements ApplicationRepository {
 
     @Override
     public List<Application> findBySharedWithUser(String sharedWith) {
-        return mongoApplicationDao.findBySharedWith_key(sharedWith)
+        return mongoApplicationDao.findBySharedWith_KeyAndSharedWith_ExpirationDateIsNullAndSharedWith_RevokedDateIsNull(sharedWith)
                 .stream().map(ApplicationDocument::toApplication).toList();
     }
 
     @Override
     public List<Application> findBySharedWithTeams(Set<String> teamKeys) {
-        return mongoApplicationDao.findBySharedWith_KeyIn(teamKeys)
+        return mongoApplicationDao.findBySharedWith_KeyInAndSharedWith_ExpirationDateIsNullAndSharedWith_RevokedDateIsNull(teamKeys)
                 .stream().map(ApplicationDocument::toApplication).toList();
     }
 

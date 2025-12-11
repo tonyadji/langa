@@ -4,6 +4,7 @@ import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.teams.TeamInvitation;
 import com.langa.backend.domain.teams.exceptions.TeamException;
 import com.langa.backend.domain.teams.repositories.TeamInvitationRepository;
+import com.langa.backend.domain.teams.usecases.invitations.fetch.GetInvitationUseCase;
 import com.langa.backend.domain.teams.valueobjects.InvitationStatus;
 import com.langa.backend.domain.teams.valueobjects.TeamInvitationIdentity;
 import com.langa.backend.domain.teams.valueobjects.TeamInvitationPeriod;

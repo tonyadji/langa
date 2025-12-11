@@ -5,6 +5,7 @@ import com.langa.backend.common.eda.services.OutboxEventService;
 import com.langa.backend.domain.teams.TeamInvitation;
 import com.langa.backend.domain.teams.exceptions.TeamException;
 import com.langa.backend.domain.teams.repositories.TeamInvitationRepository;
+import com.langa.backend.domain.teams.usecases.invitations.accept.AcceptInvitationUseCase;
 import com.langa.backend.domain.teams.valueobjects.InvitationStatus;
 import com.langa.backend.domain.teams.valueobjects.TeamInvitationIdentity;
 import com.langa.backend.domain.teams.valueobjects.TeamInvitationPeriod;

@@ -1,7 +1,7 @@
 package com.langa.backend.infra.adapters.services.teams;
 
 import com.langa.backend.domain.teams.TeamInvitation;
-import com.langa.backend.domain.teams.usecases.SendInvitationUseCase;
+import com.langa.backend.domain.teams.usecases.invitations.send.SendInvitationUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

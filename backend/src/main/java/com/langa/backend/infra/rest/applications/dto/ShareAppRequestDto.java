@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record ShareAppRequestDto(
-        @NotBlank String sharedWith,
+        @NotBlank String shareWith,
         @NotNull SharedWithProfile profile
 ) {
 
@@ -15,7 +15,7 @@ public record ShareAppRequestDto(
         return new ShareApplicationCommand(
                 appId,
                 userName,
-                sharedWith,
+                shareWith,
                 profile
         );
     }
@@ -24,7 +24,7 @@ public record ShareAppRequestDto(
         return new RevokeSharingApplicationCommand(
                 appId,
                 username,
-                sharedWith,
+                shareWith,
                 profile
         );
     }

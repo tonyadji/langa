@@ -15,7 +15,9 @@ public interface MongoApplicationDao extends MongoRepository<ApplicationDocument
     List<ApplicationDocument> findByAccountKey(String accountKey);
     List<ApplicationDocument> findByOwner(String owner);
     List<ApplicationDocument> findBySharedWith_key(String accountOrTeamKey);
+    List<ApplicationDocument> findBySharedWith_KeyAndSharedWith_ExpirationDateIsNullAndSharedWith_RevokedDateIsNull(String accountOrTeamKey);
     List<ApplicationDocument> findBySharedWith_KeyIn(Set<String> teamKeys);
+    List<ApplicationDocument> findBySharedWith_KeyInAndSharedWith_ExpirationDateIsNullAndSharedWith_RevokedDateIsNull(Set<String> teamKeys);
 
     Optional<ApplicationDocument> findByOwnerAndName(String owner, String name);
 

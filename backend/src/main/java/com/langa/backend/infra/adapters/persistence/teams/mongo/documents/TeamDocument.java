@@ -1,6 +1,7 @@
 package com.langa.backend.infra.adapters.persistence.teams.mongo.documents;
 
 import com.langa.backend.domain.teams.Team;
+import com.langa.backend.domain.teams.valueobjects.TeamId;
 import com.langa.backend.domain.teams.valueobjects.TeamMember;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
@@ -22,9 +23,7 @@ public class TeamDocument {
     private LocalDateTime createdDate;
 
     public Team toTeam() {
-        final Team team = Team.populate(id, name, createdBy, createdDate);
-        team.getMembers().addAll(members);
-        return team;
+        return Team.populate(TeamId.of(id, key), name, createdBy, members, createdDate);
     }
 
     public static TeamDocument of(Team team) {
