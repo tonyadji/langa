@@ -19,16 +19,16 @@ public class TeamInvitation {
     private LocalDateTime acceptedDate;
     private InvitationStatus status;
 
-    private TeamInvitation(TeamInvitationIdentity id, TeamInvitationStakeHolders stakeHolders, TeamInvitationPeriod invitationPeriod, LocalDateTime acceptedDate, InvitationStatus status) {
-        this.identity = id;
+    private TeamInvitation(TeamInvitationIdentity identity, TeamInvitationStakeHolders stakeHolders, TeamInvitationPeriod invitationPeriod, LocalDateTime acceptedDate, InvitationStatus status) {
+        this.identity = identity;
         this.stakeHolders = stakeHolders;
         this.invitationPeriod = invitationPeriod;
         this.acceptedDate = acceptedDate;
         this.status = status;
     }
 
-    public static TeamInvitation populate(TeamInvitationIdentity id, TeamInvitationStakeHolders stakeHolders, TeamInvitationPeriod invitationPeriod, LocalDateTime acceptedDate, InvitationStatus status) {
-        return new TeamInvitation(id, stakeHolders, invitationPeriod, acceptedDate, status);
+    public static TeamInvitation populate(TeamInvitationIdentity identity, TeamInvitationStakeHolders stakeHolders, TeamInvitationPeriod invitationPeriod, LocalDateTime acceptedDate, InvitationStatus status) {
+        return new TeamInvitation(identity, stakeHolders, invitationPeriod, acceptedDate, status);
     }
 
     public TeamInvitation accept() {

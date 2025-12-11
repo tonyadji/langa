@@ -35,7 +35,7 @@ public record TeamInvitationEmailEvent(
 
     public static TeamInvitationEmailEvent of(TeamInvitation invitation, Team team) {
         return new TeamInvitationEmailEvent(
-                invitation.getIdentity().id(),
+                invitation.getIdentity().teamId(),
                 invitation.getStakeHolders().guest(),
                 invitation.getStakeHolders().host(),
                 team.getName(),

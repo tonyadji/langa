@@ -8,7 +8,13 @@ public record TeamId(
         String id,
         String key
 ) {
-    public static TeamId of(String name, String createdBy) {
+    public static TeamId newTeamIdOf(String name, String createdBy) {
         return new TeamId(UUID.nameUUIDFromBytes(name.concat(createdBy).getBytes()).toString(), KeyGenerator.generateTeamKey(name, createdBy));
     }
+
+    public static TeamId of(String id, String key) {
+        return new TeamId(id, key);
+    }
+
+
 }

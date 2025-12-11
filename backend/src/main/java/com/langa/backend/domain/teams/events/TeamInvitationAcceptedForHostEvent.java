@@ -34,7 +34,7 @@ public record TeamInvitationAcceptedForHostEvent(
 
     public static TeamInvitationAcceptedForHostEvent of(TeamInvitation invitation) {
         return new TeamInvitationAcceptedForHostEvent(
-                invitation.getIdentity().id(),
+                invitation.getIdentity().teamId(),
                 invitation.getStakeHolders().guest(),
                 invitation.getStakeHolders().host(),
                 invitation.getStakeHolders().team(),

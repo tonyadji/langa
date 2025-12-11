@@ -15,7 +15,7 @@ public record GetInvitationResponseDto(
 ) {
     public static GetInvitationResponseDto of(TeamInvitation teamInvitation) {
         return new GetInvitationResponseDto(
-                teamInvitation.getIdentity().id(),
+                teamInvitation.getIdentity().teamId(),
                 teamInvitation.getStakeHolders().team(),
                 teamInvitation.getStakeHolders().host(),
                 teamInvitation.getStakeHolders().guest(),

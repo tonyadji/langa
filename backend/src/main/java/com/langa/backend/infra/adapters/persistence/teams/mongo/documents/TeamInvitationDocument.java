@@ -35,7 +35,7 @@ public class TeamInvitationDocument {
 
     public static TeamInvitationDocument of(TeamInvitation teamInvitation) {
         TeamInvitationDocument teamInvitationDocument = new TeamInvitationDocument();
-        teamInvitationDocument.setId(teamInvitation.getIdentity().id());
+        teamInvitationDocument.setId(teamInvitation.getIdentity().teamId());
         teamInvitationDocument.setTeam(teamInvitation.getStakeHolders().team());
         teamInvitationDocument.setHost(teamInvitation.getStakeHolders().host());
         teamInvitationDocument.setGuest(teamInvitation.getStakeHolders().guest());
