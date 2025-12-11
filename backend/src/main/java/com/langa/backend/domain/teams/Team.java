@@ -101,4 +101,11 @@ public class Team extends AbstractModel {
     public String getKey() {
         return teamId.key();
     }
+
+    public void flagInvitationExpired(TeamInvitation teamInvitation) {
+        teamInvitation.markAsExpired();
+        invitations.removeIf(invitation -> Objects.equals(invitation.getIdentity().invitationToken(), teamInvitation.getIdentity().invitationToken()));
+        invitations.add(teamInvitation);
+        // register invitation expired event
+    }
 }

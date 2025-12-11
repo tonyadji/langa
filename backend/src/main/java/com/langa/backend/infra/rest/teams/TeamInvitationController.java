@@ -2,6 +2,7 @@ package com.langa.backend.infra.rest.teams;
 
 
 import com.langa.backend.domain.teams.usecases.invitations.accept.AcceptInvitationUseCase;
+import com.langa.backend.domain.teams.usecases.invitations.fetch.GetInvitationQuery;
 import com.langa.backend.domain.teams.usecases.invitations.fetch.GetInvitationUseCase;
 import com.langa.backend.infra.rest.teams.dto.AcceptInvitationRequest;
 import com.langa.backend.infra.rest.teams.dto.GetInvitationResponseDto;
@@ -11,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/team-invitations")
+@RequestMapping("/api/teams")
 @CrossOrigin(origins = "*")
 public class TeamInvitationController {
 
@@ -23,13 +24,13 @@ public class TeamInvitationController {
         this.acceptInvitationUseCase = acceptInvitationUseCase;
     }
 
-    @GetMapping
-    public ResponseEntity<GetInvitationResponseDto> getInvitation(@RequestParam String invitationToken) {
+    @GetMapping("{teamId}/invitations")
+    public ResponseEntity<GetInvitationResponseDto> getInvitation(@PathVariable String teamId, @RequestParam String invitationToken) {
         return ResponseEntity.ok(GetInvitationResponseDto.of(
-                getInvitationUseCase.getInvitation(invitationToken)));
+                getInvitationUseCase.query(new GetInvitationQuery(teamId, invitationToken))));
     }
 
-    @PostMapping("/accept")
+    @PostMapping("{teamId}/invitations/accept")
     public ResponseEntity<String> getInvitation(@Valid @RequestBody AcceptInvitationRequest acceptInvitationRequest) {
         acceptInvitationUseCase.acceptInvitation(acceptInvitationRequest.invitationId());
         return ResponseEntity.status(HttpStatus.ACCEPTED).body("Invitation accepted");
