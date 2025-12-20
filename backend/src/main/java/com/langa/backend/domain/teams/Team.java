@@ -2,6 +2,8 @@ package com.langa.backend.domain.teams;
 
 import com.langa.backend.common.model.AbstractModel;
 import com.langa.backend.common.model.errors.Errors;
+import com.langa.backend.domain.teams.events.TeamInvitationAcceptedByGuestEvent;
+import com.langa.backend.domain.teams.events.TeamInvitationAcceptedForHostEvent;
 import com.langa.backend.domain.teams.events.TeamInvitationEmailEvent;
 import com.langa.backend.domain.teams.exceptions.TeamException;
 import com.langa.backend.domain.teams.valueobjects.*;
@@ -52,8 +54,8 @@ public class Team extends AbstractModel {
         return new Team(name, createdBy, createdDate);
     }
 
-    public void checkOwnership(String host) {
-        if (!Objects.equals(host, this.createdBy)) {
+    public void checkOwnership(String owner) {
+        if (!Objects.equals(owner, this.createdBy)) {
            throw new TeamException("Team Ownership", null, Errors.ACCESS_DENIED);
         }
     }
@@ -104,8 +106,34 @@ public class Team extends AbstractModel {
 
     public void flagInvitationExpired(TeamInvitation teamInvitation) {
         teamInvitation.markAsExpired();
+        updateInvitation(teamInvitation);
+    }
+
+    public boolean acceptInvitation(TeamInvitation invitation) {
+        if (invitation == null) {
+            return false;
+        }
+
+        if(!invitation.isExpired()) {
+            updateInvitation(invitation.accept());
+            registerDomainEvent(TeamInvitationAcceptedByGuestEvent.of(invitation));
+            registerDomainEvent(TeamInvitationAcceptedForHostEvent.of(invitation));
+            return true;
+        } else {
+            invitation.markAsExpired();
+            updateInvitation(invitation);
+        }
+        return false;
+    }
+
+    public TeamInvitation getInvitation(String token) {
+        return invitations.stream()
+                .filter(invitation -> Objects.equals(invitation.getIdentity().invitationToken(), token))
+                .findFirst().orElse(null);
+    }
+
+    private void updateInvitation(TeamInvitation teamInvitation) {
         invitations.removeIf(invitation -> Objects.equals(invitation.getIdentity().invitationToken(), teamInvitation.getIdentity().invitationToken()));
         invitations.add(teamInvitation);
-        // register invitation expired event
     }
 }

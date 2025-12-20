@@ -7,15 +7,17 @@ import java.time.LocalDateTime;
 
 public record GetInvitationResponseDto(
         String id,
+        String token,
         String team,
         String host,
         String guest,
-        LocalDateTime epiryDate,
+        LocalDateTime expiryDate,
         InvitationStatus status
 ) {
     public static GetInvitationResponseDto of(TeamInvitation teamInvitation) {
         return new GetInvitationResponseDto(
-                teamInvitation.getIdentity().teamId(),
+                teamInvitation.getTeamId(),
+                teamInvitation.getToken(),
                 teamInvitation.getStakeHolders().team(),
                 teamInvitation.getStakeHolders().host(),
                 teamInvitation.getStakeHolders().guest(),

@@ -5,7 +5,8 @@ import com.langa.backend.domain.teams.exceptions.TeamException;
 
 public record GetInvitationQuery(
         String teamId,
-        String invitationToken
+        String invitationToken,
+        String guestOrHost
 ) {
 
     public GetInvitationQuery {
@@ -15,6 +16,10 @@ public record GetInvitationQuery(
 
         if (invitationToken == null || invitationToken.isBlank()) {
             throw new TeamException("invitationToken is required", null, Errors.VALIDATION_ERROR);
+        }
+
+        if (guestOrHost == null || guestOrHost.isBlank()) {
+            throw new TeamException("guest Or Host is required", null, Errors.VALIDATION_ERROR);
         }
     }
 }

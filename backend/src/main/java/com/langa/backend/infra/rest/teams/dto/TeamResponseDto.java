@@ -29,4 +29,8 @@ public record TeamResponseDto(
                 team.getCreatedDate()
         );
     }
+
+    public static List<TeamResponseDto> of(List<Team> teams) {
+        return teams.stream().map(TeamResponseDto::of).toList();
+    }
 }

@@ -10,6 +10,7 @@ import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 public class TeamInvitation {
@@ -46,5 +47,22 @@ public class TeamInvitation {
 
     public void markAsExpired() {
         status = InvitationStatus.EXPIRED;
+    }
+
+    public String getTeamId() {
+        return identity.teamId();
+    }
+
+    public String getToken() {
+        return identity.invitationToken();
+    }
+
+    public boolean isVisibleBy(String guestOrHost) {
+        return Objects.equals(stakeHolders.guest(), guestOrHost) ||
+                Objects.equals(stakeHolders.host(), guestOrHost);
+    }
+
+    public boolean canAccept(String guest) {
+        return Objects.equals(stakeHolders.guest(), guest);
     }
 }
