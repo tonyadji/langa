@@ -6,6 +6,10 @@ import com.langa.backend.domain.applications.exceptions.ApplicationException;
 import com.langa.backend.domain.applications.repositories.ApplicationRepository;
 import com.langa.backend.infra.adapters.persistence.applications.mongo.documents.ApplicationDocument;
 import com.langa.backend.infra.adapters.persistence.applications.mongo.daos.MongoApplicationDao;
+import com.langa.backend.infra.adapters.persistence.logentries.mongo.LogEntryDocument;
+import com.langa.backend.infra.adapters.persistence.logentries.mongo.MongoLogEntryDao;
+import com.langa.backend.infra.adapters.persistence.metricentries.mongo.MetricEntryDocument;
+import com.langa.backend.infra.adapters.persistence.metricentries.mongo.MongoMetricEntryDao;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -18,11 +22,25 @@ import java.util.Set;
 public class ApplicationRepositoryImpl implements ApplicationRepository {
 
     private final MongoApplicationDao mongoApplicationDao;
+    private final MongoLogEntryDao mongoLogEntryDao;
+    private final MongoMetricEntryDao mongoMetricEntryDao;
 
     @Override
     public Application save(Application application) {
+
+        if (!application.getNewLogEntries().isEmpty()) {
+            List<LogEntryDocument> logEntryDocuments = application.getNewLogEntries().stream().map(LogEntryDocument::of).toList();
+            mongoLogEntryDao.saveAll(logEntryDocuments);
+        }
+
+        if (!application.getNewMetricsEntries().isEmpty()) {
+            List<MetricEntryDocument> metricEntryDocuments = application.getNewMetricsEntries().stream().map(MetricEntryDocument::of).toList();
+            mongoMetricEntryDao.saveAll(metricEntryDocuments);
+        }
+
         final ApplicationDocument applicationDocument = ApplicationDocument.of(application);
         mongoApplicationDao.save(applicationDocument);
+
         return applicationDocument.toApplication();
     }
 

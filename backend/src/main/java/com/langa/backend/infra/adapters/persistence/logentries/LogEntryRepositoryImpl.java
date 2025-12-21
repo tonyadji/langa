@@ -1,6 +1,6 @@
 package com.langa.backend.infra.adapters.persistence.logentries;
 
-import com.langa.backend.domain.applications.repositories.LogEntryRepository;
+import com.langa.backend.domain.applications.repositories.LogQueryRepository;
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
 import com.langa.backend.domain.applications.valueobjects.LogFilter;
 import com.langa.backend.domain.applications.valueobjects.PaginatedResult;
@@ -17,16 +17,11 @@ import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
-public class LogEntryRepositoryImpl implements LogEntryRepository {
+public class LogEntryRepositoryImpl implements LogQueryRepository {
 
     private final MongoLogEntryDao mongoLogEntryDao;
     private final MongoTemplate mongoTemplate;
 
-    @Override
-    public LogEntry save(LogEntry logEntry) {
-        return mongoLogEntryDao.save(LogEntryDocument.of(logEntry))
-                .toLogEntry();
-    }
 
     @Override
     public List<LogEntry> findByAppKeyOrderByTimestampDesc(String id) {
@@ -39,14 +34,6 @@ public class LogEntryRepositoryImpl implements LogEntryRepository {
     @Override
     public List<LogEntry> findByAppKeyAndAccountKeyOrderByTimestampDesc(String appKey, String accountKey) {
         return mongoLogEntryDao.findByAppKeyAndAccountKeyOrderByTimestampDesc(appKey, accountKey)
-                .stream()
-                .map(LogEntryDocument::toLogEntry)
-                .toList();
-    }
-
-    @Override
-    public List<LogEntry> saveAll(List<LogEntry> logs) {
-        return mongoLogEntryDao.saveAll(logs.stream().map(LogEntryDocument::of).toList())
                 .stream()
                 .map(LogEntryDocument::toLogEntry)
                 .toList();

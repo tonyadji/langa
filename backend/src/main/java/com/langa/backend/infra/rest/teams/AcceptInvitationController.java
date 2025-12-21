@@ -2,7 +2,7 @@ package com.langa.backend.infra.rest.teams;
 
 
 import com.langa.backend.common.commands.CommandBusDispatcher;
-import com.langa.backend.domain.teams.TeamInvitation;
+import com.langa.backend.domain.teams.valueobjects.TeamInvitation;
 import com.langa.backend.domain.teams.usecases.invitations.accept.AcceptInvitationCommand;
 import com.langa.backend.infra.rest.teams.dto.GetInvitationResponseDto;
 import org.springframework.http.ResponseEntity;

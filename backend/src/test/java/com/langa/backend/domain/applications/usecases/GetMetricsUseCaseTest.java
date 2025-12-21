@@ -4,7 +4,7 @@ import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.applications.Application;
 import com.langa.backend.domain.applications.exceptions.ApplicationException;
 import com.langa.backend.domain.applications.repositories.ApplicationRepository;
-import com.langa.backend.domain.applications.repositories.MetricEntryRepository;
+import com.langa.backend.domain.applications.repositories.MetricQueryRepository;
 import com.langa.backend.domain.applications.usecases.fetch.GetMetricsUseCase;
 import com.langa.backend.domain.applications.valueobjects.MetricEntry;
 import com.langa.backend.domain.applications.valueobjects.MetricFilter;
@@ -33,7 +33,7 @@ class GetMetricsUseCaseTest {
     private ApplicationRepository applicationRepository;
 
     @Mock
-    private MetricEntryRepository metricEntryRepository;
+    private MetricQueryRepository metricQueryRepository;
 
     @Mock
     private UserAccountService userAccountService;
@@ -57,7 +57,7 @@ class GetMetricsUseCaseTest {
                 Collections.singletonList(metric), 1, 1, page, size);
 
         when(applicationRepository.findById(appId)).thenReturn(Optional.of(mockApp));
-        when(metricEntryRepository.findFiltered(mockApp.getKey(), mockApp.getAccountKey(), filter, page, size))
+        when(metricQueryRepository.findFiltered(mockApp.getKey(), mockApp.getAccountKey(), filter, page, size))
                 .thenReturn(mockPageResult);
         when(userAccountService.getAllAccountKeys(userEmail)).thenReturn(Collections.singleton("U-accountkey123"));
 
@@ -71,7 +71,7 @@ class GetMetricsUseCaseTest {
         assertEquals(page, result.getPage());
 
         verify(applicationRepository, times(1)).findById(appId);
-        verify(metricEntryRepository, times(1)).findFiltered(mockApp.getKey(), mockApp.getAccountKey(), filter, page, size);
+        verify(metricQueryRepository, times(1)).findFiltered(mockApp.getKey(), mockApp.getAccountKey(), filter, page, size);
     }
 
 
@@ -90,7 +90,7 @@ class GetMetricsUseCaseTest {
         assertEquals(Errors.APPLICATION_NOT_FOUND, exception.getError());
 
         verify(applicationRepository, times(1)).findById(appId);
-        verifyNoInteractions(metricEntryRepository);
+        verifyNoInteractions(metricQueryRepository);
     }
 
 
@@ -111,7 +111,7 @@ class GetMetricsUseCaseTest {
         assertEquals(Errors.ACCESS_DENIED, exception.getError());
 
         verify(applicationRepository, times(1)).findById(appId);
-        verifyNoInteractions(metricEntryRepository);
+        verifyNoInteractions(metricQueryRepository);
     }
 
     @Test
@@ -128,7 +128,7 @@ class GetMetricsUseCaseTest {
                 Collections.emptyList(), 0, 0, page, size);
 
         when(applicationRepository.findById(appId)).thenReturn(Optional.of(mockApp));
-        when(metricEntryRepository.findFiltered(mockApp.getKey(), mockApp.getAccountKey(), filter, page, size))
+        when(metricQueryRepository.findFiltered(mockApp.getKey(), mockApp.getAccountKey(), filter, page, size))
                 .thenReturn(mockPageResult);
         when(userAccountService.getAllAccountKeys(userEmail)).thenReturn(Collections.singleton("U-accountkey123"));
 
@@ -142,6 +142,6 @@ class GetMetricsUseCaseTest {
         assertEquals(page, result.getPage());
 
         verify(applicationRepository, times(1)).findById(appId);
-        verify(metricEntryRepository, times(1)).findFiltered(mockApp.getKey(), mockApp.getAccountKey(), filter, page, size);
+        verify(metricQueryRepository, times(1)).findFiltered(mockApp.getKey(), mockApp.getAccountKey(), filter, page, size);
     }
 }

@@ -1,7 +1,7 @@
 package com.langa.backend.infra.adapters.persistence.teams.mongo.documents;
 
 import com.langa.backend.domain.teams.Team;
-import com.langa.backend.domain.teams.TeamInvitation;
+import com.langa.backend.domain.teams.valueobjects.TeamInvitation;
 import com.langa.backend.domain.teams.valueobjects.TeamId;
 import com.langa.backend.domain.teams.valueobjects.TeamMember;
 import lombok.Data;

@@ -2,7 +2,7 @@ package com.langa.backend.domain.teams.usecases.invitations.accept;
 
 import com.langa.backend.common.commands.Command;
 import com.langa.backend.common.model.errors.Errors;
-import com.langa.backend.domain.teams.TeamInvitation;
+import com.langa.backend.domain.teams.valueobjects.TeamInvitation;
 import com.langa.backend.domain.teams.exceptions.TeamException;
 
 public record AcceptInvitationCommand(String teamId, String invitationToken, String guest)

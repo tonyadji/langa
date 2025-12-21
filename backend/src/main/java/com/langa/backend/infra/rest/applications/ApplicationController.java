@@ -1,7 +1,6 @@
 package com.langa.backend.infra.rest.applications;
 
 import com.langa.backend.domain.applications.Application;
-import com.langa.backend.domain.applications.usecases.create.CreateApplicationUseCase;
 import com.langa.backend.domain.applications.usecases.fetch.GetApplicationsUseCase;
 import com.langa.backend.domain.applications.usecases.fetch.GetLogUseCase;
 import com.langa.backend.domain.applications.usecases.fetch.GetMetricsUseCase;
@@ -57,11 +56,6 @@ public class ApplicationController {
                         getApplicationsUseCase.getSecuredApplication(appId, userDetails.getUsername()),
                         applicationProperties.getHttpPrefix(),
                         applicationProperties.getKafkaPrefix()));
-    }
-
-    public ResponseEntity<List<LogDto>> getLogsByAppKey(@AuthenticationPrincipal UserDetails userDetails, @PathVariable String appId) {
-        return ResponseEntity.ok(getLogUseCase.getLogs(appId, userDetails.getUsername())
-                .stream().map(LogDto::of).toList());
     }
 
 

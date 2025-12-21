@@ -1,6 +1,6 @@
 package com.langa.backend.infra.adapters.persistence.metricentries;
 
-import com.langa.backend.domain.applications.repositories.MetricEntryRepository;
+import com.langa.backend.domain.applications.repositories.MetricQueryRepository;
 import com.langa.backend.domain.applications.valueobjects.MetricEntry;
 import com.langa.backend.domain.applications.valueobjects.MetricFilter;
 import com.langa.backend.domain.applications.valueobjects.PaginatedResult;
@@ -17,17 +17,11 @@ import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
-public class MetricEntryRepositoryImpl implements MetricEntryRepository {
+public class MetricQueryRepositoryImpl implements MetricQueryRepository {
 
     public static final String TIMESTAMP = "timestamp";
     private final MongoMetricEntryDao mongoMetricEntryDao;
     private final MongoTemplate mongoTemplate;
-
-    @Override
-    public MetricEntry save(MetricEntry metricEntry) {
-        return mongoMetricEntryDao.save(MetricEntryDocument.of(metricEntry))
-                .toMetricEntry();
-    }
 
     @Override
     public List<MetricEntry> findByAppKeyOrderByTimestampDesc(String id) {
@@ -40,14 +34,6 @@ public class MetricEntryRepositoryImpl implements MetricEntryRepository {
     @Override
     public List<MetricEntry> findByAppKeyAndAccountKeyOrderByTimestampDesc(String appKey, String accountKey) {
         return mongoMetricEntryDao.findByAppKeyAndAccountKeyOrderByTimestampDesc(appKey, accountKey)
-                .stream()
-                .map(MetricEntryDocument::toMetricEntry)
-                .toList();
-    }
-
-    @Override
-    public List<MetricEntry> saveAll(List<MetricEntry> metrics) {
-        return mongoMetricEntryDao.saveAll(metrics.stream().map(MetricEntryDocument::of).toList())
                 .stream()
                 .map(MetricEntryDocument::toMetricEntry)
                 .toList();

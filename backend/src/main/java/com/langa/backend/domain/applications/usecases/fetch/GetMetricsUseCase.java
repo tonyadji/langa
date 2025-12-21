@@ -5,7 +5,7 @@ import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.applications.Application;
 import com.langa.backend.domain.applications.exceptions.ApplicationException;
 import com.langa.backend.domain.applications.repositories.ApplicationRepository;
-import com.langa.backend.domain.applications.repositories.MetricEntryRepository;
+import com.langa.backend.domain.applications.repositories.MetricQueryRepository;
 import com.langa.backend.domain.applications.valueobjects.MetricEntry;
 import com.langa.backend.domain.applications.valueobjects.MetricFilter;
 import com.langa.backend.domain.applications.valueobjects.PaginatedResult;
@@ -17,12 +17,12 @@ import java.util.Set;
 public class GetMetricsUseCase {
 
     private final ApplicationRepository applicationRepository;
-    private final MetricEntryRepository metricEntryRepository;
+    private final MetricQueryRepository metricQueryRepository;
     private final UserAccountService userAccountService;
 
-    public GetMetricsUseCase(ApplicationRepository applicationRepository, MetricEntryRepository metricEntryRepository, UserAccountService userAccountService) {
+    public GetMetricsUseCase(ApplicationRepository applicationRepository, MetricQueryRepository metricQueryRepository, UserAccountService userAccountService) {
         this.applicationRepository = applicationRepository;
-        this.metricEntryRepository = metricEntryRepository;
+        this.metricQueryRepository = metricQueryRepository;
         this.userAccountService = userAccountService;
     }
 
@@ -37,7 +37,7 @@ public class GetMetricsUseCase {
         Set<String> accountKeys = userAccountService.getAllAccountKeys(userEmail);
         app.authorizedToAccess(userEmail, accountKeys);
 
-        PaginatedResult<MetricEntry> pageResult = metricEntryRepository.findFiltered(app.getKey(), app.getAccountKey(), filter, page, size);
+        PaginatedResult<MetricEntry> pageResult = metricQueryRepository.findFiltered(app.getKey(), app.getAccountKey(), filter, page, size);
 
         return new PaginatedResult<>(
                 pageResult.getContent(),

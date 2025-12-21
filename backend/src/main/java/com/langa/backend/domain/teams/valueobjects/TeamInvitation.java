@@ -1,11 +1,7 @@
-package com.langa.backend.domain.teams;
+package com.langa.backend.domain.teams.valueobjects;
 
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.teams.exceptions.TeamException;
-import com.langa.backend.domain.teams.valueobjects.InvitationStatus;
-import com.langa.backend.domain.teams.valueobjects.TeamInvitationIdentity;
-import com.langa.backend.domain.teams.valueobjects.TeamInvitationPeriod;
-import com.langa.backend.domain.teams.valueobjects.TeamInvitationStakeHolders;
 import lombok.Getter;
 
 import java.time.LocalDateTime;

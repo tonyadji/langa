@@ -1,6 +1,6 @@
 package com.langa.backend.domain.teams.repositories;
 
-import com.langa.backend.domain.teams.TeamInvitation;
+import com.langa.backend.domain.teams.valueobjects.TeamInvitation;
 
 import java.util.Optional;
 

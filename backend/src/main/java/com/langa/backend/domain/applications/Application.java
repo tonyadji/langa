@@ -4,16 +4,13 @@ import com.langa.backend.common.model.AbstractModel;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.common.utils.KeyGenerator;
 import com.langa.backend.domain.applications.events.ApplicationCreatedEvent;
-import com.langa.backend.domain.applications.events.ApplicationSharedEvent;
 import com.langa.backend.domain.applications.exceptions.ApplicationException;
+import com.langa.backend.domain.applications.services.IngestionSizeCalculator;
 import com.langa.backend.domain.applications.valueobjects.*;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 @Getter
@@ -25,7 +22,12 @@ public class Application extends AbstractModel {
     private final String owner;
     private String secret;
     private String ingestionUri;
-    private final Set<ShareWith> sharedWith;
+    private Set<ShareWith> sharedWith;
+    private ApplicationUsage usage;
+
+
+    private List<LogEntry> newLogEntries = new ArrayList<>();
+    private List<MetricEntry> newMetricsEntries = new ArrayList<>();
 
 
     private Application(String name, String accountKey, String owner) {
@@ -38,15 +40,16 @@ public class Application extends AbstractModel {
         sharedWith = new HashSet<>();
     }
 
-    private Application(ApplicationId appId, String name, String accountKey, String owner, Set<ShareWith> sharedWith) {
+    private Application(ApplicationId appId, String name, String accountKey, String owner, Set<ShareWith> sharedWith, ApplicationUsage usage) {
         this.appId = appId;
         this.name = name;
         this.accountKey = accountKey;
         this.owner = owner;
         this.sharedWith = sharedWith == null ? new HashSet<>() : sharedWith;
+        this.usage = usage == null ? ApplicationUsage.empty() : usage;
     }
 
-    private Application(ApplicationId appId, String name, String accountKey, String secret, String ingestionUri, String owner, Set<ShareWith> sharedWith) {
+    private Application(ApplicationId appId, String name, String accountKey, String secret, String ingestionUri, String owner, Set<ShareWith> sharedWith, ApplicationUsage usage) {
         this.appId = appId;
         this.name = name;
         this.accountKey = accountKey;
@@ -54,13 +57,12 @@ public class Application extends AbstractModel {
         this.ingestionUri = ingestionUri;
         this.owner = owner;
         this.sharedWith = sharedWith == null ? new HashSet<>() : sharedWith;
+        this.usage = usage == null ? ApplicationUsage.empty() : usage;
     }
 
-    public static Application populate(ApplicationId appId, String name, String accountKey, String owner, Set<ShareWith> sharedWith) {
-        return new Application(appId, name, accountKey, owner, sharedWith);
+    public static Application populate(ApplicationId appId, String name, String accountKey, String owner, Set<ShareWith> sharedWith, ApplicationUsage usage) {
+        return new Application(appId, name, accountKey, owner, sharedWith, usage);
     }
-
-
 
     public static Application createNew(String name, String accountKey, String owner) {
         final Application application = new Application(name, accountKey, owner);
@@ -68,24 +70,26 @@ public class Application extends AbstractModel {
         return application;
     }
 
-    public static Application populateSecured(ApplicationId appId, String name, String accountKey, String secret, String ingestionUri, String owner, Set<ShareWith> sharedWith) {
-        return new Application(appId, name, accountKey, secret, ingestionUri, owner, sharedWith);
+    public static Application populateSecured(ApplicationId appId, String name, String accountKey, String secret, String ingestionUri, String owner, Set<ShareWith> sharedWith, ApplicationUsage usage) {
+        return new Application(appId, name, accountKey, secret, ingestionUri, owner, sharedWith, usage);
     }
 
-    public List<LogEntry> createLogEntries(List<LogEntry> logs) {
-        return logs.stream()
+    public void createLogEntries(List<LogEntry> logs, IngestionSizeCalculator ingestionSizeCalculator) {
+        newLogEntries = logs.stream()
                 .map(entry -> entry
                         .setAppKey(appId.key())
                         .setAccountKey(accountKey))
                 .toList();
+        this.usage = this.usage.increaseLogBytes(ingestionSizeCalculator.calculateSizeInBytes(newLogEntries));
     }
 
-    public List<MetricEntry> createMetricEntries(List<MetricEntry> metrics) {
-        return metrics.stream()
+    public void createMetricEntries(List<MetricEntry> metrics, IngestionSizeCalculator ingestionSizeCalculator) {
+        newMetricsEntries = metrics.stream()
                 .map(entry -> entry
                         .setAppKey(appId.key())
                         .setAccountKey(accountKey))
                 .toList();
+        this.usage = this.usage.increaseTotalMetricBytes(ingestionSizeCalculator.calculateSizeInBytes(newMetricsEntries));
     }
 
     public void checkOwnership(String username) {

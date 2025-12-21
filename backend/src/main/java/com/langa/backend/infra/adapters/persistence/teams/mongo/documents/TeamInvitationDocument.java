@@ -1,6 +1,6 @@
 package com.langa.backend.infra.adapters.persistence.teams.mongo.documents;
 
-import com.langa.backend.domain.teams.TeamInvitation;
+import com.langa.backend.domain.teams.valueobjects.TeamInvitation;
 import com.langa.backend.domain.teams.valueobjects.InvitationStatus;
 import com.langa.backend.domain.teams.valueobjects.TeamInvitationIdentity;
 import com.langa.backend.domain.teams.valueobjects.TeamInvitationPeriod;

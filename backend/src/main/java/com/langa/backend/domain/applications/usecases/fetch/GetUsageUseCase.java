@@ -5,20 +5,16 @@ import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.applications.Application;
 import com.langa.backend.domain.applications.exceptions.ApplicationException;
 import com.langa.backend.domain.applications.repositories.ApplicationRepository;
-import com.langa.backend.domain.applications.repositories.ApplicationUsageRepository;
 import com.langa.backend.domain.applications.valueobjects.ApplicationUsageInfo;
 
 @UseCase
 public class GetUsageUseCase {
 
     private final ApplicationRepository applicationRepository;
-    private final ApplicationUsageRepository applicationUsageRepository;
 
-    public GetUsageUseCase(ApplicationRepository applicationRepository, ApplicationUsageRepository applicationUsageRepository) {
+    public GetUsageUseCase(ApplicationRepository applicationRepository) {
         this.applicationRepository = applicationRepository;
-        this.applicationUsageRepository = applicationUsageRepository;
     }
-
 
     public ApplicationUsageInfo getApplicationUsage(String appId, String username) {
         final Application app = applicationRepository.findById(appId)
@@ -26,18 +22,7 @@ public class GetUsageUseCase {
 
         app.checkOwnership(username);
 
-        return applicationUsageRepository.findByApplicationKey(app.getKey())
-                .map(usage -> new ApplicationUsageInfo(
-                        app.getId(),
-                        app.getKey(),
-                        app.getName(),
-                        usage.totalLogBytes(),
-                        usage.totalMetricBytes()
-                )).orElse(new ApplicationUsageInfo(
-                        app.getId(),
-                        app.getKey(),
-                        app.getName(),
-                        0,
-                        0));
+        return new ApplicationUsageInfo(app.getId(), app.getKey(), app.getName(),
+                app.getUsage().totalLogBytes(), app.getUsage().totalMetricBytes());
     }
 }

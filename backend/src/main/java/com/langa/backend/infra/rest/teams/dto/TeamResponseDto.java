@@ -1,7 +1,7 @@
 package com.langa.backend.infra.rest.teams.dto;
 
 import com.langa.backend.domain.teams.Team;
-import com.langa.backend.domain.teams.TeamInvitation;
+import com.langa.backend.domain.teams.valueobjects.TeamInvitation;
 
 import java.time.LocalDateTime;
 import java.util.List;

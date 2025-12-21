@@ -4,7 +4,7 @@ import com.langa.backend.common.annotations.UseCase;
 import com.langa.backend.common.eda.services.OutboxEventService;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.teams.Team;
-import com.langa.backend.domain.teams.TeamInvitation;
+import com.langa.backend.domain.teams.valueobjects.TeamInvitation;
 import com.langa.backend.domain.teams.exceptions.TeamException;
 import com.langa.backend.domain.teams.repositories.TeamRepository;
 

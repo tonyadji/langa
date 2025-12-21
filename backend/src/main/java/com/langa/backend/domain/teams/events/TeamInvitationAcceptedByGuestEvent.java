@@ -3,7 +3,7 @@ package com.langa.backend.domain.teams.events;
 import com.langa.backend.common.eda.annotations.DomainEventType;
 import com.langa.backend.common.eda.model.DomainEvent;
 import com.langa.backend.common.eda.registry.EventTypeRegistry;
-import com.langa.backend.domain.teams.TeamInvitation;
+import com.langa.backend.domain.teams.valueobjects.TeamInvitation;
 
 import java.time.LocalDateTime;
 
