@@ -43,6 +43,26 @@ public class GetInvitationUseCase {
         return teamInvitation;
     }
 
+    public TeamInvitation query(GetPublicInvitationQuery query) {
+        final Team team = teamRepository.findById(query.teamId())
+                .orElseThrow(() -> new TeamException("Team not found with id " + query.teamId(), null, Errors.TEAM_NOT_FOUND));
+
+        final TeamInvitation teamInvitation = team.getInvitation(query.invitationToken());
+
+        if (teamInvitation == null) {
+            throw new TeamException("Invitation not found", null, Errors.TEAM_INVITATION_NOTFOUND_OR_EXPIRED);
+        }
+
+        if (teamInvitation.isExpired()) {
+            team.flagInvitationExpired(teamInvitation);
+            teamRepository.save(team);
+            handleDomainEvents(team);
+            throw new TeamException("Invitation expired", null, Errors.TEAM_INVITATION_NOTFOUND_OR_EXPIRED);
+        }
+
+        return teamInvitation;
+    }
+
     private void handleDomainEvents(Team team) {
         team.getEvents().forEach(outboxEventService::storeOutboxEvent);
         team.clearEvents();

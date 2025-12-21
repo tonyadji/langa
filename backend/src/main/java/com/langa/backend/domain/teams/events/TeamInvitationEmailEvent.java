@@ -13,7 +13,8 @@ public record TeamInvitationEmailEvent(
         String aggregateId,
         String guest,
         String host,
-        String team,
+        String teamName,
+        String teamKey,
         String invitationToken,
         LocalDateTime expiration) implements DomainEvent {
 
@@ -39,6 +40,7 @@ public record TeamInvitationEmailEvent(
                 invitation.getStakeHolders().guest(),
                 invitation.getStakeHolders().host(),
                 team.getName(),
+                team.getId(),
                 invitation.getIdentity().invitationToken(),
                 invitation.getInvitationPeriod().expiryDate()
         );

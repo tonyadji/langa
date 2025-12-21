@@ -26,6 +26,8 @@ public class Team extends AbstractModel {
     private final String createdBy;
     private final LocalDateTime createdDate;
 
+    private List<TeamMember> newMembers = new ArrayList<>();
+
 
     private Team(String name, String createdBy, LocalDateTime createdDate) {
         this.teamId = TeamId.newTeamIdOf(name, createdBy);
@@ -94,6 +96,7 @@ public class Team extends AbstractModel {
         }
         final TeamMember teamMember = new TeamMember(memberEmail, TeamRole.MEMBER, teamId.key(), LocalDateTime.now());
         members.add(teamMember);
+        newMembers.add(teamMember);
     }
 
     public String getId() {

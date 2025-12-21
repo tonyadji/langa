@@ -3,6 +3,7 @@ package com.langa.backend.infra.adapters.persistence.users;
 import com.langa.backend.common.model.ShareWithInfo;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.teams.repositories.TeamMemberRepository;
+import com.langa.backend.domain.teams.repositories.TeamRepository;
 import com.langa.backend.domain.users.exceptions.UserException;
 import com.langa.backend.domain.users.repositories.UserRepository;
 import com.langa.backend.domainexchange.user.UserAccountService;
@@ -20,7 +21,7 @@ public class UserAccountServiceImpl implements UserAccountService {
     private final UserRepository userRepository;
     private final TeamMemberRepository teamMemberRepository;
 
-    public UserAccountServiceImpl(UserRepository userRepository, TeamMemberRepository teamMemberRepository) {
+    public UserAccountServiceImpl(UserRepository userRepository, TeamMemberRepository teamMemberRepository, TeamRepository teamRepository) {
         this.userRepository = userRepository;
         this.teamMemberRepository = teamMemberRepository;
     }
@@ -52,7 +53,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         Set<String> accessKeys = new HashSet<>(Set.of(userKey));
         Set<String> teamKeys = teamMemberRepository.findTeamsKeysByMemberUsername(username);
         accessKeys.addAll(teamKeys);
-        log.info("Access keys for user {}: {}", username, accessKeys);
+        log.debug("Access keys for user {}: {}", username, accessKeys);
         return accessKeys;
     }
 

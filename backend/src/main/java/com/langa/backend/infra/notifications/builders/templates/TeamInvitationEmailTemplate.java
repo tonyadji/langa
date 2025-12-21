@@ -12,7 +12,8 @@ import java.util.List;
 @Component
 public class TeamInvitationEmailTemplate extends EmailTemplate {
 
-    private static final String TEAM_KEY = "team";
+    private static final String TEAM_KEY = "teamKey";
+    private static final String TEAM_NAME = "teamName";
     private static final String TOKEN_KEY = "invitationToken";
     private static final String RECIPIENTS_KEY = "recipients";
     private final String baseUrl;
@@ -29,9 +30,9 @@ public class TeamInvitationEmailTemplate extends EmailTemplate {
 
     @Override
     public String getMessage() {
-        return "You have been invited to join the team " +variables.get(TEAM_KEY).toString() +
+        return "You have been invited to join the team " +variables.get(TEAM_NAME).toString() +
                 "\nPlease follow the link "+baseUrl+
-                "/team-invitations?token="+variables.get(TOKEN_KEY).toString()+" to join the team";
+                "/team-invitations/"+variables.get(TEAM_KEY)+"/public?token="+variables.get(TOKEN_KEY).toString()+" to join the team";
     }
 
     @Override
@@ -48,7 +49,8 @@ public class TeamInvitationEmailTemplate extends EmailTemplate {
     public void processEvent(DomainEvent event) {
         if(event instanceof TeamInvitationEmailEvent teamInvitationEmailEvent) {
             variables.put(RECIPIENTS_KEY, List.of(teamInvitationEmailEvent.guest()));
-            variables.put(TEAM_KEY, teamInvitationEmailEvent.team());
+            variables.put(TEAM_NAME, teamInvitationEmailEvent.teamName());
+            variables.put(TEAM_KEY, teamInvitationEmailEvent.teamKey());
             variables.put(TOKEN_KEY, teamInvitationEmailEvent.invitationToken());
         }
     }

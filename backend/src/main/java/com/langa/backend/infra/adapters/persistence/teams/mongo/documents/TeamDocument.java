@@ -39,4 +39,8 @@ public class TeamDocument {
         teamDocument.setCreatedDate(team.getCreatedDate());
         return teamDocument;
     }
+
+    public Team toSharedTeam() {
+        return Team.populate(TeamId.of(id, key), name, createdBy, List.of(), List.of(), createdDate);
+    }
 }

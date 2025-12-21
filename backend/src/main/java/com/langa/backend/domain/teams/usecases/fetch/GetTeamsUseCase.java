@@ -30,6 +30,6 @@ public class GetTeamsUseCase implements IFetchTeamsUseCase {
 
     @Override
     public List<Team> queryTeams(String owner) {
-        return teamRepository.findByOwner(owner);
+        return teamRepository.findByOwnerOrTeamSharedWith(owner);
     }
 }

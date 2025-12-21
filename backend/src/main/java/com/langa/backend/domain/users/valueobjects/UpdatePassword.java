@@ -18,7 +18,7 @@ public record UpdatePassword(
             throw new UserException("Confirmation Password is required", null, Errors.VALIDATION_ERROR);
         }
 
-        if (Objects.equals(password,confirmationPassword)) {
+        if (!Objects.equals(password,confirmationPassword)) {
             throw new UserException("Passwords do not match", null, Errors.PASSWORDS_MISMATCH);
         }
     }

@@ -21,11 +21,11 @@ import java.util.List;
 public class TeamController {
 
     private final CommandBusDispatcher commandBusDispatcher;
-    private final IFetchTeamsUseCase fetchTeamUse;
+    private final IFetchTeamsUseCase fetchTeamUseCase;
 
-    public TeamController(CommandBusDispatcher commandBusDispatcher, IFetchTeamsUseCase fetchTeamUse) {
+    public TeamController(CommandBusDispatcher commandBusDispatcher, IFetchTeamsUseCase fetchTeamUseCase) {
         this.commandBusDispatcher = commandBusDispatcher;
-        this.fetchTeamUse = fetchTeamUse;
+        this.fetchTeamUseCase = fetchTeamUseCase;
     }
 
     @PostMapping
@@ -37,14 +37,14 @@ public class TeamController {
 
     @GetMapping
     public ResponseEntity<List<TeamResponseDto>> createTeam(@AuthenticationPrincipal UserDetails userDetails) {
-        final List<Team> teams = fetchTeamUse.queryTeams(userDetails.getUsername());
+        final List<Team> teams = fetchTeamUseCase.queryTeams(userDetails.getUsername());
         return ResponseEntity.ok(TeamResponseDto.of(teams));
     }
 
     @GetMapping("{teamId}")
     public ResponseEntity<TeamResponseDto> createTeam(@AuthenticationPrincipal UserDetails userDetails,
                                                       @PathVariable String teamId) {
-        final Team team = fetchTeamUse.query(new GetTeamQuery(teamId, userDetails.getUsername()));
+        final Team team = fetchTeamUseCase.query(new GetTeamQuery(teamId, userDetails.getUsername()));
         return ResponseEntity.ok(TeamResponseDto.of(team));
     }
 
