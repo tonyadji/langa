@@ -3,6 +3,7 @@ package com.capricedumardi.agent.core.config;
 import com.capricedumardi.agent.core.buffers.BuffersFactory;
 import com.capricedumardi.agent.core.helpers.EnvironmentUtils;
 import com.capricedumardi.agent.core.helpers.IngestionParamsResolver;
+import com.capricedumardi.agent.core.config.jmx.AgentManagement;
 import com.capricedumardi.agent.core.services.SenderService;
 import com.capricedumardi.agent.core.services.SenderServiceFactory;
 import org.aspectj.weaver.loadtime.Agent;
@@ -21,6 +22,7 @@ public class LangaAgentInitializer {
         LangaPrinter.agentStarting();
 
         try {
+            ConfigLoader.getConfigInstance();
             initSenderAndBuffers();
             LangaPrinter.printTrace("Buffers and sender initialized");
         } catch (Exception e) {
@@ -70,7 +72,7 @@ public class LangaAgentInitializer {
     }
 
     private static LoggingFramework determineLoggingFramework() {
-        String envFramework = System.getenv(LOGGING_FRAMEWORK);
+        String envFramework = ConfigLoader.getConfigInstance().getLoggingFramework();
 
         if (envFramework != null && !envFramework.trim().isEmpty()) {
             String framework = envFramework.trim().toLowerCase();
@@ -126,19 +128,25 @@ public class LangaAgentInitializer {
     }
 
     private static void initSenderAndBuffers() {
-        IngestionParamsResolver resolver = EnvironmentUtils.getIngestionParamsResolver();
-        SenderService senderService = SenderServiceFactory.create(resolver);
 
-        int batchSize = getConfigInt("LANGA_BATCH_SIZE", DEFAULT_BATCH_SIZE);
-        int flushInterval = getConfigInt("LANGA_FLUSH_INTERVAL_SECONDS", DEFAULT_FLUSH_DELAY_IN_SECONDS);
+      // Initialiser la couche de gestion dynamique (JMX)
+      AgentManagement dynamicConfig = AgentManagement.getInstance();
 
-        BuffersFactory.init(
-                senderService,
-                resolver.resolveAppKey(),
-                resolver.resolveAccountKey(),
-                batchSize,
-                flushInterval
-        );
+      // 3. Préparer le Sender
+      // Note: Tu devrais aussi passer dynamicConfig au SenderFactory si tu veux tuner le HTTP
+      IngestionParamsResolver resolver = EnvironmentUtils.getIngestionParamsResolver();
+      SenderService senderService = SenderServiceFactory.create(resolver, dynamicConfig);
+
+      // 4. Initialiser les Buffers
+      // IMPORTANT : On ne passe plus des int bruts, mais on laisse le factory
+      // se connecter à la config dynamique.
+
+      BuffersFactory.init(
+          senderService,
+          resolver.resolveAppKey(),
+          resolver.resolveAccountKey(),
+          dynamicConfig // On passe l'objet de management, pas juste les valeurs !
+      );
     }
 
     private static boolean isSpringPresent() {
@@ -161,19 +169,6 @@ public class LangaAgentInitializer {
             LangaPrinter.printError("✗ Unable to initialize AspectJ weaver: " + e.getMessage());
             e.printStackTrace(System.err);
         }
-    }
-
-    private static int getConfigInt(String envKey, int defaultValue) {
-        String envVar = System.getenv(envKey);
-        if (envVar != null && !envVar.trim().isEmpty()) {
-            try {
-                return Integer.parseInt(envVar.trim());
-            } catch (NumberFormatException e) {
-                LangaPrinter.printError("Invalid value for " + envKey + ": " + envVar +
-                        " (using default: " + defaultValue + ")");
-            }
-        }
-        return defaultValue;
     }
 
     private enum LoggingFramework {

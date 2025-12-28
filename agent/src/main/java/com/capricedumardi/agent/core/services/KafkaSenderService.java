@@ -3,6 +3,7 @@ package com.capricedumardi.agent.core.services;
 import com.capricedumardi.agent.core.config.AgentConfig;
 import com.capricedumardi.agent.core.config.ConfigLoader;
 import com.capricedumardi.agent.core.config.LangaPrinter;
+import com.capricedumardi.agent.core.config.jmx.AgentManagement;
 import com.capricedumardi.agent.core.helpers.CredentialsHelper;
 import com.capricedumardi.agent.core.model.LogRequestDto;
 import com.capricedumardi.agent.core.model.MetricRequestDto;
@@ -46,6 +47,7 @@ public class KafkaSenderService implements SenderService {
     private final AtomicLong totalAsyncFailed = new AtomicLong(0);
 
     private static final AgentConfig agentConfig = ConfigLoader.getConfigInstance();
+    private final AgentManagement dynamicConfig; //TODO use it to take advantage of dynamic config
     /**
      * Constructor for KafkaSenderService
      *
@@ -54,7 +56,7 @@ public class KafkaSenderService implements SenderService {
      * @param credentialsHelper Helper for generating authentication headers
      */
     public KafkaSenderService(String bootstrapServer, String topic,
-        CredentialsHelper credentialsHelper) {
+        CredentialsHelper credentialsHelper, AgentManagement dynamicConfig) {
         this.topic = topic;
         this.credentialsHelper = credentialsHelper;
         this.gson = new Gson();
@@ -63,6 +65,7 @@ public class KafkaSenderService implements SenderService {
                 agentConfig.getCircuitBreakerOpenDurationMillis());
 
         Properties props = new Properties();
+        this.dynamicConfig = dynamicConfig;
 
         // Basic configuration
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServer);

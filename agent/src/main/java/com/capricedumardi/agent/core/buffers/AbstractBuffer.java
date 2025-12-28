@@ -3,8 +3,11 @@ package com.capricedumardi.agent.core.buffers;
 import com.capricedumardi.agent.core.config.AgentConfig;
 import com.capricedumardi.agent.core.config.ConfigLoader;
 import com.capricedumardi.agent.core.config.LangaPrinter;
+import com.capricedumardi.agent.core.config.jmx.AgentManagement;
+import com.capricedumardi.agent.core.config.jmx.LangaAgentMetricsRegistry;
 import com.capricedumardi.agent.core.model.SendableRequestDto;
 import com.capricedumardi.agent.core.services.SenderService;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,8 +23,6 @@ public abstract class AbstractBuffer<T> {
     protected final SenderService senderService;
     protected final String appKey;
     protected final String accountKey;
-    protected final int batchSize;
-    protected final int flushIntervalSeconds;
     protected final String bufferName;
 
     protected final BlockingQueue<T> mainQueue;
@@ -39,25 +40,55 @@ public abstract class AbstractBuffer<T> {
     private final AtomicLong totalRetried = new AtomicLong(0);
     private final AtomicLong totalSendFailures = new AtomicLong(0);
 
+    // Static Config
     private static final AgentConfig agentConfig = ConfigLoader.getConfigInstance();
+    private final LangaAgentMetricsRegistry registry = LangaAgentMetricsRegistry.getInstance();
 
-     AbstractBuffer(SenderService senderService, String appKey, String accountKey,
-                          int batchSize, int flushIntervalSeconds, String bufferName) {
+    // Dynamic config via JMX or Actuator
+    protected final AgentManagement dynamicConfig;
+    private final AtomicReference<ScheduledFuture<?>> currentFlushTask = new AtomicReference<>();
+
+
+  AbstractBuffer(SenderService senderService, String appKey, String accountKey,
+                          AgentManagement dynamicConfig, String bufferName) {
         this.senderService = senderService;
         this.appKey = appKey;
         this.accountKey = accountKey;
-        this.batchSize = batchSize;
-        this.flushIntervalSeconds = flushIntervalSeconds;
+        this.dynamicConfig = dynamicConfig;
         this.bufferName = bufferName;
 
          mainQueue = new LinkedBlockingQueue<>(getMainQueueCapacity());
          retryQueue = new LinkedBlockingQueue<>(getRetryQueueCapacity());
 
-        scheduler = BuffersFactory.getScheduler();
-        scheduler.scheduleAtFixedRate(this::flush, flushIntervalSeconds, flushIntervalSeconds, TimeUnit.SECONDS);
+         int flushInterval = dynamicConfig.getBufferFlushIntervalSeconds();
+
+       scheduler = BuffersFactory.getScheduler();
+       scheduleNextFlush(flushInterval);
+       scheduler.scheduleAtFixedRate(this::flush, flushInterval, flushInterval, TimeUnit.SECONDS);
     }
 
-    public void add(T entry) {
+  /**
+   * Schedules the next flush operation with a specified initial delay.
+   * It's perfect when use JMX or Actuator config updates
+   *
+   * @param initialDelay The initial delay in seconds before scheduling the next flush operation.
+   */
+  private void scheduleNextFlush(int initialDelay) {
+    LangaPrinter.printTrace(String.format("current flush interval %s", initialDelay));
+    currentFlushTask.set(
+        scheduler.schedule(() -> {
+          try {
+            flush();
+          } finally {
+            // Re-schedule avec l'intervalle actuel de la config JMX
+            int nextInterval = dynamicConfig.getBufferFlushIntervalSeconds();
+            scheduleNextFlush(nextInterval);
+          }
+        }, initialDelay, TimeUnit.SECONDS)
+    );
+  }
+
+  public void add(T entry) {
         if (BuffersFactory.isShuttingDown()) {
             totalDropped.incrementAndGet();
             return;
@@ -65,7 +96,9 @@ public abstract class AbstractBuffer<T> {
 
         totalAdded.incrementAndGet();
         if(mainQueue.offer(entry)) {
-            if (mainQueue.size() >= batchSize && flushScheduled.compareAndSet(false, true)) {
+            // Si on a changé la valeur via JMX il y a 10ms, c'est pris en compte ici !
+            int currentBatchSize = dynamicConfig.getBufferBatchSize();
+            if (mainQueue.size() >= currentBatchSize && flushScheduled.compareAndSet(false, true)) {
                 scheduler.submit(() -> {
                     try {
                         flush();
@@ -114,16 +147,19 @@ public abstract class AbstractBuffer<T> {
         }
 
         var entries = new ArrayList<T>();
-        processingQueue.drainTo(entries, batchSize);
+        processingQueue.drainTo(entries, dynamicConfig.getMainQueueCapacity());
 
         if (entries.isEmpty()) {
             return;
         }
-
+        long start = System.currentTimeMillis(); // CHRONO DÉBUT
         try {
             var dto = mapToSendableRequest(entries);
             boolean isSendSuccess = senderService.send(dto);
 
+            // Record flush and duration in JMX
+            long duration = System.currentTimeMillis() - start; // CHRONO FIN
+            registry.recordFlush(duration);
             if (isSendSuccess) {
                 totalFlushed.addAndGet(entries.size());
                 consecutiveSendingErrors.set(0);
@@ -134,11 +170,13 @@ public abstract class AbstractBuffer<T> {
                 }
             } else {
                 handleSendFailure(entries, isRetry);
+                registry.recordError("SEND_FAILURE");
             }
 
         } catch (Exception e) {
             LangaPrinter.printError(bufferName + " flush error: " + e.getMessage());
             handleSendFailure(entries, isRetry);
+            registry.recordError("FLUSH_EXCEPTION");
         }
     }
 

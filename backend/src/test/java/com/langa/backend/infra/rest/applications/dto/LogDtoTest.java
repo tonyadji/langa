@@ -9,7 +9,7 @@ import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import jakarta.validation.ConstraintViolation;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,15 +26,15 @@ class LogDtoTest {
 
     @Test
     void toLogEntry_shouldMapCorrectly() {
-        String now = LocalDateTime.now().toString();
-        LogDto dto = new LogDto("Message", "INFO", "MyLogger", now);
+        String now = Instant.now().toString();
+        LogDto dto = new LogDto("Message", "INFO", "MyLogger", now, null, null, null);
 
         LogEntry entry = dto.toLogEntry();
 
         assertThat(entry.getMessage()).isEqualTo("Message");
         assertThat(entry.getLevel()).isEqualTo("INFO");
         assertThat(entry.getLoggerName()).isEqualTo("MyLogger");
-        assertThat(entry.getTimestamp()).isEqualTo(LocalDateTime.parse(now));
+        assertThat(entry.getTimestamp()).isEqualTo(Instant.parse(now));
     }
 
     @Test
@@ -43,19 +43,19 @@ class LogDtoTest {
                 .setMessage("Hello")
                 .setLevel("DEBUG")
                 .setLoggerName("TestLogger")
-                .setTimestamp(LocalDateTime.of(2024, 1, 1, 12, 0));
+                .setTimestamp(Instant.parse("2024-01-01T12:00:00Z"));
 
         LogDto dto = LogDto.of(entry);
 
         assertThat(dto.message()).isEqualTo("Hello");
         assertThat(dto.level()).isEqualTo("DEBUG");
         assertThat(dto.loggerName()).isEqualTo("TestLogger");
-        assertThat(dto.timestamp()).isEqualTo("2024-01-01T12:00");
+        assertThat(dto.timestamp()).isEqualTo("2024-01-01T12:00:00Z");
     }
 
     @Test
     void toLogEntry_shouldThrow_whenTimestampIsInvalid() {
-        LogDto dto = new LogDto("Message", "ERROR", "MyLogger", "invalid-timestamp");
+        LogDto dto = new LogDto("Message", "ERROR", "MyLogger", "invalid-timestamp", null, null, null);
 
         assertThatThrownBy(dto::toLogEntry)
                 .isInstanceOf(RuntimeException.class);
@@ -63,7 +63,7 @@ class LogDtoTest {
 
     @Test
     void validation_shouldFail_whenFieldsAreBlankOrTooLong() {
-        LogDto dto = new LogDto("", "", "", ""); // all blank
+        LogDto dto = new LogDto("", "", "", "", null, null, null); // all blank
 
         Set<ConstraintViolation<LogDto>> violations = validator.validate(dto);
 
