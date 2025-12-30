@@ -39,8 +39,19 @@ public class LangaControlEndpoint {
       @Nullable Integer compressionThreshold) {
 
     if (batchSize != null) management.setBufferBatchSize(batchSize);
-    if (flushIntervalSeconds != null) management.setBufferFlushIntervalSeconds(flushIntervalSeconds);
+    if (flushIntervalSeconds != null) {
+      int flushInterval = flushIntervalSeconds;
+      if (flushInterval > 0) {
+        management.setBufferFlushIntervalSeconds(flushIntervalSeconds);
+      }
+    }
+
     if (debugMode != null) management.setDebugMode(debugMode);
-    if (compressionThreshold != null) management.setHttpCompressionThresholdBytes(compressionThreshold);
+    if (compressionThreshold != null) {
+      int threshold = compressionThreshold;
+      if (threshold > 0) {
+        management.setHttpCompressionThresholdBytes(threshold);
+      }
+    }
   }
 }

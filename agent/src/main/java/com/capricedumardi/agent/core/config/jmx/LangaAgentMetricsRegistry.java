@@ -14,8 +14,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class LangaAgentMetricsRegistry extends StandardMBean implements LangaAgentMetricsMBeans {
 
-  // --- Metrics "Push" (Evénements agrégés) ---
-  // Ces métriques sont mises à jour par des appels depuis AbstractBuffer
+  // --- Metrics "Push" (Aggregated events) ---
+  // These metrics are updated by calls from AbstractBuffer
   private final AtomicLong flushCount = new AtomicLong(0);
   private final AtomicLong flushTotalDurationMs = new AtomicLong(0);
   private final AtomicLong flushLastTimestamp = new AtomicLong(0);
@@ -54,10 +54,10 @@ public class LangaAgentMetricsRegistry extends StandardMBean implements LangaAge
   }
 
   // =========================================================================
-  // PARTIE PULL : On va chercher la vérité à la source (BuffersFactory)
+  // PULL PART: Get the truth from the source (BuffersFactory)
   // =========================================================================
 
-  // Helper pour éviter les NullPointer si les buffers ne sont pas encore init
+  // Helper to avoid NullPointer if the buffers are not yet initialized
   private BufferStats getSafeLogStats() {
     return BuffersFactory.getLogBufferStats();
   }
@@ -121,7 +121,7 @@ public class LangaAgentMetricsRegistry extends StandardMBean implements LangaAge
     return stats != null ? stats.getTotalDropped() : 0;
   }
 
-  // --- Totaux globaux (Agrégation des stats des deux buffers) ---
+  // --- Global totals (Aggregation of stats from both buffers) ---
 
   @Override
   public long getTotalLogsSent() {
@@ -143,7 +143,7 @@ public class LangaAgentMetricsRegistry extends StandardMBean implements LangaAge
   }
 
   // =========================================================================
-  // PARTIE PUSH : Méthodes appelées par AbstractBuffer pour les événements
+  // PUSH PART: Methods called by AbstractBuffer for events
   // =========================================================================
 
   public void recordFlush(long durationMs) {

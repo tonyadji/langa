@@ -57,7 +57,7 @@ Protection automatique contre les backends défaillants :
 
 #### 📊 Monitoring JMX/Actuator
 - **JMX MBeans** : Accès aux métriques et configuration runtime
-- **Spring Boot Actuator** : Endpoints `/actuator/langa-metrics` et `/actuator/langa-control`
+- **Spring Boot Actuator** : Endpoints `/actuator/langaMetrics` et `/actuator/langaControl`
 - **Statistiques en temps réel** : Buffer stats, circuit breaker state, success/failure rates
 
 #### 🗜️ Compression GZIP

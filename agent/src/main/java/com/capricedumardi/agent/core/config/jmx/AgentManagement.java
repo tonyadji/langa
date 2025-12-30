@@ -12,20 +12,20 @@ public class AgentManagement extends StandardMBean implements AgentManagementMBe
 
   private static AgentManagement instance;
 
-  // 1. On garde une référence vers la config immuable (pour ce qui ne change jamais)
+  // 1. Keep a reference to the immutable config (for what never changes)
   private final AgentConfig staticConfig;
 
-  // 2. On définit des versions "Atomiques" (modifiables) pour ce qu'on veut tuner
+  // 2. Define "Atomic" versions (modifiable) for what we want to tune
   private final AtomicInteger currentBatchSize;
   private final AtomicInteger currentFlushInterval;
   private final AtomicBoolean currentDebugMode;
   private final AtomicBoolean currentHttpCompressionEnabled;
-  private final AtomicLong currentCompressionThreshold;
+  private final AtomicInteger currentCompressionThreshold;
 
   // Singleton Lazy-loading
   public static synchronized AgentManagement getInstance() {
     if (instance == null) {
-      // On récupère ton objet AgentConfig existant
+      // Get your existing AgentConfig object
       AgentConfig initialConfig = ConfigLoader.getConfigInstance();
       try {
         instance = new AgentManagement(initialConfig);
@@ -41,12 +41,12 @@ public class AgentManagement extends StandardMBean implements AgentManagementMBe
     super(AgentManagementMBean.class, false);
     this.staticConfig = config;
 
-    // 3. On initialise les valeurs dynamiques avec les valeurs de la config initiale
+    // 3. Initialize the dynamic values with the values from the initial config
     this.currentBatchSize = new AtomicInteger(config.getBatchSize());
     this.currentFlushInterval = new AtomicInteger(config.getFlushIntervalSeconds());
     this.currentDebugMode = new AtomicBoolean(config.isDebugMode());
     this.currentHttpCompressionEnabled = new AtomicBoolean(config.isHttpCompressionEnabled());
-    this.currentCompressionThreshold = new AtomicLong(config.getHttpCompressionThresholdBytes());
+    this.currentCompressionThreshold = new AtomicInteger(config.getHttpCompressionThresholdBytes());
 
     registerJMX();
   }
@@ -62,7 +62,7 @@ public class AgentManagement extends StandardMBean implements AgentManagementMBe
   }
 
   // =========================================================================
-  // PARTIE 1 : DYNAMIQUE (Lecture / Écriture via JMX)
+  // PART 1: DYNAMIC (Read / Write via JMX)
   // =========================================================================
 
   @Override
@@ -108,12 +108,12 @@ public class AgentManagement extends StandardMBean implements AgentManagementMBe
   }
 
   @Override
-  public long getHttpCompressionThresholdBytes() {
-    return staticConfig.getHttpCompressionThresholdBytes();
+  public int getHttpCompressionThresholdBytes() {
+    return currentCompressionThreshold.get();
   }
 
   @Override
-  public void setHttpCompressionThresholdBytes(long bytes) {
+  public void setHttpCompressionThresholdBytes(int bytes) {
     if (bytes > 0) {
       currentCompressionThreshold.set(bytes);
       LangaPrinter.printTrace("JMX Update: HttpCompressionThresholdBytes changed to " + bytes);
@@ -121,11 +121,11 @@ public class AgentManagement extends StandardMBean implements AgentManagementMBe
   }
 
   // =========================================================================
-  // PARTIE 2 : STATIQUE (Lecture seule - Délégation vers AgentConfig)
+  // PART 2: STATIC (Read only - Delegation to AgentConfig)
   // =========================================================================
 
-  // Ces méthodes sont exposées dans JMX pour info, mais elles lisent
-  // directement dans l'objet immuable AgentConfig.
+  // These methods are exposed in JMX for info, but they read
+  // directly from the immutable AgentConfig object.
 
   @Override
   public String getAgentVersion() { return staticConfig.getAgentVersion(); }
@@ -146,7 +146,7 @@ public class AgentManagement extends StandardMBean implements AgentManagementMBe
 
   @Override
   public String getLoggingFramework() {
-    return "Unknown"; //TODO to add in LangaConfig
+    return staticConfig.getLoggingFramework();
   }
 
   @Override

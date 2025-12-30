@@ -26,18 +26,18 @@ public class KafkaCredentialsMapper {
         String timestamp = getHeaderValue(messageRecord, "xTimestamp");
         String signature = getHeaderValue(messageRecord, X_AGENT_SIGNATURE);
         
-        // Debug: afficher tous les headers reçus
+        // Debug: display all received headers
         log.debug("Kafka headers received:");
         messageRecord.headers().forEach(header -> {
             String value = new String(header.value(), StandardCharsets.UTF_8);
             log.debug("  {}: '{}'", header.key(), value);
         });
 
-        // Vérifier si nous avons un nonce séparé dans les headers
+        // Check if we have a separate nonce in the headers
         String nonce = getHeaderValue(messageRecord, "xNonce");
         
-        // Si la signature ne contient pas de nonce et que nous n'avons pas de header nonce séparé,
-        // essayer de reconstruire le format attendu
+        // If the signature does not contain a nonce and we don't have a separate nonce header,
+        // try to reconstruct the expected format
         if (signature != null && !signature.contains(":") && nonce != null) {
             signature = nonce + ":" + signature;
             log.debug("Reconstructed signature with nonce: '{}'", signature);
@@ -68,10 +68,10 @@ public class KafkaCredentialsMapper {
         if (header != null && header.value() != null) {
             String value = new String(header.value(), StandardCharsets.UTF_8);
             
-            // Debug logging pour voir les valeurs des headers
+            // Debug logging to see header values
             if (X_AGENT_SIGNATURE.equals(headerKey)) {
                 log.debug("Raw signature header value for {}: '{}'", headerKey, value);
-                // Vérifier si la signature contient déjà le format nonce:signature
+                // Check if the signature already contains the nonce:signature format
                 if (!value.contains(":") && value.length() > 10) {
                     log.warn("Signature header '{}' appears to be missing nonce part. Value: '{}'", headerKey, value);
                 }

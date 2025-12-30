@@ -129,23 +129,23 @@ public class LangaAgentInitializer {
 
     private static void initSenderAndBuffers() {
 
-      // Initialiser la couche de gestion dynamique (JMX)
+      // Initialize the dynamic management layer (JMX)
       AgentManagement dynamicConfig = AgentManagement.getInstance();
 
-      // 3. Préparer le Sender
-      // Note: Tu devrais aussi passer dynamicConfig au SenderFactory si tu veux tuner le HTTP
+      // 3. Prepare the Sender
+      // Note: You should also pass dynamicConfig to SenderFactory if you want to tune HTTP
       IngestionParamsResolver resolver = EnvironmentUtils.getIngestionParamsResolver();
       SenderService senderService = SenderServiceFactory.create(resolver, dynamicConfig);
 
-      // 4. Initialiser les Buffers
-      // IMPORTANT : On ne passe plus des int bruts, mais on laisse le factory
-      // se connecter à la config dynamique.
+      // 4. Initialize the Buffers
+      // IMPORTANT: We no longer pass raw ints, but let the factory
+      // connect to the dynamic config.
 
       BuffersFactory.init(
           senderService,
           resolver.resolveAppKey(),
           resolver.resolveAccountKey(),
-          dynamicConfig // On passe l'objet de management, pas juste les valeurs !
+          dynamicConfig // We pass the management object, not just the values!
       );
     }
 

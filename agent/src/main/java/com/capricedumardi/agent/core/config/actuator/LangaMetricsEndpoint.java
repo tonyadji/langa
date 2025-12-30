@@ -11,7 +11,7 @@ import java.util.Map;
 @Endpoint(id = "langaMetrics")
 public class LangaMetricsEndpoint {
 
-  // On utilise le Singleton du Registry (qui fait maintenant le "Pull" vers les buffers)
+  // Use the Registry singleton (which now performs the "pull" from the buffers)
   private final LangaAgentMetricsRegistry registry = LangaAgentMetricsRegistry.getInstance();
 
   @ReadOperation
@@ -21,7 +21,7 @@ public class LangaMetricsEndpoint {
     // --- 1. Buffers (Logs vs Metrics) ---
     Map<String, Object> buffers = new LinkedHashMap<>();
 
-    // Détails Log Buffer
+    // Log Buffer Details
     Map<String, Object> logBuffer = new HashMap<>();
     logBuffer.put("size", registry.getLogBufferSize());
     logBuffer.put("capacity", registry.getLogBufferCapacity());
@@ -30,7 +30,7 @@ public class LangaMetricsEndpoint {
     logBuffer.put("utilizationPct", registry.getLogBufferUtilization());
     buffers.put("logs", logBuffer);
 
-    // Détails Metric Buffer
+    // Metric Buffer Details
     Map<String, Object> metricBuffer = new HashMap<>();
     metricBuffer.put("size", registry.getMetricBufferSize());
     metricBuffer.put("capacity", registry.getMetricBufferCapacity());

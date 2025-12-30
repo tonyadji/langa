@@ -2,8 +2,8 @@ package com.capricedumardi.agent.core.config.jmx;
 
 public interface AgentManagementMBean {
 
-  // --- 1. Runtime Tuning (Lecture / Écriture) ---
-  // Ce sont les paramètres que l'on peut changer sans redémarrer
+  // --- 1. Runtime Tuning (Read / Write) ---
+  // These are the parameters that can be changed without restarting
 
   boolean isDebugMode();
   void setDebugMode(boolean enabled);
@@ -16,15 +16,15 @@ public interface AgentManagementMBean {
 
   boolean isHttpCompressionEnabled();
   void enableHttpCompression(boolean enabled);
-  long getHttpCompressionThresholdBytes();
-  void setHttpCompressionThresholdBytes(long bytes);
+  int getHttpCompressionThresholdBytes();
+  void setHttpCompressionThresholdBytes(int bytes);
 
-  // --- 2. Configuration Statique (Lecture Seule) ---
-  // Paramètres informatifs (pour vérifier le chargement)
+  // --- 2. Static Configuration (Read Only) ---
+  // Informational parameters (to verify loading)
 
   String getAgentVersion();
   String getLoggingFramework();
-  String getIngestionUrl(); // A afficher, mais peut-être masqué partiellement
+  String getIngestionUrl(); // To display, but may be partially masked
 
   // Buffer
   int getMainQueueCapacity();
@@ -38,7 +38,7 @@ public interface AgentManagementMBean {
   int getCircuitBreakerFailureThreshold();
   long getCircuitBreakerOpenDurationMillis();
 
-  // Kafka (Si utilisé)
+  // Kafka (If used)
   boolean isKafkaAsyncSend();
   String getKafkaCompressionType();
 

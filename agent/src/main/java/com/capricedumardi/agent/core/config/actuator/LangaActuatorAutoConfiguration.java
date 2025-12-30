@@ -7,11 +7,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 
 @Configuration
-@ConditionalOnClass(Endpoint.class) // Ne se charge que si Actuator est dans le classpath
+@ConditionalOnClass(Endpoint.class)
 public class LangaActuatorAutoConfiguration {
 
   @Bean
-  @ConditionalOnMissingBean // Permet à l'utilisateur de surcharger si besoin
+  @ConditionalOnMissingBean // Allows the user to override if needed
   public LangaMetricsEndpoint langaMetricsEndpoint() {
     return new LangaMetricsEndpoint();
   }

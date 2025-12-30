@@ -64,7 +64,6 @@ public abstract class AbstractBuffer<T> {
 
        scheduler = BuffersFactory.getScheduler();
        scheduleNextFlush(flushInterval);
-       scheduler.scheduleAtFixedRate(this::flush, flushInterval, flushInterval, TimeUnit.SECONDS);
     }
 
   /**
@@ -96,7 +95,7 @@ public abstract class AbstractBuffer<T> {
 
         totalAdded.incrementAndGet();
         if(mainQueue.offer(entry)) {
-            // Si on a changé la valeur via JMX il y a 10ms, c'est pris en compte ici !
+            // If we changed the value via JMX 10ms ago, it's taken into account here!
             int currentBatchSize = dynamicConfig.getBufferBatchSize();
             if (mainQueue.size() >= currentBatchSize && flushScheduled.compareAndSet(false, true)) {
                 scheduler.submit(() -> {
@@ -152,7 +151,7 @@ public abstract class AbstractBuffer<T> {
         if (entries.isEmpty()) {
             return;
         }
-        long start = System.currentTimeMillis(); // CHRONO DÉBUT
+        long start = System.currentTimeMillis(); // TIMER START
         try {
             var dto = mapToSendableRequest(entries);
             boolean isSendSuccess = senderService.send(dto);
