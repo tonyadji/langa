@@ -36,13 +36,13 @@ public class TeamController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TeamResponseDto>> createTeam(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<List<TeamResponseDto>> queryTeams(@AuthenticationPrincipal UserDetails userDetails) {
         final List<Team> teams = fetchTeamUseCase.queryTeams(userDetails.getUsername());
         return ResponseEntity.ok(TeamResponseDto.of(teams));
     }
 
     @GetMapping("{teamId}")
-    public ResponseEntity<TeamResponseDto> createTeam(@AuthenticationPrincipal UserDetails userDetails,
+    public ResponseEntity<TeamResponseDto> queryTeam(@AuthenticationPrincipal UserDetails userDetails,
                                                       @PathVariable String teamId) {
         final Team team = fetchTeamUseCase.query(new GetTeamQuery(teamId, userDetails.getUsername()));
         return ResponseEntity.ok(TeamResponseDto.of(team));

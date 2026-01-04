@@ -1,7 +1,6 @@
 package com.langa.backend.infra.rest.applications;
 
 import com.langa.backend.common.commands.CommandBusDispatcher;
-import com.langa.backend.domain.applications.usecases.sharing.revoke.RevokeSharingUseCase;
 import com.langa.backend.domain.applications.valueobjects.ApplicationInfo;
 import com.langa.backend.infra.rest.applications.dto.ApplicationDto;
 import com.langa.backend.infra.rest.applications.dto.ShareAppRequestDto;
@@ -16,12 +15,9 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*")
 public class ApplicationSharingController {
 
-    private final RevokeSharingUseCase revokeSharingUseCase;
     private final CommandBusDispatcher commandBusDispatcher;
 
-    public ApplicationSharingController(RevokeSharingUseCase revokeSharingUseCase,
-                                        CommandBusDispatcher commandBusDispatcher) {
-        this.revokeSharingUseCase = revokeSharingUseCase;
+    public ApplicationSharingController(CommandBusDispatcher commandBusDispatcher) {
         this.commandBusDispatcher = commandBusDispatcher;
     }
 
