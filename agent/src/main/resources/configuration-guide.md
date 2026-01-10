@@ -19,8 +19,8 @@ The Langa Agent uses **flexible, multi-source configuration** to give you comple
 | Variable | Description | Example Values |
 |----------|-------------|----------------|
 | `LOGGING_FRAMEWORK` | Which logging framework to use | `logback`, `log4j2`, `none` |
-| `LANGA_URL` | Backend ingestion URL | `http://api.langa.io/api/ingestion/h/base64creds` |
-| `LANGA_SECRET` | Authentication secret | `your-secret-key` |
+| `LANGA_INGESTION_URL` | Backend ingestion URL | `http://api.langa.io/api/ingestion/h/base64creds` |
+| `LANGA_INGESTION_SECRET` | Authentication secret | `your-secret-key` |
 
 **Note**: The agent will **fail fast** with clear error messages if these are missing or invalid.
 
@@ -33,8 +33,8 @@ The Langa Agent uses **flexible, multi-source configuration** to give you comple
 ```bash
 # Core configuration
 export LOGGING_FRAMEWORK=logback
-export LANGA_URL=http://api.langa.io/api/ingestion/h/base64creds
-export LANGA_SECRET=your-secret-key
+export LANGA_INGESTION_URL=http://api.langa.io/api/ingestion/h/base64creds
+export LANGA_INGESTION_SECRET=your-secret-key
 
 # Buffer configuration
 export LANGA_BUFFER_BATCH_SIZE=100
@@ -263,8 +263,8 @@ services:
     environment:
       # Core config
       - LOGGING_FRAMEWORK=logback
-      - LANGA_URL=https://api.langa.io/api/ingestion/h/YWNjLWtleS1sZ2EtYXBwLWtleQ==
-      - LANGA_SECRET=your-secret-key
+      - LANGA_INGESTION_URL=https://api.langa.io/api/ingestion/h/YWNjLWtleS1sZ2EtYXBwLWtleQ==
+      - LANGA_INGESTION_SECRET=your-secret-key
       
       # Buffer tuning
       - LANGA_BUFFER_BATCH_SIZE=100
@@ -297,8 +297,8 @@ services:
     environment:
       # Core config
       - LOGGING_FRAMEWORK=log4j2
-      - LANGA_URL=kafka://kafka-broker:9092/api/ingestion/langa-logs/YWNjLWtleS1sZ2EtYXBwLWtleQ==
-      - LANGA_SECRET=your-secret-key
+      - LANGA_INGESTION_URL=kafka://kafka-broker:9092/api/ingestion/langa-logs/YWNjLWtleS1sZ2EtYXBwLWtleQ==
+      - LANGA_INGESTION_SECRET=your-secret-key
       
       # Buffer tuning for high volume
       - LANGA_BUFFER_BATCH_SIZE=500
@@ -355,8 +355,8 @@ metadata:
   name: langa-secrets
 type: Opaque
 stringData:
-  LANGA_URL: "https://api.langa.io/api/ingestion/h/YWNjLWtleS1sZ2EtYXBwLWtleQ=="
-  LANGA_SECRET: "your-secret-key"
+  LANGA_INGESTION_URL: "https://api.langa.io/api/ingestion/h/YWNjLWtleS1sZ2EtYXBwLWtleQ=="
+  LANGA_INGESTION_SECRET: "your-secret-key"
 ```
 
 **deployment.yaml:**
@@ -397,8 +397,8 @@ spec:
 
 ```bash
 export LOGGING_FRAMEWORK=none
-export LANGA_URL=http://api.langa.io/api/ingestion/h/base64creds
-export LANGA_SECRET=your-secret-key
+export LANGA_INGESTION_URL=http://api.langa.io/api/ingestion/h/base64creds
+export LANGA_INGESTION_SECRET=your-secret-key
 export LANGA_BUFFER_BATCH_SIZE=200
 
 java -javaagent:langa-agent.jar -jar app.jar
@@ -551,11 +551,11 @@ Loading Langa Agent configuration...
 ========================================
 Creating SenderService from configuration...
 ✗ FATAL: Failed to create SenderService
-  Reason: LANGA_URL is required but not configured. Set environment variable: LANGA_URL=<your-ingestion-url>
+  Reason: LANGA_INGESTION_URL is required but not configured. Set environment variable: LANGA_INGESTION_URL=<your-ingestion-url>
   Impact: Agent will NOT send logs/metrics
   Action: Fix configuration and restart
 
-Exception in thread "main" java.lang.IllegalArgumentException: SenderService configuration invalid: LANGA_URL is required but not configured.
+Exception in thread "main" java.lang.IllegalArgumentException: SenderService configuration invalid: LANGA_INGESTION_URL is required but not configured.
 ```
 
 ---
@@ -595,7 +595,7 @@ CircuitBreaker[HTTP[https://api.langa.io]]: HALF_OPEN -> CLOSED (recovery confir
 
 ### Sender Type Configuration
 
-| LANGA_URL Pattern | Result |
+| LANGA_INGESTION_URL Pattern | Result |
 |-------------------|--------|
 | `http://...` or `https://...` | HTTP sender with connection pooling + GZIP |
 | `kafka://bootstrap:port/...` | Kafka sender with async tracking |
@@ -605,14 +605,14 @@ CircuitBreaker[HTTP[https://api.langa.io]]: HALF_OPEN -> CLOSED (recovery confir
 
 ## Troubleshooting
 
-### Issue: "SenderService configuration invalid: LANGA_URL is required"
+### Issue: "SenderService configuration invalid: LANGA_INGESTION_URL is required"
 
-**Cause**: Missing required LANGA_URL environment variable.
+**Cause**: Missing required LANGA_INGESTION_URL environment variable.
 
 **Fix**:
 ```bash
-export LANGA_URL=http://api.langa.io/api/ingestion/h/base64creds
-export LANGA_SECRET=your-secret-key
+export LANGA_INGESTION_URL=http://api.langa.io/api/ingestion/h/base64creds
+export LANGA_INGESTION_SECRET=your-secret-key
 ```
 
 ---
@@ -674,7 +674,7 @@ export LANGA_BUFFER_FLUSH_INTERVAL_SECONDS=3
 export LANGA_DEBUG_MODE=true
 
 # Check connectivity manually
-curl -X POST $LANGA_URL \
+curl -X POST $LANGA_INGESTION_URL \
   -H "Content-Type: application/json" \
   -d '{"test": "data"}'
 ```
@@ -748,7 +748,7 @@ export LANGA_SCHEDULER_THREAD_POOL_SIZE=8
 
 ## Best Practices
 
-1. ✅ **Always set LANGA_URL and LANGA_SECRET** - Agent fails fast if missing
+1. ✅ **Always set LANGA_INGESTION_URL and LANGA_INGESTION_SECRET** - Agent fails fast if missing
 2. ✅ **Set LOGGING_FRAMEWORK explicitly** in production for predictability
 3. ✅ **Use config file for base settings**, override with env vars per environment
 4. ✅ **Start with defaults**, tune based on actual metrics

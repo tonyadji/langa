@@ -16,7 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -82,13 +82,13 @@ class ApplicationControllerTest {
                 .setAccountKey("accountKey1")
                 .setLevel("INFO")
                 .setMessage("message1")
-                .setTimestamp(LocalDateTime.now());
+                .setTimestamp(Instant.now());
         LogEntry log2 = new LogEntry()
                 .setAppKey("appKey1")
                 .setAccountKey("accountKey1")
                 .setLevel("ERROR")
                 .setMessage("message2")
-                .setTimestamp(LocalDateTime.now());
+                .setTimestamp(Instant.now());
 
         when(getLogUseCase.getLogs("app1", "user@example.com")).thenReturn(List.of(log1, log2));
 

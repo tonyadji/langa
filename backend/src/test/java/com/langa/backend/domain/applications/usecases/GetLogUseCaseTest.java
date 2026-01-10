@@ -13,10 +13,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+
+import java.time.Instant;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -95,9 +96,9 @@ class GetLogUseCaseTest {
         String userEmail = "owner@example.com";
 
         LogEntry log1 = new LogEntry().setMessage("message1")
-                .setLevel("INFO").setLoggerName("logger1").setTimestamp(LocalDateTime.now());
+                .setLevel("INFO").setLoggerName("logger1").setTimestamp(Instant.now());
         LogEntry log2 = new LogEntry().setMessage("message2")
-                .setLevel("ERROR").setLoggerName("logger2").setTimestamp(LocalDateTime.now());
+                .setLevel("ERROR").setLoggerName("logger2").setTimestamp(Instant.now());
 
         PaginatedResult<LogEntry> paginatedResult = new PaginatedResult<>(
                 List.of(log1, log2),

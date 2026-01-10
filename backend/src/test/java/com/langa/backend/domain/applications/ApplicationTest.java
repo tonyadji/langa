@@ -25,7 +25,7 @@ class ApplicationTest {
     void createLogEntries_shouldMapDtosToLogEntries() {
         Application app = Application.createNew("MyApp", "accountKey123", "owner@example.com");
 
-        LogDto logDto = new LogDto("message", "INFO", "loggerName", "2025-08-23T12:00:00");
+        LogDto logDto = new LogDto("message", "INFO", "loggerName", "2025-08-23T12:00:00Z", null, null, null);
         List<LogEntry> logEntries = app.createLogEntries(List.of(logDto.toLogEntry()));
 
         assertEquals(1, logEntries.size());

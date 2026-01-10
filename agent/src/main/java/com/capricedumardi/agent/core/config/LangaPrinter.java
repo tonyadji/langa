@@ -42,4 +42,11 @@ public class LangaPrinter {
     }
 
 
+    public static void agentInitializationComplete() {
+        System.out.println("========================================");
+        System.out.println("  Langa Agent Initialization Complete");
+        System.out.println("========================================");
+    }
+
+
 }
