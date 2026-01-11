@@ -60,6 +60,7 @@ public class ConfigLoader {
 
         AgentConfig.Builder builder = new AgentConfig.Builder();
 
+        loadBackendConfig(builder, fileProps);
         loadBufferConfig(builder, fileProps);
         loadSchedulerConfig(builder, fileProps);
         loadHttpConfig(builder, fileProps);
@@ -79,6 +80,12 @@ public class ConfigLoader {
     }
 
     // ========== Configuration Loaders ==========
+
+    private static void loadBackendConfig(AgentConfig.Builder builder, Properties fileProps) {
+      builder.ingestionUrl(getStringProperty("langa.ingestion.url", fileProps, null));
+      builder.secret(getStringProperty("langa.ingestion.secret", fileProps, null));
+      builder.loggingFramework(getStringProperty("logging.framework", fileProps, "none"));
+    }
 
     private static void loadBufferConfig(AgentConfig.Builder builder, Properties fileProps) {
         builder.batchSize(getIntProperty("langa.buffer.batch.size", fileProps, 50));

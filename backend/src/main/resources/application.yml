@@ -68,3 +68,17 @@ logging:
     org.springframework.web: ${LOG_LEVEL_SPRING_WEB}
     org.springframework.security: ${LOG_LEVEL_SPRING_SECURITY}
     com.langa: ${LOG_LEVEL_LANGA}
+    org.apache.kafka: ${LOG_LEVEL_KAFKA:OFF}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+         - health
+         - info
+         - metrics
+         - langaMetrics
+         - langaConfig
+    health:
+      show-details: always

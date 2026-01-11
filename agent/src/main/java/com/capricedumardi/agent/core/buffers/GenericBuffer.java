@@ -1,6 +1,7 @@
 package com.capricedumardi.agent.core.buffers;
 
 import com.capricedumardi.agent.core.config.LangaPrinter;
+import com.capricedumardi.agent.core.config.jmx.AgentManagement;
 import com.capricedumardi.agent.core.model.SendableRequestDto;
 import com.capricedumardi.agent.core.services.SenderService;
 
@@ -12,8 +13,8 @@ public class GenericBuffer<T, U extends SendableRequestDto> extends AbstractBuff
 
     public GenericBuffer(Function<List<T>, U> mapSendableRequestDto,
                          SenderService senderService, String appKey, String accountKey,
-                     int batchSize, int flushIntervalSeconds, String bufferName) {
-        super(senderService, appKey, accountKey, batchSize, flushIntervalSeconds, bufferName);
+                     AgentManagement dynamicConfig, String bufferName) {
+        super(senderService, appKey, accountKey, dynamicConfig, bufferName);
         this.mapSendableRequestDto = mapSendableRequestDto;
     }
 

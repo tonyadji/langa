@@ -7,9 +7,10 @@ package com.capricedumardi.agent.core.config;
  * Immutable once loaded - all fields are final.
  */
 public class AgentConfig {
-    // ========== Buffer Configuration ==========
+    // ========== App Configuration ==========
     private final String ingestionUrl;
     private final String secret;
+    private final String loggingFramework;
 
     // ========== Buffer Configuration ==========
 
@@ -136,6 +137,7 @@ public class AgentConfig {
         // Backend
         this.ingestionUrl = builder.ingestionUrl;
         this.secret = builder.secret;
+        this.loggingFramework = builder.loggingFramework;
 
         // Buffer
         this.batchSize = builder.batchSize;
@@ -191,6 +193,7 @@ public class AgentConfig {
     // Backend
     public String getIngestionUrl() { return ingestionUrl; }
     public String getSecret() { return secret; }
+    public String getLoggingFramework() { return loggingFramework; }
 
     // Buffer
     public int getBatchSize() { return batchSize; }
@@ -247,8 +250,9 @@ public class AgentConfig {
      */
     public static class Builder {
         // Backend defaults
-        private String ingestionUrl = "https://api.langa.capricedumardi.com/ingest";
-        private String secret = "";
+        private String ingestionUrl = null;
+        private String secret = null;
+        private String loggingFramework = "none";
 
         // Buffer defaults
         private int batchSize = 50;
@@ -297,6 +301,11 @@ public class AgentConfig {
         // Metadata defaults
         private String agentVersion = "langa-agent-v1.0.0";
         private boolean debugMode = false;
+
+        // Backend
+        public Builder ingestionUrl(String ingestionUrl) {this.ingestionUrl = ingestionUrl; return this;}
+        public Builder secret(String secret) {this.secret = secret; return this;}
+        public Builder loggingFramework(String loggingFramework) {this.loggingFramework = loggingFramework; return this;}
 
         // Buffer
         public Builder batchSize(int batchSize) { this.batchSize = batchSize; return this; }
@@ -354,6 +363,7 @@ public class AgentConfig {
     @Override
     public String toString() {
         return "AgentConfig{" +
+                "loggingFramework=" + loggingFramework +
                 "batchSize=" + batchSize +
                 ", flushIntervalSeconds=" + flushIntervalSeconds +
                 ", mainQueueCapacity=" + mainQueueCapacity +

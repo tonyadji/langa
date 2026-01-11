@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.capricedumardi</groupId>
     <artifactId>langa-agent</artifactId>
-    <version>0.0.0-M1</version>
+    <version>0.0.1-M1</version>
     <name>Langa-Agent</name>
     <description>Java Agent for collecting logs and metrics with support for Log4j2, Logback, and AOP-based monitoring</description>
     <url>https://github.com/langa-org/langa</url>
@@ -127,6 +127,19 @@
             <scope>test</scope>
         </dependency>
 
+       <!-- Actuator for metrics collection -->
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-actuator</artifactId>
+        <version>3.1.6</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-autoconfigure</artifactId>
+        <version>3.1.0</version>
+        <scope>provided</scope>
+      </dependency>
     </dependencies>
 
     <build>

@@ -1,6 +1,7 @@
 package com.capricedumardi.agent.core.services;
 
 import com.capricedumardi.agent.core.config.LangaPrinter;
+import com.capricedumardi.agent.core.config.jmx.AgentManagement;
 import com.capricedumardi.agent.core.helpers.CredentialsHelper;
 import com.capricedumardi.agent.core.helpers.IngestionParamsResolver;
 import com.capricedumardi.agent.core.model.SenderType;
@@ -14,7 +15,8 @@ public class SenderServiceFactory {
     private SenderServiceFactory() {
     }
 
-    public static SenderService create(final IngestionParamsResolver resolver) {
+    public static SenderService create(final IngestionParamsResolver resolver,
+        AgentManagement dynamicConfig) {
         LangaPrinter.printTrace("Creating SenderService from configuration...");
 
         try {
@@ -24,7 +26,7 @@ public class SenderServiceFactory {
 
             CredentialsHelper credentialsHelper = createCredentialsHelper(resolver);
 
-            SenderService sender = createSender(senderType, resolver, credentialsHelper);
+            SenderService sender = createSender(senderType, resolver, credentialsHelper, dynamicConfig);
 
             LangaPrinter.printTrace("SenderService created successfully: " + sender.getDescription());
             return sender;
@@ -52,23 +54,23 @@ public class SenderServiceFactory {
         String ingestionUrl = resolver.ingestionUrl();
         if (ingestionUrl == null || ingestionUrl.trim().isEmpty()) {
             throw new IllegalArgumentException(
-                    "LANGA_URL is required but not configured. " +
-                            "Set environment variable: LANGA_URL=<your-ingestion-url>"
+                    "LANGA_INGESTION_URL is required but not configured. " +
+                            "Set environment variable: LANGA_INGESTION_URL=<your-ingestion-url>"
             );
         }
 
         String secret = resolver.resolveSecret();
         if (secret == null || secret.trim().isEmpty()) {
             throw new IllegalArgumentException(
-                    "LANGA_SECRET is required but not configured. " +
-                            "Set environment variable: LANGA_SECRET=<your-secret>"
+                    "LANGA_INGESTION_SECRET is required but not configured. " +
+                            "Set environment variable: LANGA_INGESTION_SECRET=<your-secret>"
             );
         }
 
         String appKey = resolver.resolveAppKey();
         if (appKey == null || appKey.trim().isEmpty()) {
             throw new IllegalArgumentException(
-                    "AppKey could not be extracted from LANGA_URL. " +
+                    "AppKey could not be extracted from LANGA_INGESTION_URL. " +
                             "Check URL format: .../api/ingestion/{type}/{base64_credentials}"
             );
         }
@@ -76,7 +78,7 @@ public class SenderServiceFactory {
         String accountKey = resolver.resolveAccountKey();
         if (accountKey == null || accountKey.trim().isEmpty()) {
             throw new IllegalArgumentException(
-                    "AccountKey could not be extracted from LANGA_URL. " +
+                    "AccountKey could not be extracted from LANGA_INGESTION_URL. " +
                             "Check URL format: .../api/ingestion/{type}/{base64_credentials}"
             );
         }
@@ -100,10 +102,11 @@ public class SenderServiceFactory {
      */
     private static SenderService createSender(SenderType type,
                                               IngestionParamsResolver resolver,
-                                              CredentialsHelper credentialsHelper) {
+                                              CredentialsHelper credentialsHelper,
+        AgentManagement dynamicConfig) {
         return switch (type) {
-            case HTTP -> createHttpSender(resolver, credentialsHelper);
-            case KAFKA -> createKafkaSender(resolver, credentialsHelper);
+            case HTTP -> createHttpSender(resolver, credentialsHelper, dynamicConfig);
+            case KAFKA -> createKafkaSender(resolver, credentialsHelper, dynamicConfig);
         };
     }
 
@@ -113,7 +116,8 @@ public class SenderServiceFactory {
      * @throws IllegalArgumentException if HTTP-specific configuration is invalid
      */
     private static SenderService createHttpSender(IngestionParamsResolver resolver,
-                                                  CredentialsHelper credentialsHelper) {
+                                                  CredentialsHelper credentialsHelper,
+        AgentManagement dynamicConfig) {
         String url = resolver.resolveHttpUrl();
 
         if (url == null || url.trim().isEmpty()) {
@@ -127,7 +131,7 @@ public class SenderServiceFactory {
         }
 
         LangaPrinter.printTrace("  HTTP URL: " + url);
-        return new HttpSenderService(url, credentialsHelper);
+        return new HttpSenderService(url, credentialsHelper, dynamicConfig);
     }
 
     /**
@@ -136,7 +140,8 @@ public class SenderServiceFactory {
      * @throws IllegalArgumentException if Kafka-specific configuration is invalid
      */
     private static SenderService createKafkaSender(IngestionParamsResolver resolver,
-                                                   CredentialsHelper credentialsHelper) {
+                                                   CredentialsHelper credentialsHelper,
+        AgentManagement dynamicConfig) {
         String bootstrapServer = resolver.resolveBootStrapServer();
         String topic = resolver.resolveTopic();
 
@@ -160,7 +165,7 @@ public class SenderServiceFactory {
         LangaPrinter.printTrace("Bootstrap Server: " + bootstrapServer);
         LangaPrinter.printTrace("Topic: " + topic);
 
-        return new KafkaSenderService(bootstrapServer, topic, credentialsHelper);
+        return new KafkaSenderService(bootstrapServer, topic, credentialsHelper, dynamicConfig);
     }
 
     /**

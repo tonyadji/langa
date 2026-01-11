@@ -1,11 +1,14 @@
 package com.capricedumardi.agent.core.buffers;
 
-import com.capricedumardi.agent.core.config.AgentConfig;
-import com.capricedumardi.agent.core.config.ConfigLoader;
 import com.capricedumardi.agent.core.config.LangaPrinter;
-import com.capricedumardi.agent.core.model.*;
+import com.capricedumardi.agent.core.config.jmx.AgentManagement;
+import com.capricedumardi.agent.core.model.LogEntry;
+import com.capricedumardi.agent.core.model.LogRequestDto;
+import com.capricedumardi.agent.core.model.MetricEntry;
+import com.capricedumardi.agent.core.model.MetricRequestDto;
+import com.capricedumardi.agent.core.model.SendableRequestDto;
+import com.capricedumardi.agent.core.model.SendableRequestType;
 import com.capricedumardi.agent.core.services.SenderService;
-
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -27,7 +30,7 @@ public class BuffersFactory {
     private static final int SHUTDOWN_TIMEOUT_SECONDS = 30;
     private static final int FORCED_SHUTDOWN_TIMEOUT_SECONDS = 10;
 
-    private static final AgentConfig  agentConfig = ConfigLoader.getConfigInstance();
+    private static AgentManagement dynamicConfig;
 
     private BuffersFactory() {
     }
@@ -40,7 +43,7 @@ public class BuffersFactory {
      * @throws IllegalStateException if called after shutdown
      */
     public static void init(SenderService senderService, String appKey, String accountKey,
-                            int batchSize, int flushIntervalSeconds) {
+                            AgentManagement agentManagement) {
 
         if (shuttingDown.get()) {
             throw new IllegalStateException("Cannot initialize BuffersFactory after shutdown");
@@ -50,11 +53,12 @@ public class BuffersFactory {
             LangaPrinter.printTrace("BuffersFactory already initialized, skipping re-initialization");
             return;
         }
+        dynamicConfig = agentManagement;
         senderServiceInstance = senderService;
         initScheduler();
 
-        initLogBuffer(senderService, appKey, accountKey, batchSize, flushIntervalSeconds);
-        initMetricBuffer(senderService, appKey, accountKey, batchSize, flushIntervalSeconds);
+        initLogBuffer(senderService, appKey, accountKey);
+        initMetricBuffer(senderService, appKey, accountKey);
 
         initialized.set(true);
         LangaPrinter.printTrace("BuffersFactory initialized successfully");
@@ -205,8 +209,7 @@ public class BuffersFactory {
         }
     }
 
-    private static void initLogBuffer(SenderService senderService, String appKey, String accountKey,
-                                      int batchSize, int flushIntervalSeconds) {
+    private static void initLogBuffer(SenderService senderService, String appKey, String accountKey) {
         if (logBufferInstance == null) {
             synchronized (LOG_BUFFER_LOCK) {
                 if (logBufferInstance == null) {
@@ -215,8 +218,7 @@ public class BuffersFactory {
                             senderService,
                             appKey,
                             accountKey,
-                            batchSize,
-                            flushIntervalSeconds,
+                            dynamicConfig,
                             "logBuffer"
                     );
                     LangaPrinter.printTrace("Log buffer initialized");
@@ -225,8 +227,7 @@ public class BuffersFactory {
         }
     }
 
-    private static void initMetricBuffer(SenderService senderService, String appKey, String accountKey,
-                                         int batchSize, int flushIntervalSeconds) {
+    private static void initMetricBuffer(SenderService senderService, String appKey, String accountKey) {
         if (metricBufferInstance == null) {
             synchronized (METRIC_BUFFER_LOCK) {
                 if (metricBufferInstance == null) {
@@ -235,8 +236,7 @@ public class BuffersFactory {
                             senderService,
                             appKey,
                             accountKey,
-                            batchSize,
-                            flushIntervalSeconds,
+                            dynamicConfig,
                             "metricBuffer"
                     );
                     LangaPrinter.printTrace("Metric buffer initialized");
