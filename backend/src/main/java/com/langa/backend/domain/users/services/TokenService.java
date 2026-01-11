@@ -43,4 +43,8 @@ public class TokenService {
     public void revokeAllByUserEmail(String userEmail) {
         repository.revokeAllByUserEmail(userEmail);
     }
+
+    public String getAccountKey() {
+        return tokenProvider.getClaim("account_key");
+    }
 }

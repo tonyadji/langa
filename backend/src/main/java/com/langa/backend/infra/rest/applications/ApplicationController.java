@@ -50,12 +50,19 @@ public class ApplicationController {
     }
 
     @GetMapping("{appId}/secured-details")
-    public ResponseEntity<SecuredApplicationDto> getAllApplications(@AuthenticationPrincipal UserDetails userDetails, @PathVariable String appId) {
+    public ResponseEntity<SecuredApplicationDto> getAllApplicationDetails(@AuthenticationPrincipal UserDetails userDetails, @PathVariable String appId) {
         return ResponseEntity.ok(
                 SecuredApplicationDto.of(
                         getApplicationsUseCase.getSecuredApplication(appId, userDetails.getUsername()),
                         applicationProperties.getHttpPrefix(),
                         applicationProperties.getKafkaPrefix()));
+    }
+
+    @GetMapping("{appId}")
+    public ResponseEntity<ApplicationDto> getApplicationDetails(@AuthenticationPrincipal UserDetails userDetails, @PathVariable String appId) {
+        return ResponseEntity.ok(
+                ApplicationDto.of(
+                        getApplicationsUseCase.getApplication(appId, userDetails.getUsername())));
     }
 
 

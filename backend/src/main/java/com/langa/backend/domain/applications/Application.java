@@ -142,4 +142,9 @@ public class Application extends AbstractModel {
     public String getKey() {
         return appId.key();
     }
+
+    public boolean isOwnedOrSharedWith(String username, String accountKey) {
+        return Objects.equals(owner, username) ||
+                sharedWith.stream().anyMatch(shareWith -> Objects.equals(shareWith.key(), accountKey));
+    }
 }
