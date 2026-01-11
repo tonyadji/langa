@@ -3,7 +3,10 @@ package com.langa.backend.infra.adapters.persistence.metricentries.mongo;
 import com.langa.backend.domain.applications.valueobjects.MetricEntry;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.Instant;
 
 @Document(collection = "c_metrics")
 @Data
@@ -16,10 +19,13 @@ public class MetricEntryDocument {
     private String name;
     private Integer durationMillis;
     private String status;
-    private String timestamp;
+
+    private Instant timestamp;
     private String uri;
     private String httpMethod;
     private int httpStatus;
+    @Indexed(name = "ttl_dynamic_index", expireAfter = "0")
+    private Instant expiresAt;
 
     public MetricEntry toMetricEntry() {
         return new MetricEntry()
@@ -43,6 +49,7 @@ public class MetricEntryDocument {
         metricEntryDocument.setUri(metricEntry.getUri());
         metricEntryDocument.setHttpMethod(metricEntry.getHttpMethod());
         metricEntryDocument.setHttpStatus(metricEntry.getHttpStatus());
+        metricEntryDocument.setExpiresAt(Instant.now().plus(metricEntry.getRetentionDuration(), metricEntry.getRetentionUnit()));
         return metricEntryDocument;
     }
 }

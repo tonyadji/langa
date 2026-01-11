@@ -127,7 +127,7 @@ public class ApplicationController {
                         metric.getName(),
                         metric.getDurationMillis(),
                         metric.getStatus(),
-                        metric.getTimestamp(),
+                        metric.getTimestamp().toString(),
                         metric.getUri(),
                         metric.getHttpMethod(),
                         metric.getHttpStatus()

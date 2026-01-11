@@ -3,6 +3,8 @@ package com.langa.backend.infra.rest.common.dto;
 import com.langa.backend.domain.applications.valueobjects.MetricEntry;
 import jakarta.validation.constraints.NotNull;
 
+import java.time.Instant;
+
 public record MetricDto(
         @NotNull String name,
         Integer durationMillis,
@@ -19,7 +21,7 @@ public record MetricDto(
                 .setName(name)
                 .setDurationMillis(durationMillis)
                 .setStatus(status)
-                .setTimestamp(timestamp)
+                .setTimestamp(Instant.parse(timestamp))
                 .setUri(uri)
                 .setHttpMethod(httpMethod)
                 .setHttpStatus(httpStatus);

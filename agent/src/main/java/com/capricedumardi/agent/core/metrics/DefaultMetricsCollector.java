@@ -14,14 +14,15 @@ public class DefaultMetricsCollector implements MetricsCollector {
 
     @Override
     public void track(String methodName, long durationMillis, String status, String uri, String httpMethod, int httpStatus) {
-        MetricEntry metricEntry = new MetricEntry(methodName, durationMillis, status, Instant.now().toEpochMilli());
+        MetricEntry metricEntry = new MetricEntry(methodName, durationMillis, status,
+                Instant.ofEpochMilli(System.currentTimeMillis()).toString());
         metricEntry.setHttpMethod(httpMethod);
         metricEntry.setHttpStatus(httpStatus);
         metricEntry.setUri(uri);
         log.trace("Adding entry to metric buffer:");
         BuffersFactory.getMetricBufferInstance().add(metricEntry);
         log.trace("[{}] {} executed in {} with status {}",
-                Instant.now(), methodName, durationMillis, status);
+                metricEntry.getTimestamp(), methodName, durationMillis, status);
     }
 
 }

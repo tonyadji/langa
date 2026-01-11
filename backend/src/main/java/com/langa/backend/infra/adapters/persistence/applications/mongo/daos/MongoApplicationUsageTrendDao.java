@@ -7,6 +7,7 @@ import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface MongoApplicationUsageTrendDao extends MongoRepository<ApplicationUsageTrendDocument, String> {
     List<ApplicationUsageTrendDocument> findByAppKeyOrderByCreatedDateDesc(String appKey);
@@ -16,5 +17,5 @@ public interface MongoApplicationUsageTrendDao extends MongoRepository<Applicati
 
             "{ '$group': { '_id': null, 'total': { '$sum': '$usage' } } }"
     })
-    UsageSumDto sumUsageByAppKeyAndType(String appKey, IngestionType type);
+    Optional<UsageSumDto> sumUsageByAppKeyAndType(String appKey, IngestionType type);
 }

@@ -11,6 +11,7 @@ import com.langa.backend.infra.adapters.persistence.applications.mongo.daos.Mong
 import com.langa.backend.infra.adapters.persistence.applications.mongo.daos.MongoApplicationUsageTrendDao;
 import com.langa.backend.infra.adapters.persistence.applications.mongo.documents.ApplicationDocument;
 import com.langa.backend.infra.adapters.persistence.applications.mongo.documents.ApplicationUsageTrendDocument;
+import com.langa.backend.infra.adapters.persistence.applications.mongo.documents.UsageSumDto;
 import com.langa.backend.infra.adapters.persistence.logentries.mongo.LogEntryDocument;
 import com.langa.backend.infra.adapters.persistence.logentries.mongo.MongoLogEntryDao;
 import com.langa.backend.infra.adapters.persistence.metricentries.mongo.MetricEntryDocument;
@@ -53,8 +54,8 @@ public class ApplicationRepositoryImpl implements ApplicationRepository {
             mongoApplicationUsageTrendDao.save(ApplicationUsageTrendDocument.ofMetric(application));
         }
 
-        long usageLog = mongoApplicationUsageTrendDao.sumUsageByAppKeyAndType(application.getKey(), IngestionType.LOG).total();
-        long usageMetric = mongoApplicationUsageTrendDao.sumUsageByAppKeyAndType(application.getKey(), IngestionType.METRIC).total();
+        long usageLog = mongoApplicationUsageTrendDao.sumUsageByAppKeyAndType(application.getKey(), IngestionType.LOG).map(UsageSumDto::total).orElse(0L);
+        long usageMetric = mongoApplicationUsageTrendDao.sumUsageByAppKeyAndType(application.getKey(), IngestionType.METRIC).map(UsageSumDto::total).orElse(0L);
         applicationDocument.setUsage(new ApplicationUsage(usageLog, usageMetric, Instant.now()));
 
         mongoApplicationDao.save(applicationDocument);
