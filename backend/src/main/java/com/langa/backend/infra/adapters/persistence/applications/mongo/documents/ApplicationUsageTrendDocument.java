@@ -1,7 +1,6 @@
 package com.langa.backend.infra.adapters.persistence.applications.mongo.documents;
 
 import com.langa.backend.domain.applications.Application;
-import com.langa.backend.domain.applications.valueobjects.ApplicationUsage;
 import com.langa.backend.domain.applications.valueobjects.ApplicationUsageTrend;
 import com.langa.backend.domain.applications.valueobjects.IngestionType;
 import lombok.Data;

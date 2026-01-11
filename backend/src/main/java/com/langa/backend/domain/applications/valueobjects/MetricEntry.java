@@ -3,6 +3,9 @@ package com.langa.backend.domain.applications.valueobjects;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 @Data
 @Accessors(chain = true)
 public class MetricEntry implements Entry {
@@ -12,11 +15,12 @@ public class MetricEntry implements Entry {
     private String name;
     private Integer durationMillis;
     private String status;
-    private String timestamp;
+    private Instant timestamp;
 
     private String uri;
     private String httpMethod;
     private int httpStatus;
+    private RetentionPolicy retention;
 
     @Override
     public long getSizeInBytes() {
@@ -28,9 +32,17 @@ public class MetricEntry implements Entry {
         sizeInBytes += getStringSize(httpMethod);
         sizeInBytes += getStringSize(status);
         sizeInBytes += getStringSize(String.valueOf(durationMillis));
-        sizeInBytes += getStringSize(timestamp);
+        sizeInBytes += getStringSize(timestamp.toString());
         sizeInBytes += getStringSize(String.valueOf(httpStatus));
         sizeInBytes += TIMESTAMP_SIZE;
         return sizeInBytes;
+    }
+
+    public long getRetentionDuration() {
+        return retention.duration();
+    }
+
+    public ChronoUnit getRetentionUnit() {
+        return retention.unit();
     }
 }

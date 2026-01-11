@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import static org.springframework.http.HttpStatus.CREATED;
+
 @RestController
 @RequestMapping("/api/applications")
 public class CreateApplicationController {
@@ -27,6 +29,7 @@ public class CreateApplicationController {
     public ResponseEntity<ApplicationDto> createApplication(@AuthenticationPrincipal UserDetails userDetails,
                                                             @Valid @RequestBody CreateApplicationRequestDto applicationRequestDto) {
 
-        return ResponseEntity.ok(ApplicationDto.of(commandBusDispatcher.dispatch(applicationRequestDto.toCommand(userDetails.getUsername()))));
+        return ResponseEntity.status(CREATED)
+                .body(ApplicationDto.of(commandBusDispatcher.dispatch(applicationRequestDto.toCommand(userDetails.getUsername()))));
     }
 }

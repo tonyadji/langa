@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 @Data
@@ -18,6 +19,7 @@ public class LogEntry implements Entry {
     private String threadName;
     private String stackTrace;
     private Map<String, String> mdc;
+    private RetentionPolicy retention;
 
     @Override
     public long getSizeInBytes() {
@@ -30,5 +32,13 @@ public class LogEntry implements Entry {
         sizeInBytes += getStringSize(timestamp.toString());
         sizeInBytes += TIMESTAMP_SIZE;
         return sizeInBytes;
+    }
+
+    public long getRetentionDuration() {
+        return retention.duration();
+    }
+
+    public ChronoUnit getRetentionUnit() {
+        return retention.unit();
     }
 }

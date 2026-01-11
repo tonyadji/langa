@@ -1,9 +1,7 @@
 package com.langa.backend.infra.adapters.persistence.applications.mongo.documents;
 
 import com.langa.backend.domain.applications.Application;
-import com.langa.backend.domain.applications.valueobjects.ApplicationId;
-import com.langa.backend.domain.applications.valueobjects.ApplicationUsage;
-import com.langa.backend.domain.applications.valueobjects.ShareWith;
+import com.langa.backend.domain.applications.valueobjects.*;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -23,13 +21,14 @@ public class ApplicationDocument {
     private String owner;
     private Set<ShareWith> sharedWith;
     private ApplicationUsage usage;
+    private RetentionPolicy retentionPolicy;
 
     public Application toApplication() {
-        return Application.populate(ApplicationId.of(id, key), name, accountKey, owner, sharedWith, usage);
+        return Application.populate(ApplicationId.of(id, key), name, owner(accountKey, owner), sharedWith, usage);
     }
 
     public Application toSecuredApplication() {
-        return Application.populateSecured(ApplicationId.of(id, key), name, accountKey, secret, ingestionUri, owner, sharedWith, usage);
+        return Application.populateSecured(ApplicationId.of(id, key), name, owner(accountKey, owner), secret, ingestionUri, sharedWith, usage, retentionPolicy);
     }
 
     public static ApplicationDocument of(Application application) {
@@ -43,6 +42,11 @@ public class ApplicationDocument {
         applicationDocument.setSecret(application.getSecret());
         applicationDocument.setIngestionUri(application.getIngestionUri());
         applicationDocument.setUsage(application.getUsage());
+        applicationDocument.setRetentionPolicy(application.getRetentionPolicy());
         return applicationDocument;
+    }
+
+    private ApplicationOwner owner(String accountKey, String owner) {
+        return new ApplicationOwner(accountKey, owner);
     }
 }

@@ -3,9 +3,11 @@ package com.langa.backend.infra.adapters.persistence.logentries.mongo;
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 @Data
@@ -22,6 +24,8 @@ public class LogEntryDocument {
     private String threadName;
     private String stackTrace;
     private Map<String, String> mdc;
+    @Indexed(name = "ttl_dynamic_index", expireAfter = "0")
+    private Instant expiresAt;
 
     public LogEntry toLogEntry() {
         return new LogEntry()
@@ -47,6 +51,7 @@ public class LogEntryDocument {
         logEntryDocument.setThreadName(logEntry.getThreadName());
         logEntryDocument.setStackTrace(logEntry.getStackTrace());
         logEntryDocument.setMdc(logEntry.getMdc());
+        logEntryDocument.setExpiresAt(Instant.now().plus(logEntry.getRetentionDuration(), logEntry.getRetentionUnit()));
         return logEntryDocument;
     }
 }

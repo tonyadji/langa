@@ -1,6 +1,7 @@
 package com.langa.backend.infra.rest.applications.dto;
 
 import com.langa.backend.domain.applications.Application;
+import com.langa.backend.domain.applications.valueobjects.RetentionPolicy;
 import com.langa.backend.domain.applications.valueobjects.ShareWith;
 import lombok.Getter;
 
@@ -18,6 +19,7 @@ public final class SecuredApplicationDto {
     private final String ingestionUri;
     private final Set<ShareWith> sharedWith;
     private ApplicationUsageDto usage;
+    private RetentionPolicy retentionPolicy;
     private String http;
     private String kafka;
 
@@ -43,13 +45,14 @@ public final class SecuredApplicationDto {
                 application.getOwner(),
                 application.getSharedWith())
         .setHttpAndKafkaUrl(httpPrefix, kafkaPrefix)
-        .setUsage(application);
+        .setUsageAndPolicy(application);
     }
 
-    private SecuredApplicationDto setUsage(Application app) {
+    private SecuredApplicationDto setUsageAndPolicy(Application app) {
         if (app !=  null && app.getUsage() != null) {
             this.usage = ApplicationUsageDto.of(app);
         }
+        this.retentionPolicy = app != null ? app.getRetentionPolicy() : null;
         return this;
     }
 
