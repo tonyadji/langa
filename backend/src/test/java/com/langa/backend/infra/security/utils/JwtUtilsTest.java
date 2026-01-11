@@ -1,6 +1,7 @@
 package com.langa.backend.infra.security.utils;
 
 import com.langa.backend.domain.users.User;
+import com.langa.backend.domain.users.repositories.TokenRepository;
 import com.langa.backend.infra.security.config.JwtConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,13 +12,14 @@ class JwtUtilsTest {
 
     private JwtUtils jwtUtils;
     private JwtConfig jwtConfig;
+    private TokenRepository tokenRepository;
 
     @BeforeEach
     void setUp() {
 
         jwtConfig = new JwtConfig("awesome-key-to-match-length-secure-enough-for-hmac-sha-algorithm", "test-kid", 86400000);
 
-        jwtUtils = new JwtUtils(jwtConfig);
+        jwtUtils = new JwtUtils(jwtConfig, tokenRepository);
     }
 
     @Test

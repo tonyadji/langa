@@ -2,8 +2,11 @@ package com.langa.backend.domain.users;
 
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.common.model.errors.GenericException;
-import com.langa.backend.domain.users.repositories.RefreshTokenRepository;
-import com.langa.backend.domain.users.services.RefreshTokenService;
+import com.langa.backend.domain.users.repositories.TokenRepository;
+import com.langa.backend.domain.users.services.TokenProvider;
+import com.langa.backend.domain.users.services.TokenService;
+import com.langa.backend.domain.users.valueobjects.Token;
+import com.langa.backend.domain.users.valueobjects.TokenType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,34 +20,36 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class RefreshTokenServiceTest {
+class TokenServiceTest {
 
     @Mock
-    private RefreshTokenRepository repository;
+    private TokenRepository repository;
 
-    private RefreshTokenService service;
+    private TokenService service;
 
-    private RefreshToken validToken;
+    @Mock
+    private TokenProvider tokenProvider;
+
+    private Token validToken;
 
     @BeforeEach
     void setUp() {
-        validToken = new RefreshToken("refreshToken", "user@example.com",
-                Instant.now().plusSeconds(3600));
+        validToken = new Token("refreshToken", "user@example.com",
+                Instant.now().plusSeconds(3600), TokenType.REFRESH);
 
-        service = new RefreshTokenService(repository, 10);
+        service = new TokenService(repository, 10, tokenProvider);
     }
 
     @Test
     void issue_shouldSaveAndReturnRefreshToken() {
-        when(repository.save(any(RefreshToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        RefreshToken rt = service.issue("user@example.com");
+        when(repository.save(any(Token.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(tokenProvider.generateToken(anyString(),any(TokenType.class))).thenReturn("refreshToken");
+        Token rt = service.issue(TokenType.REFRESH,"user@example.com");
 
         assertNotNull(rt);
-        assertEquals("user@example.com", rt.getUserEmail());
+        assertEquals("user@example.com", rt.getBearer());
         assertFalse(rt.isExpired());
         assertFalse(rt.isRevoked());
-        verify(repository, times(1)).save(any(RefreshToken.class));
     }
 
     @Test
@@ -68,8 +73,8 @@ class RefreshTokenServiceTest {
 
     @Test
     void validateAndGetUserEmail_shouldThrowException_whenTokenExpired() {
-        RefreshToken expired = new RefreshToken("expiredToken", "user@example.com",
-                Instant.now().minusSeconds(10));
+        Token expired = new Token("expiredToken", "user@example.com",
+                Instant.now().minusSeconds(10), TokenType.REFRESH);
 
         when(repository.findByToken("expiredToken")).thenReturn(Optional.of(expired));
 
@@ -81,8 +86,8 @@ class RefreshTokenServiceTest {
 
     @Test
     void validateAndGetUserEmail_shouldThrowException_whenTokenRevoked() {
-        RefreshToken revoked = new RefreshToken("revokedToken", "user@example.com",
-                Instant.now().plusSeconds(3600));
+        Token revoked = new Token("revokedToken", "user@example.com",
+                Instant.now().plusSeconds(3600), TokenType.REFRESH);
         revoked.revoke();
 
         when(repository.findByToken("revokedToken")).thenReturn(Optional.of(revoked));

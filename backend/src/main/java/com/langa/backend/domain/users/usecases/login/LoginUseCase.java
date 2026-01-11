@@ -6,9 +6,9 @@ import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.users.User;
 import com.langa.backend.domain.users.exceptions.UserException;
 import com.langa.backend.domain.users.repositories.UserRepository;
-import com.langa.backend.domain.users.services.RefreshTokenService;
-import com.langa.backend.domain.users.services.TokenProvider;
+import com.langa.backend.domain.users.services.TokenService;
 import com.langa.backend.domain.users.valueobjects.AuthTokens;
+import com.langa.backend.domain.users.valueobjects.TokenType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @UseCase
@@ -16,17 +16,14 @@ public class LoginUseCase implements ILoginUseCase, CommandHandler<LoginCommand,
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final TokenProvider tokenProvider;
-    private final RefreshTokenService refreshTokenService;
+    private final TokenService tokenService;
 
     public LoginUseCase(UserRepository userRepository,
                         PasswordEncoder passwordEncoder,
-                        TokenProvider tokenProvider,
-                        RefreshTokenService refreshTokenService) {
+                        TokenService tokenService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.tokenProvider = tokenProvider;
-        this.refreshTokenService = refreshTokenService;
+        this.tokenService = tokenService;
     }
 
     @Override
@@ -38,8 +35,8 @@ public class LoginUseCase implements ILoginUseCase, CommandHandler<LoginCommand,
             throw new UserException("Invalid password", null, Errors.INVALID_CREDENTIALS);
         }
 
-        String accessToken = tokenProvider.generateToken(user);
-        String refreshToken = refreshTokenService.issue(user.getEmail()).getToken();
+        String accessToken = tokenService.issue(TokenType.ACCESS, user.getEmail()).getValue();
+        String refreshToken = tokenService.issue(TokenType.REFRESH, user.getEmail()).getValue();
 
         return new AuthTokens(accessToken, refreshToken);
     }

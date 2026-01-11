@@ -30,9 +30,11 @@ public class GetApplicationsUseCase {
     public List<ApplicationInfo> getApplications(String owner) {
         final String accountKey = userAccountService.getAccountKey(owner);
         final Set<String> teamKeys = userAccountService.getTeamKeys(owner);
+
         final Stream<ApplicationInfo> ownedApplications = applicationRepository.findByOwner(owner)
                 .stream()
                 .map(this::toOwnedApplicationDto);
+
         final Stream<ApplicationInfo> shareApplications = applicationRepository.findBySharedWithUser(accountKey)
                 .stream()
                 .map(this::toSharedApplicationDto);
@@ -40,6 +42,7 @@ public class GetApplicationsUseCase {
         final Stream<ApplicationInfo> teamApplications = applicationRepository.findBySharedWithTeams(teamKeys)
                 .stream()
                 .map(this::toSharedApplicationDto);
+
         return Stream.of(ownedApplications, shareApplications, teamApplications)
                 .flatMap(stream -> stream)
                 .distinct()
