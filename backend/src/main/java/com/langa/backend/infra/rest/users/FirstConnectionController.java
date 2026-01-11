@@ -1,9 +1,9 @@
 package com.langa.backend.infra.rest.users;
 
-import com.langa.backend.domain.users.usecases.GetUserUseCase;
+import com.langa.backend.common.commands.CommandBusDispatcher;
+import com.langa.backend.domain.users.usecases.fetch.IGetUserUseCase;
 import com.langa.backend.infra.rest.users.dto.CompleteFirstConnectionRequestDto;
 import com.langa.backend.infra.rest.users.dto.UserDto;
-import com.langa.backend.infra.adapters.services.users.CompleteFirstConnectionService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -15,24 +15,23 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class FirstConnectionController {
 
-    private final GetUserUseCase getUserUseCase;
-    private final CompleteFirstConnectionService completeFirstConnectionService;
+    private final IGetUserUseCase getUserUseCase;
+    private final CommandBusDispatcher commandBusDispatcher;
 
-    public FirstConnectionController(GetUserUseCase getUserUseCase,
-                                     CompleteFirstConnectionService completeFirstConnectionService) {
+    public FirstConnectionController(IGetUserUseCase getUserUseCase,
+                                     CommandBusDispatcher commandBusDispatcher) {
         this.getUserUseCase = getUserUseCase;
-        this.completeFirstConnectionService = completeFirstConnectionService;
+        this.commandBusDispatcher = commandBusDispatcher;
     }
-
 
     @GetMapping
     public ResponseEntity<UserDto> getUserInfo(@RequestParam String token) {
-        return ResponseEntity.ok(UserDto.of(getUserUseCase.findByFirstConnectionToken(token)));
+        return ResponseEntity.ok(UserDto.of(getUserUseCase.queryByFirstConnectionToken(token)));
     }
 
     @PostMapping("/complete")
     public ResponseEntity<String> completeFirstConnectionProcess(@Valid @RequestBody CompleteFirstConnectionRequestDto requestDto) {
-        completeFirstConnectionService.complete(requestDto.firstConnectionToken(), requestDto.toUpdatePassword());
+        commandBusDispatcher.dispatch(requestDto.toCommand());
         return ResponseEntity.status(HttpStatus.ACCEPTED).body("Account setup completed");
     }
 }

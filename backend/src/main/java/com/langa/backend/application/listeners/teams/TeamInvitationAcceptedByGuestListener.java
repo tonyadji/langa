@@ -37,6 +37,7 @@ public class TeamInvitationAcceptedByGuestListener {
         log.debug("Event received: {}", teamInvitationAcceptedByGuestEvent);
         try {
             User user = userService.findOrCreateUserByEmail(teamInvitationAcceptedByGuestEvent.guest());
+            //TODO: replace this by a use case
             Team team = teamMemberShipService.addMemberToTeam(teamInvitationAcceptedByGuestEvent.team(), user.getEmail());
 
             outboxEventService.storeOutboxEvent(InvitationAcceptedMailEvent.of(team, user.getEmail()));

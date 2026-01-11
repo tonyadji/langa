@@ -1,5 +1,6 @@
 package com.langa.backend.infra.rest.applications.dto;
 
+import com.langa.backend.domain.applications.Application;
 import com.langa.backend.domain.applications.valueobjects.ApplicationInfo;
 import com.langa.backend.domain.applications.valueobjects.ShareWith;
 
@@ -13,6 +14,16 @@ public record ApplicationDto(String id, String name, String accountKey, String o
                 applicationInfo.accountKey(),
                 applicationInfo.owner(),
                 applicationInfo.sharedWith()
+        );
+    }
+
+    public static ApplicationDto of(Application application) {
+        return new ApplicationDto(
+                application.getId(),
+                application.getName(),
+                null,
+                application.getOwner(),
+                null
         );
     }
 }

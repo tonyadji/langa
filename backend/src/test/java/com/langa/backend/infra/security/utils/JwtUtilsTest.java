@@ -1,11 +1,16 @@
 package com.langa.backend.infra.security.utils;
 
 import com.langa.backend.domain.users.User;
+import com.langa.backend.domain.users.repositories.TokenRepository;
+import com.langa.backend.domain.users.valueobjects.TokenType;
 import com.langa.backend.infra.security.config.JwtConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 class JwtUtilsTest {
 
@@ -17,14 +22,14 @@ class JwtUtilsTest {
 
         jwtConfig = new JwtConfig("awesome-key-to-match-length-secure-enough-for-hmac-sha-algorithm", "test-kid", 86400000);
 
-        jwtUtils = new JwtUtils(jwtConfig);
+        jwtUtils = new JwtUtils(jwtConfig, null);
     }
 
     @Test
     void generateToken_shouldContainSubject() {
         User user = User.createNew("user@example.com", "encodedPassword");
 
-        String token = jwtUtils.generateToken(user);
+        String token = jwtUtils.generateToken(user, TokenType.ACCESS);
         assertNotNull(token);
 
         String usernameFromToken = jwtUtils.getUsernameFromToken(token);
@@ -34,8 +39,10 @@ class JwtUtilsTest {
     @Test
     void validateToken_shouldReturnTrueForValidToken() {
         User user = User.createNew("user@example.com", "encodedPassword");
-
-        String token = jwtUtils.generateToken(user);
+        TokenRepository tokenRepository = Mockito.mock(TokenRepository.class);
+        when(tokenRepository.isRevoked(anyString())).thenReturn(false);
+        jwtUtils = new JwtUtils(jwtConfig, tokenRepository);
+        String token = jwtUtils.generateToken(user, TokenType.ACCESS);
         assertTrue(jwtUtils.validateToken(token));
     }
 

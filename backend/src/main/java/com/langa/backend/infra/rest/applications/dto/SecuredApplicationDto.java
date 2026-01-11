@@ -17,6 +17,7 @@ public final class SecuredApplicationDto {
     private final String secret;
     private final String ingestionUri;
     private final Set<ShareWith> sharedWith;
+    private ApplicationUsageDto usage;
     private String http;
     private String kafka;
 
@@ -40,8 +41,16 @@ public final class SecuredApplicationDto {
                 application.getSecret(),
                 application.getIngestionUri(),
                 application.getOwner(),
-                application.getSharedWith()
-        ).setHttpAndKafkaUrl(httpPrefix, kafkaPrefix);
+                application.getSharedWith())
+        .setHttpAndKafkaUrl(httpPrefix, kafkaPrefix)
+        .setUsage(application);
+    }
+
+    private SecuredApplicationDto setUsage(Application app) {
+        if (app !=  null && app.getUsage() != null) {
+            this.usage = ApplicationUsageDto.of(app);
+        }
+        return this;
     }
 
     private SecuredApplicationDto setHttpAndKafkaUrl(String httpPrefix, String kafkaPrefix) {

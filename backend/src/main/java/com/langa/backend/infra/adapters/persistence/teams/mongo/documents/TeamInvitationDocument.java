@@ -1,6 +1,6 @@
 package com.langa.backend.infra.adapters.persistence.teams.mongo.documents;
 
-import com.langa.backend.domain.teams.TeamInvitation;
+import com.langa.backend.domain.teams.valueobjects.TeamInvitation;
 import com.langa.backend.domain.teams.valueobjects.InvitationStatus;
 import com.langa.backend.domain.teams.valueobjects.TeamInvitationIdentity;
 import com.langa.backend.domain.teams.valueobjects.TeamInvitationPeriod;
@@ -35,7 +35,7 @@ public class TeamInvitationDocument {
 
     public static TeamInvitationDocument of(TeamInvitation teamInvitation) {
         TeamInvitationDocument teamInvitationDocument = new TeamInvitationDocument();
-        teamInvitationDocument.setId(teamInvitation.getIdentity().id());
+        teamInvitationDocument.setId(teamInvitation.getIdentity().teamId());
         teamInvitationDocument.setTeam(teamInvitation.getStakeHolders().team());
         teamInvitationDocument.setHost(teamInvitation.getStakeHolders().host());
         teamInvitationDocument.setGuest(teamInvitation.getStakeHolders().guest());

@@ -1,6 +1,6 @@
 package com.langa.backend.infra.adapters.persistence.teams;
 
-import com.langa.backend.domain.teams.TeamInvitation;
+import com.langa.backend.domain.teams.valueobjects.TeamInvitation;
 import com.langa.backend.domain.teams.repositories.TeamInvitationRepository;
 import com.langa.backend.infra.adapters.persistence.teams.mongo.dao.TeamInvitationDao;
 import com.langa.backend.infra.adapters.persistence.teams.mongo.documents.TeamInvitationDocument;

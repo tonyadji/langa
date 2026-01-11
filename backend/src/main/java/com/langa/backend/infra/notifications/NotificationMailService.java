@@ -18,7 +18,7 @@ public class NotificationMailService implements NotificationService {
     public void send(Notification notification) {
         if (notification instanceof EmailNotification emailNotification) {
             mailSendService.ping(
-                    emailNotification.getRecipients().get(0),
+                    emailNotification.getRecipients().getFirst(),
                     emailNotification.getSubject(),
                     emailNotification.getBody()
             );

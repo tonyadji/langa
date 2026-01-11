@@ -3,7 +3,7 @@ package com.langa.backend.domain.teams.events;
 import com.langa.backend.common.eda.annotations.DomainEventType;
 import com.langa.backend.common.eda.model.DomainEvent;
 import com.langa.backend.common.eda.registry.EventTypeRegistry;
-import com.langa.backend.domain.teams.TeamInvitation;
+import com.langa.backend.domain.teams.valueobjects.TeamInvitation;
 
 import java.time.LocalDateTime;
 
@@ -34,7 +34,7 @@ public record TeamInvitationAcceptedForHostEvent(
 
     public static TeamInvitationAcceptedForHostEvent of(TeamInvitation invitation) {
         return new TeamInvitationAcceptedForHostEvent(
-                invitation.getIdentity().id(),
+                invitation.getIdentity().teamId(),
                 invitation.getStakeHolders().guest(),
                 invitation.getStakeHolders().host(),
                 invitation.getStakeHolders().team(),

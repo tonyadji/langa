@@ -4,7 +4,7 @@ import com.langa.backend.common.eda.annotations.DomainEventType;
 import com.langa.backend.common.eda.model.DomainEvent;
 import com.langa.backend.common.eda.registry.EventTypeRegistry;
 import com.langa.backend.domain.teams.Team;
-import com.langa.backend.domain.teams.TeamInvitation;
+import com.langa.backend.domain.teams.valueobjects.TeamInvitation;
 
 import java.time.LocalDateTime;
 
@@ -13,7 +13,8 @@ public record TeamInvitationEmailEvent(
         String aggregateId,
         String guest,
         String host,
-        String team,
+        String teamName,
+        String teamKey,
         String invitationToken,
         LocalDateTime expiration) implements DomainEvent {
 
@@ -35,10 +36,11 @@ public record TeamInvitationEmailEvent(
 
     public static TeamInvitationEmailEvent of(TeamInvitation invitation, Team team) {
         return new TeamInvitationEmailEvent(
-                invitation.getIdentity().id(),
+                invitation.getIdentity().teamId(),
                 invitation.getStakeHolders().guest(),
                 invitation.getStakeHolders().host(),
                 team.getName(),
+                team.getId(),
                 invitation.getIdentity().invitationToken(),
                 invitation.getInvitationPeriod().expiryDate()
         );

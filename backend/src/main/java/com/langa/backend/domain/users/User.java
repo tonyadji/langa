@@ -4,7 +4,9 @@ import com.langa.backend.common.model.AbstractModel;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.common.utils.KeyGenerator;
 import com.langa.backend.domain.users.events.AccountSetupCompleteMailEvent;
+import com.langa.backend.domain.users.events.ActiveUserRegisteredEvent;
 import com.langa.backend.domain.users.exceptions.UserException;
+import com.langa.backend.domain.users.valueobjects.UserId;
 import com.langa.backend.domain.users.valueobjects.UserStatus;
 import lombok.Getter;
 
@@ -13,43 +15,44 @@ import java.util.Objects;
 
 @Getter
 public class User extends AbstractModel {
-    private final String id;
-    private final String email;
+    private final UserId userId;
+
     private String password;
-    private final String accountKey;
     private UserStatus status;
     private String firstConnectionToken;
 
 
-    private User(String id, String email, String password, String accountKey, UserStatus status, String firstConnectionToken) {
-        this.id = id;
-        this.email = email;
+    private User(UserId userId, String password, UserStatus status, String firstConnectionToken) {
+        this.userId = userId;
         this.password = password;
-        this.accountKey = accountKey;
         this.status = status;
         this.firstConnectionToken = firstConnectionToken;
     }
 
-    public static User populate(String id, String email, String password, String accountKey, UserStatus status, String firstConnectionToken) {
-        return new User(id, email, password, accountKey, status, firstConnectionToken);
+    public static User populate(UserId id, String password, UserStatus status, String firstConnectionToken) {
+        return new User(id, password, status, firstConnectionToken);
     }
 
     public static User createActive(String email, String encodedPassword) {
         String accountKey = KeyGenerator.generateAccountKey(email);
-        return new User(null, email, encodedPassword, accountKey, UserStatus.ACTIVE, null);
+        final UserId id = UserId.newId().withEmail(email).withAccountKey(accountKey);
+        final User activeUser = new User(id, encodedPassword, UserStatus.ACTIVE, null);
+        activeUser.registerDomainEvent(ActiveUserRegisteredEvent.of(activeUser));
+        return activeUser;
     }
 
     public static User createNew(String email, String encodedPassword) {
         String accountKey = KeyGenerator.generateAccountKey(email);
-        return new User(null, email, encodedPassword, accountKey, UserStatus.CREATED, null);
+        final UserId id = UserId.newId().withEmail(email).withAccountKey(accountKey);
+        return new User(id, encodedPassword, UserStatus.CREATED, null);
     }
 
     public void buildFirstConnectionToken() {
-        firstConnectionToken = KeyGenerator.genericToken(accountKey, email);
+        firstConnectionToken = KeyGenerator.genericToken(userId.accountKey(), userId.email());
     }
 
 
-    public AccountSetupCompleteMailEvent completeFirstConnection(String encodedPassword) {
+    public void completeFirstConnection(String encodedPassword) {
         if(UserStatus.ACTIVE.equals(status)) {
             throw new UserException("User is already active", null, Errors.USER_ILLEGAL_STATUS);
         }
@@ -57,6 +60,18 @@ public class User extends AbstractModel {
             this.password = encodedPassword;
         }
         this.status = UserStatus.ACTIVE;
-        return AccountSetupCompleteMailEvent.of(this);
+        this.registerDomainEvent(AccountSetupCompleteMailEvent.of(this));
+    }
+
+    public String getEmail() {
+        return userId.email();
+    }
+
+    public String getAccountKey() {
+        return userId.accountKey();
+    }
+
+    public String getId() {
+        return userId.id();
     }
 }

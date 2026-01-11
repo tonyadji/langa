@@ -12,4 +12,6 @@ public interface MongoTeamDao extends MongoRepository<TeamDocument, String> {
     Optional<TeamDocument> findByKey(String key);
 
     List<TeamDocument> findByCreatedBy(String owner);
+
+    List<TeamDocument> findByKeyIn(List<String> teamMemberKeys);
 }
