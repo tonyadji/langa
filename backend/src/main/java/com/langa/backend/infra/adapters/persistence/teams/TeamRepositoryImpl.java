@@ -68,7 +68,7 @@ public class TeamRepositoryImpl implements TeamRepository {
     }
 
     @Override
-    public List<Team> findByOwnerOrTeamSharedWith(String owner) {
+    public List<Team> findByOwnerOrTeamMember(String owner) {
         List<Team> ownedTeams = mongoTeamDao.findByCreatedBy(owner)
                 .stream()
                 .map(TeamDocument::toTeam)

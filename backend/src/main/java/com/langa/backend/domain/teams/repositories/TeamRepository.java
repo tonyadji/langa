@@ -20,5 +20,5 @@ public interface TeamRepository {
 
     Set<String> findTeamsKeysByMemberUsername(String username);
 
-    List<Team> findByOwnerOrTeamSharedWith(String owner);
+    List<Team> findByOwnerOrTeamMember(String owner);
 }

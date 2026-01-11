@@ -31,6 +31,10 @@ public record TeamResponseDto(
     }
 
     public static List<TeamResponseDto> of(List<Team> teams) {
-        return teams.stream().map(TeamResponseDto::of).toList();
+        return teams.stream().map(TeamResponseDto::ofLite).toList();
+    }
+
+    public static TeamResponseDto ofLite(Team team) {
+        return new TeamResponseDto(team.getId(), team.getName(), team.getKey(), null, null, team.getCreatedBy(), null);
     }
 }
