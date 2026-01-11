@@ -9,8 +9,10 @@ import com.langa.backend.domain.applications.valueobjects.ApplicationUsageTrend;
 import com.langa.backend.domain.applications.valueobjects.IngestionType;
 import com.langa.backend.infra.adapters.persistence.applications.mongo.daos.MongoApplicationDao;
 import com.langa.backend.infra.adapters.persistence.applications.mongo.daos.MongoApplicationUsageTrendDao;
+import com.langa.backend.infra.adapters.persistence.applications.mongo.daos.MongoDeletedApplicationDao;
 import com.langa.backend.infra.adapters.persistence.applications.mongo.documents.ApplicationDocument;
 import com.langa.backend.infra.adapters.persistence.applications.mongo.documents.ApplicationUsageTrendDocument;
+import com.langa.backend.infra.adapters.persistence.applications.mongo.documents.DeletedAppsDocument;
 import com.langa.backend.infra.adapters.persistence.applications.mongo.documents.UsageSumDto;
 import com.langa.backend.infra.adapters.persistence.logentries.mongo.LogEntryDocument;
 import com.langa.backend.infra.adapters.persistence.logentries.mongo.MongoLogEntryDao;
@@ -35,6 +37,7 @@ public class ApplicationRepositoryImpl implements ApplicationRepository {
     private final MongoLogEntryDao mongoLogEntryDao;
     private final MongoMetricEntryDao mongoMetricEntryDao;
     private final MongoApplicationUsageTrendDao mongoApplicationUsageTrendDao;
+    private final MongoDeletedApplicationDao mongoDeletedApplicationDao;
     private final MongoTemplate mongoTemplate;
 
     @Override
@@ -134,6 +137,15 @@ public class ApplicationRepositoryImpl implements ApplicationRepository {
         return mongoApplicationUsageTrendDao.findByAppKeyOrderByCreatedDateDesc(key)
                 .stream().map(ApplicationUsageTrendDocument::toApplicationTrend)
                 .toList();
+    }
+
+    @Override
+    public void deleteById(String id) {
+        mongoApplicationDao.findById(id).ifPresent(appDocument->{
+            final DeletedAppsDocument deletedAppsDocument = DeletedAppsDocument.of(appDocument);
+            mongoDeletedApplicationDao.save(deletedAppsDocument);
+            mongoApplicationDao.deleteById(id);
+        });
     }
 
     @Override

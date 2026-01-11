@@ -36,4 +36,6 @@ public interface ApplicationRepository {
     Optional<Application> securedFindByIdAndOwner(String appId, String username);
 
     List<ApplicationUsageTrend> findApplicationUsageTrends(String key);
+
+    void deleteById(String s);
 }
