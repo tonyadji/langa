@@ -26,6 +26,8 @@ public class Application extends AbstractModel {
     private ApplicationUsage usage;
 
 
+    private long pendingLogBytes = 0;
+    private long pendingMetricBytes = 0;
     private List<LogEntry> newLogEntries = new ArrayList<>();
     private List<MetricEntry> newMetricsEntries = new ArrayList<>();
 
@@ -80,7 +82,8 @@ public class Application extends AbstractModel {
                         .setAppKey(appId.key())
                         .setAccountKey(accountKey))
                 .toList();
-        this.usage = this.usage.increaseLogBytes(ingestionSizeCalculator.calculateSizeInBytes(newLogEntries));
+        pendingLogBytes = ingestionSizeCalculator.calculateSizeInBytes(newLogEntries);
+        this.usage = this.usage.increaseLogBytes(pendingLogBytes);
     }
 
     public void createMetricEntries(List<MetricEntry> metrics, IngestionSizeCalculator ingestionSizeCalculator) {
@@ -89,7 +92,8 @@ public class Application extends AbstractModel {
                         .setAppKey(appId.key())
                         .setAccountKey(accountKey))
                 .toList();
-        this.usage = this.usage.increaseTotalMetricBytes(ingestionSizeCalculator.calculateSizeInBytes(newMetricsEntries));
+        pendingMetricBytes = ingestionSizeCalculator.calculateSizeInBytes(newMetricsEntries);
+        this.usage = this.usage.increaseTotalMetricBytes(pendingMetricBytes);
     }
 
     public void checkOwnership(String username) {

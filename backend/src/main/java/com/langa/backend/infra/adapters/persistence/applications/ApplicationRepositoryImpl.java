@@ -4,42 +4,62 @@ import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.applications.Application;
 import com.langa.backend.domain.applications.exceptions.ApplicationException;
 import com.langa.backend.domain.applications.repositories.ApplicationRepository;
-import com.langa.backend.infra.adapters.persistence.applications.mongo.documents.ApplicationDocument;
+import com.langa.backend.domain.applications.valueobjects.ApplicationUsage;
+import com.langa.backend.domain.applications.valueobjects.ApplicationUsageTrend;
+import com.langa.backend.domain.applications.valueobjects.IngestionType;
 import com.langa.backend.infra.adapters.persistence.applications.mongo.daos.MongoApplicationDao;
+import com.langa.backend.infra.adapters.persistence.applications.mongo.daos.MongoApplicationUsageTrendDao;
+import com.langa.backend.infra.adapters.persistence.applications.mongo.documents.ApplicationDocument;
+import com.langa.backend.infra.adapters.persistence.applications.mongo.documents.ApplicationUsageTrendDocument;
 import com.langa.backend.infra.adapters.persistence.logentries.mongo.LogEntryDocument;
 import com.langa.backend.infra.adapters.persistence.logentries.mongo.MongoLogEntryDao;
 import com.langa.backend.infra.adapters.persistence.metricentries.mongo.MetricEntryDocument;
 import com.langa.backend.infra.adapters.persistence.metricentries.mongo.MongoMetricEntryDao;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
+@Slf4j
 public class ApplicationRepositoryImpl implements ApplicationRepository {
 
     private final MongoApplicationDao mongoApplicationDao;
     private final MongoLogEntryDao mongoLogEntryDao;
     private final MongoMetricEntryDao mongoMetricEntryDao;
+    private final MongoApplicationUsageTrendDao mongoApplicationUsageTrendDao;
+    private final MongoTemplate mongoTemplate;
 
     @Override
     public Application save(Application application) {
 
+        ApplicationDocument applicationDocument = ApplicationDocument.of(application);
         if (!application.getNewLogEntries().isEmpty()) {
             List<LogEntryDocument> logEntryDocuments = application.getNewLogEntries().stream().map(LogEntryDocument::of).toList();
             mongoLogEntryDao.saveAll(logEntryDocuments);
+            mongoApplicationUsageTrendDao.save(ApplicationUsageTrendDocument.ofLog(application));
         }
 
         if (!application.getNewMetricsEntries().isEmpty()) {
             List<MetricEntryDocument> metricEntryDocuments = application.getNewMetricsEntries().stream().map(MetricEntryDocument::of).toList();
             mongoMetricEntryDao.saveAll(metricEntryDocuments);
+
+            mongoApplicationUsageTrendDao.save(ApplicationUsageTrendDocument.ofMetric(application));
         }
 
-        final ApplicationDocument applicationDocument = ApplicationDocument.of(application);
+        long usageLog = mongoApplicationUsageTrendDao.sumUsageByAppKeyAndType(application.getKey(), IngestionType.LOG).total();
+        long usageMetric = mongoApplicationUsageTrendDao.sumUsageByAppKeyAndType(application.getKey(), IngestionType.METRIC).total();
+        applicationDocument.setUsage(new ApplicationUsage(usageLog, usageMetric, Instant.now()));
+
         mongoApplicationDao.save(applicationDocument);
+        log.debug("AFTER : application usage logs : {}",applicationDocument.getUsage().totalLogBytes());
+        log.debug("AFTER : application usage metrics : {}",applicationDocument.getUsage().totalMetricBytes());
 
         return applicationDocument.toApplication();
     }
@@ -109,6 +129,13 @@ public class ApplicationRepositoryImpl implements ApplicationRepository {
     }
 
     @Override
+    public List<ApplicationUsageTrend> findApplicationUsageTrends(String key) {
+        return mongoApplicationUsageTrendDao.findByAppKeyOrderByCreatedDateDesc(key)
+                .stream().map(ApplicationUsageTrendDocument::toApplicationTrend)
+                .toList();
+    }
+
+    @Override
     public List<Application> findBySharedWithUser(String sharedWith) {
         return mongoApplicationDao.findBySharedWith_KeyAndSharedWith_ExpirationDateIsNullAndSharedWith_RevokedDateIsNull(sharedWith)
                 .stream().map(ApplicationDocument::toApplication).toList();
@@ -126,5 +153,4 @@ public class ApplicationRepositoryImpl implements ApplicationRepository {
                 .map(ApplicationDocument::toSecuredApplication)
                 .or(Optional::empty);
     }
-
 }

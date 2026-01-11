@@ -6,6 +6,9 @@ import com.langa.backend.domain.applications.Application;
 import com.langa.backend.domain.applications.exceptions.ApplicationException;
 import com.langa.backend.domain.applications.repositories.ApplicationRepository;
 import com.langa.backend.domain.applications.valueobjects.ApplicationUsageInfo;
+import com.langa.backend.domain.applications.valueobjects.ApplicationUsageTrend;
+
+import java.util.List;
 
 @UseCase
 public class GetUsageUseCase {
@@ -21,8 +24,8 @@ public class GetUsageUseCase {
                 .orElseThrow(() -> new ApplicationException("Application not found with id: " + appId, null, Errors.APPLICATION_NOT_FOUND));
 
         app.checkOwnership(username);
-
+        List<ApplicationUsageTrend> trends = applicationRepository.findApplicationUsageTrends(app.getKey());
         return new ApplicationUsageInfo(app.getId(), app.getKey(), app.getName(),
-                app.getUsage().totalLogBytes(), app.getUsage().totalMetricBytes());
+                app.getUsage().totalLogBytes(), app.getUsage().totalMetricBytes(), trends);
     }
 }

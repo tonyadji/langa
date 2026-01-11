@@ -1,6 +1,7 @@
 package com.langa.backend.domain.applications.repositories;
 
 import com.langa.backend.domain.applications.Application;
+import com.langa.backend.domain.applications.valueobjects.ApplicationUsageTrend;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,4 +34,6 @@ public interface ApplicationRepository {
     Optional<Application> findSecuredAppByKeyAndAccountKey(String key, String accountKey);
 
     Optional<Application> securedFindByIdAndOwner(String appId, String username);
+
+    List<ApplicationUsageTrend> findApplicationUsageTrends(String key);
 }
