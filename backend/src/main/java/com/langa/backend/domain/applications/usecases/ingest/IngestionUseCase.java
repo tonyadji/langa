@@ -12,9 +12,11 @@ import com.langa.backend.infra.rest.ingest.dto.IngestionRequestDto;
 import com.langa.backend.infra.rest.ingest.dto.LogIngestionRequestDto;
 import com.langa.backend.infra.rest.ingest.dto.MetricIngestionRequestDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @UseCase
 @RequiredArgsConstructor
+@Slf4j
 public class IngestionUseCase {
 
     private final ApplicationRepository applicationRepository;
@@ -22,6 +24,7 @@ public class IngestionUseCase {
     private final IngestionSecurity ingestionSecurity;
 
     public void process(IngestionRequestDto ingestionRequestDto, IngestionCredentials ingestionCredentials) {
+        log.info("Processing ingestion request: {}", ingestionRequestDto);
         if (ingestionRequestDto instanceof LogIngestionRequestDto logIngestionRequestDto) {
             processLogIngestion(logIngestionRequestDto, ingestionCredentials);
         } else if (ingestionRequestDto instanceof MetricIngestionRequestDto metricIngestionRequestDto) {
