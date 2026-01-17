@@ -17,7 +17,7 @@ public class FirstConnectionMailTemplate extends EmailTemplate {
     private static final String RECIPIENTS_KEY = "recipients";
     private final String baseUrl;
 
-    public FirstConnectionMailTemplate(@Value("${application.base-url}") String baseUrl) {
+    public FirstConnectionMailTemplate(@Value("${application.front-url}") String baseUrl) {
         super();
         this.baseUrl = baseUrl;
     }

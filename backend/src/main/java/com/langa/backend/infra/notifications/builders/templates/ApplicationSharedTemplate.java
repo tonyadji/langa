@@ -16,7 +16,7 @@ public class ApplicationSharedTemplate extends EmailTemplate {
     private static final String RECIPIENTS_KEY = "recipients";
     private final String baseUrl;
 
-    public ApplicationSharedTemplate(@Value("${application.base-url}") String baseUrl) {
+    public ApplicationSharedTemplate(@Value("${application.front-url}") String baseUrl) {
         super();
         this.baseUrl = baseUrl;
     }

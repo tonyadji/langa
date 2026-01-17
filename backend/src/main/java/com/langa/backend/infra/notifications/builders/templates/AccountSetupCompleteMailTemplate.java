@@ -3,7 +3,6 @@ package com.langa.backend.infra.notifications.builders.templates;
 import com.langa.backend.common.eda.model.DomainEvent;
 import com.langa.backend.common.eda.registry.EventTypeRegistry;
 import com.langa.backend.domain.users.events.AccountSetupCompleteMailEvent;
-import com.langa.backend.domain.users.events.FirstConnectionMailEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +16,7 @@ public class AccountSetupCompleteMailTemplate extends EmailTemplate {
     private static final String RECIPIENTS_KEY = "recipients";
     private final String baseUrl;
 
-    public AccountSetupCompleteMailTemplate(@Value("${application.base-url}") String baseUrl) {
+    public AccountSetupCompleteMailTemplate(@Value("${application.front-url}") String baseUrl) {
         super();
         this.baseUrl = baseUrl;
     }

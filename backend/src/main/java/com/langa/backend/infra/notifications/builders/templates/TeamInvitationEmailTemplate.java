@@ -18,7 +18,7 @@ public class TeamInvitationEmailTemplate extends EmailTemplate {
     private static final String RECIPIENTS_KEY = "recipients";
     private final String baseUrl;
 
-    public TeamInvitationEmailTemplate(@Value("${application.base-url}") String baseUrl) {
+    public TeamInvitationEmailTemplate(@Value("${application.front-url}") String baseUrl) {
         super();
         this.baseUrl = baseUrl;
     }
