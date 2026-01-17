@@ -172,6 +172,9 @@ public class Application extends AbstractModel {
     }
 
     public void updateRetentionPolicy(RetentionPolicy retentionPolicy) {
+        if (this.retentionPolicy ==null) {
+            this.retentionPolicy = RetentionPolicy.defaultPolicy();
+        }
         this.retentionPolicy = this.retentionPolicy.update(retentionPolicy);
     }
 }

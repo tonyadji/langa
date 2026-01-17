@@ -10,6 +10,7 @@ public record TeamResponseDto(
         String id,
         String name,
         String key,
+        int memberCount,
         List<TeamMemberDto> members,
         List<TeamInvitation> invitations,
         String createdBy,
@@ -23,6 +24,7 @@ public record TeamResponseDto(
                 team.getId(),
                 team.getName(),
                 team.getKey(),
+                members.size(),
                 members,
                 team.getInvitations(),
                 team.getCreatedBy(),
@@ -35,6 +37,6 @@ public record TeamResponseDto(
     }
 
     public static TeamResponseDto ofLite(Team team) {
-        return new TeamResponseDto(team.getId(), team.getName(), team.getKey(), null, null, team.getCreatedBy(), null);
+        return new TeamResponseDto(team.getId(), team.getName(), team.getKey(), team.getMembers().size(), null, null, team.getCreatedBy(), team.getCreatedDate());
     }
 }

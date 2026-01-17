@@ -1,6 +1,6 @@
 package com.capricedumardi.agent.core.config.actuator;
 
-import com.capricedumardi.agent.core.config.jmx.AgentManagement;
+import com.capricedumardi.agent.core.config.jmx.AgentDynamicConfig;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.boot.actuate.endpoint.annotation.WriteOperation;
@@ -12,22 +12,22 @@ import java.util.Map;
 @Endpoint(id = "langaConfig")
 public class LangaControlEndpoint {
 
-  private final AgentManagement management = AgentManagement.getInstance();
+  private final AgentDynamicConfig dynamicConfig = AgentDynamicConfig.getInstance();
 
   @ReadOperation
   public Map<String, Object> getConfig() {
     Map<String, Object> config = new HashMap<>();
 
     // Dynamic (RW)
-    config.put("batchSize", management.getBufferBatchSize());
-    config.put("flushIntervalSeconds", management.getBufferFlushIntervalSeconds());
-    config.put("debugMode", management.isDebugMode());
-    config.put("compressionThreshold", management.getHttpCompressionThresholdBytes());
+    config.put("batchSize", dynamicConfig.getBufferBatchSize());
+    config.put("flushIntervalSeconds", dynamicConfig.getBufferFlushIntervalSeconds());
+    config.put("debugMode", dynamicConfig.isDebugMode());
+    config.put("compressionThreshold", dynamicConfig.getHttpCompressionThresholdBytes());
 
     // Static (RO)
-    config.put("agentVersion", management.getAgentVersion());
-    config.put("ingestionUrl", management.getIngestionUrl());
-    config.put("loggingFramework", management.getLoggingFramework());
+    config.put("agentVersion", dynamicConfig.getAgentVersion());
+    config.put("ingestionUrl", dynamicConfig.getIngestionUrl());
+    config.put("loggingFramework", dynamicConfig.getLoggingFramework());
 
     return config;
   }
@@ -38,19 +38,19 @@ public class LangaControlEndpoint {
       @Nullable Boolean debugMode,
       @Nullable Integer compressionThreshold) {
 
-    if (batchSize != null) management.setBufferBatchSize(batchSize);
+    if (batchSize != null) dynamicConfig.setBufferBatchSize(batchSize);
     if (flushIntervalSeconds != null) {
       int flushInterval = flushIntervalSeconds;
       if (flushInterval > 0) {
-        management.setBufferFlushIntervalSeconds(flushIntervalSeconds);
+        dynamicConfig.setBufferFlushIntervalSeconds(flushIntervalSeconds);
       }
     }
 
-    if (debugMode != null) management.setDebugMode(debugMode);
+    if (debugMode != null) dynamicConfig.setDebugMode(debugMode);
     if (compressionThreshold != null) {
       int threshold = compressionThreshold;
       if (threshold > 0) {
-        management.setHttpCompressionThresholdBytes(threshold);
+        dynamicConfig.setHttpCompressionThresholdBytes(threshold);
       }
     }
   }

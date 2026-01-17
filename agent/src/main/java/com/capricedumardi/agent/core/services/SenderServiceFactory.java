@@ -1,7 +1,7 @@
 package com.capricedumardi.agent.core.services;
 
 import com.capricedumardi.agent.core.config.LangaPrinter;
-import com.capricedumardi.agent.core.config.jmx.AgentManagement;
+import com.capricedumardi.agent.core.config.jmx.AgentDynamicConfig;
 import com.capricedumardi.agent.core.helpers.CredentialsHelper;
 import com.capricedumardi.agent.core.helpers.IngestionParamsResolver;
 import com.capricedumardi.agent.core.model.SenderType;
@@ -16,7 +16,7 @@ public class SenderServiceFactory {
     }
 
     public static SenderService create(final IngestionParamsResolver resolver,
-        AgentManagement dynamicConfig) {
+        AgentDynamicConfig dynamicConfig) {
         LangaPrinter.printTrace("Creating SenderService from configuration...");
 
         try {
@@ -103,7 +103,7 @@ public class SenderServiceFactory {
     private static SenderService createSender(SenderType type,
                                               IngestionParamsResolver resolver,
                                               CredentialsHelper credentialsHelper,
-        AgentManagement dynamicConfig) {
+        AgentDynamicConfig dynamicConfig) {
         return switch (type) {
             case HTTP -> createHttpSender(resolver, credentialsHelper, dynamicConfig);
             case KAFKA -> createKafkaSender(resolver, credentialsHelper, dynamicConfig);
@@ -117,7 +117,7 @@ public class SenderServiceFactory {
      */
     private static SenderService createHttpSender(IngestionParamsResolver resolver,
                                                   CredentialsHelper credentialsHelper,
-        AgentManagement dynamicConfig) {
+        AgentDynamicConfig dynamicConfig) {
         String url = resolver.resolveHttpUrl();
 
         if (url == null || url.trim().isEmpty()) {
@@ -141,7 +141,7 @@ public class SenderServiceFactory {
      */
     private static SenderService createKafkaSender(IngestionParamsResolver resolver,
                                                    CredentialsHelper credentialsHelper,
-        AgentManagement dynamicConfig) {
+        AgentDynamicConfig dynamicConfig) {
         String bootstrapServer = resolver.resolveBootStrapServer();
         String topic = resolver.resolveTopic();
 

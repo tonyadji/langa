@@ -23,7 +23,7 @@ public record ApplicationDto(String id, String name, String accountKey, String o
                 application.getName(),
                 null,
                 application.getOwner(),
-                null
+                application.getSharedWith()
         );
     }
 }

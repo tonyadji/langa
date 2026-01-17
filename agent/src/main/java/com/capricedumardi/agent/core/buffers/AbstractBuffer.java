@@ -3,7 +3,7 @@ package com.capricedumardi.agent.core.buffers;
 import com.capricedumardi.agent.core.config.AgentConfig;
 import com.capricedumardi.agent.core.config.ConfigLoader;
 import com.capricedumardi.agent.core.config.LangaPrinter;
-import com.capricedumardi.agent.core.config.jmx.AgentManagement;
+import com.capricedumardi.agent.core.config.jmx.AgentDynamicConfig;
 import com.capricedumardi.agent.core.config.jmx.LangaAgentMetricsRegistry;
 import com.capricedumardi.agent.core.model.SendableRequestDto;
 import com.capricedumardi.agent.core.services.SenderService;
@@ -45,12 +45,12 @@ public abstract class AbstractBuffer<T> {
     private final LangaAgentMetricsRegistry registry = LangaAgentMetricsRegistry.getInstance();
 
     // Dynamic config via JMX or Actuator
-    protected final AgentManagement dynamicConfig;
+    protected final AgentDynamicConfig dynamicConfig;
     private final AtomicReference<ScheduledFuture<?>> currentFlushTask = new AtomicReference<>();
 
 
   AbstractBuffer(SenderService senderService, String appKey, String accountKey,
-                          AgentManagement dynamicConfig, String bufferName) {
+                          AgentDynamicConfig dynamicConfig, String bufferName) {
         this.senderService = senderService;
         this.appKey = appKey;
         this.accountKey = accountKey;

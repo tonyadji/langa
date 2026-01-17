@@ -35,8 +35,8 @@ public class LoginUseCase implements ILoginUseCase, CommandHandler<LoginCommand,
             throw new UserException("Invalid password", null, Errors.INVALID_CREDENTIALS);
         }
 
-        String accessToken = tokenService.issue(TokenType.ACCESS, user.getEmail()).getValue();
-        String refreshToken = tokenService.issue(TokenType.REFRESH, user.getEmail()).getValue();
+        String accessToken = tokenService.issue(TokenType.ACCESS, user).getValue();
+        String refreshToken = tokenService.issue(TokenType.REFRESH, user).getValue();
 
         return new AuthTokens(accessToken, refreshToken);
     }

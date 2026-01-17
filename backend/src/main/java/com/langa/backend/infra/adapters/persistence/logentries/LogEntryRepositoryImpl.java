@@ -6,6 +6,7 @@ import com.langa.backend.domain.applications.valueobjects.LogFilter;
 import com.langa.backend.domain.applications.valueobjects.PaginatedResult;
 import com.langa.backend.infra.adapters.persistence.logentries.mongo.LogEntryDocument;
 import com.langa.backend.infra.adapters.persistence.logentries.mongo.MongoLogEntryDao;
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -48,7 +49,8 @@ public class LogEntryRepositoryImpl implements LogQueryRepository {
         query.addCriteria(Criteria.where("accountKey").is(accountKey));
 
         if (filter.getLogLevel() != null && !filter.getLogLevel().isEmpty()) {
-            query.addCriteria(Criteria.where("level").is(filter.getLogLevel()));
+          String[] logLevels = filter.getLogLevel().split(",");
+          query.addCriteria(Criteria.where("level").in(Arrays.stream(logLevels).toList()));
         }
 
         if (filter.getKeyword() != null && !filter.getKeyword().isEmpty()) {

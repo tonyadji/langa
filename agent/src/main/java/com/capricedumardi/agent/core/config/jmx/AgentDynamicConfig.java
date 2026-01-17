@@ -6,11 +6,10 @@ import com.capricedumardi.agent.core.config.LangaPrinter;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.management.StandardMBean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
-public class AgentManagement extends StandardMBean implements AgentManagementMBean {
+public class AgentDynamicConfig extends StandardMBean implements AgentDynamicConfigMBean {
 
-  private static AgentManagement instance;
+  private static AgentDynamicConfig instance;
 
   // 1. Keep a reference to the immutable config (for what never changes)
   private final AgentConfig staticConfig;
@@ -23,12 +22,12 @@ public class AgentManagement extends StandardMBean implements AgentManagementMBe
   private final AtomicInteger currentCompressionThreshold;
 
   // Singleton Lazy-loading
-  public static synchronized AgentManagement getInstance() {
+  public static synchronized AgentDynamicConfig getInstance() {
     if (instance == null) {
       // Get your existing AgentConfig object
       AgentConfig initialConfig = ConfigLoader.getConfigInstance();
       try {
-        instance = new AgentManagement(initialConfig);
+        instance = new AgentDynamicConfig(initialConfig);
       } catch (Exception e) {
         // Fallback ou erreur fatale selon ton choix
         LangaPrinter.printError("Failed to initialize AgentManagement JMX: " + e.getMessage());
@@ -37,8 +36,8 @@ public class AgentManagement extends StandardMBean implements AgentManagementMBe
     return instance;
   }
 
-  private AgentManagement(AgentConfig config) {
-    super(AgentManagementMBean.class, false);
+  private AgentDynamicConfig(AgentConfig config) {
+    super(AgentDynamicConfigMBean.class, false);
     this.staticConfig = config;
 
     // 3. Initialize the dynamic values with the values from the initial config

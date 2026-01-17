@@ -2,6 +2,7 @@ package com.langa.backend.domain.users.services;
 
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.common.model.errors.GenericException;
+import com.langa.backend.domain.users.User;
 import com.langa.backend.domain.users.repositories.TokenRepository;
 import com.langa.backend.domain.users.valueobjects.Token;
 import com.langa.backend.domain.users.valueobjects.TokenType;
@@ -21,9 +22,15 @@ public class TokenService {
         this.tokenProvider = tokenProvider;
     }
 
-    public Token issue(TokenType type, String userEmail) {
+    public Token issue(TokenType type, User user) {
         Instant exp = Instant.now().plus(expirationInDays, ChronoUnit.DAYS);
-        Token token = new Token(tokenProvider.generateToken(userEmail,type), userEmail, exp, type);
+        Token token = new Token(tokenProvider.generateToken(user,type), user.getEmail(), exp, type);
+        return repository.save(token);
+    }
+
+    public Token issue(TokenType type, String user) {
+        Instant exp = Instant.now().plus(expirationInDays, ChronoUnit.DAYS);
+        Token token = new Token(tokenProvider.generateToken(user,type), user, exp, type);
         return repository.save(token);
     }
 

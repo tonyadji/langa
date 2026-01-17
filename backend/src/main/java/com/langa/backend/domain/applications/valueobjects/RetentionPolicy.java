@@ -26,21 +26,7 @@ public record RetentionPolicy(
 
         long daysRequested;
 
-        try {
-            if (requestedPolicy.unit().isDurationEstimated()) {
-                if (requestedPolicy.unit() == ChronoUnit.MONTHS) {
-                    daysRequested = requestedPolicy.duration() * 30;
-                } else if (requestedPolicy.unit() == ChronoUnit.YEARS) {
-                    daysRequested = requestedPolicy.duration() * 365;
-                } else {
-                    throw new ApplicationException("Temporal Unit not supported", null, Errors.VALIDATION_ERROR);
-                }
-            } else {
-                daysRequested = Duration.of(requestedPolicy.duration(), requestedPolicy.unit()).toDays();
-            }
-        } catch (ArithmeticException | IllegalArgumentException ex) {
-            daysRequested = Long.MAX_VALUE;
-        }
+        daysRequested = Duration.of(requestedPolicy.duration(), requestedPolicy.unit()).toDays();
 
         if (daysRequested > MAX_DAYS) {
             return new RetentionPolicy(MAX_DAYS, ChronoUnit.DAYS, Instant.now());
