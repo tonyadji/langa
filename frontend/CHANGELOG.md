@@ -22,7 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Proxy headers for proper request forwarding
   - Production-grade security headers
 - **Tailwind CSS v4 Integration**: Upgraded to latest Tailwind CSS
-  - Added `@tailwindcss/vite` plugin for improved build performance
+  - Added `@tailwindcss/vite` plugin - **CRITICAL for CSS compilation**
+  - This plugin compiles raw Tailwind syntax into browser-compatible CSS
+  - Without this plugin, browsers receive uncompiled Tailwind code and ignore it
   - PostCSS configuration for Tailwind v4
   - Enhanced styling capabilities
 - **CI/CD Pipeline**: GitHub Actions workflow for automated VPS deployment
@@ -45,10 +47,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Total JavaScript: ~620 kB (gzipped: ~180 kB)
 
 ### Fixed
-- **CSS Loading Issues**: Resolved asset path problems in production
-  - Fixed Vite base path configuration
-  - Ensured proper asset serving through nginx
-  - Corrected reverse proxy configuration for static assets
+- **CSS Rendering Issues**: Resolved missing styles in production
+  - **Root Cause**: Missing Tailwind CSS compiler plugin caused Vite to ship raw Tailwind code (@theme{...}) directly to browsers
+  - **Solution**: Added `@tailwindcss/vite` plugin to compile Tailwind CSS into browser-compatible standard CSS
+  - Fixed nginx try_files syntax error ($ variable issue)
+  - Ensured proper MIME types for CSS files
+  - Fixed permissions for rootless Docker deployment
+  - Set correct Vite base path configuration (`base: '/'`)
 - **Platform Architecture Mismatch**: Fixed Docker deployment issues on VPS
   - Explicitly targeted `linux/amd64` platform for Intel/AMD servers
   - Prevented ARM64 image deployment on AMD64 architecture

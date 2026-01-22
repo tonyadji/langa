@@ -175,10 +175,16 @@ For existing local development setups:
 
 ### Fixed Issues
 
-1. **CSS Not Loading in Production** (#issue-001)
-   - Fixed Vite base path configuration
-   - Ensured correct asset serving through nginx
-   - Assets now load correctly via HTTPS
+1. **CSS Not Rendering - No Styles in Production** (#issue-001)
+   - **Root Cause**: Missing `@tailwindcss/vite` compiler plugin
+   - Vite was shipping raw, uncompiled Tailwind CSS code to browsers
+   - Browsers ignored Tailwind syntax (`@theme`, `@layer`, etc.) leaving app unstyled
+   - **Solution**: Added `@tailwindcss/vite` plugin to compile Tailwind v4 into standard CSS
+   - Fixed nginx try_files syntax error ($ variable issue)
+   - Ensured proper MIME types for CSS files
+   - Fixed rootless Docker permissions
+   - Set correct Vite base path configuration
+   - Styles now render correctly in all browsers
 
 2. **Platform Architecture Mismatch** (#issue-002)
    - Added explicit `linux/amd64` platform targeting

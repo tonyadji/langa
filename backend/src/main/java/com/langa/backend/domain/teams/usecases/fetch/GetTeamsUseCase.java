@@ -25,6 +25,7 @@ public class GetTeamsUseCase implements IFetchTeamsUseCase {
             throw new TeamException("Team not found with id : "+query.teamId(), null, Errors.TEAM_NOT_FOUND);
         }
         team.checkOwnership(query.owner());
+        team.checkMemberShip(query.owner());
         return team;
     }
 

@@ -100,7 +100,7 @@ describe('useAuth Hook - Unit Tests', () => {
   });
   
   // FIXME: result.current is persistently null in test environment despite checks.
-  it.skip('should register a new user successfully', async () => {
+  it('should register a new user successfully', async () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
     
     await waitFor(() => expect(result.current).not.toBeNull());

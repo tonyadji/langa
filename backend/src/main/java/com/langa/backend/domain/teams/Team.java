@@ -57,9 +57,15 @@ public class Team extends AbstractModel {
     }
 
     public void checkOwnership(String owner) {
-        boolean isTeamMember = this.members.stream().anyMatch(teamMember -> Objects.equals(teamMember.email(), owner));
-        if (!Objects.equals(owner, this.createdBy) && !isTeamMember) {
+        if (!Objects.equals(owner, this.createdBy)) {
            throw new TeamException("Team Ownership", null, Errors.ACCESS_DENIED);
+        }
+    }
+
+    public void checkMemberShip(String member) {
+        boolean isTeamMember = this.members.stream().anyMatch(teamMember -> Objects.equals(teamMember.email(), member));
+        if (!isTeamMember) {
+           throw new TeamException("Team Member", null, Errors.TEAM_MEMBER_NOT_FOUND);
         }
     }
 

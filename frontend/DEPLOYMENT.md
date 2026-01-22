@@ -319,6 +319,29 @@ docker buildx build \
   -t langa-dashboard .
 ```
 
+### Critical: Tailwind CSS v4 Requirement
+
+⚠️ **Important**: This project uses Tailwind CSS v4, which requires the `@tailwindcss/vite` plugin to compile CSS. Without this plugin, Vite will ship raw Tailwind syntax (like `@theme { ... }`) to browsers, which will be ignored, leaving your app completely unstyled.
+
+Ensure your `vite.config.ts` includes:
+
+```typescript
+import tailwindcss from '@tailwindcss/vite'
+
+export default defineConfig({
+  plugins: [
+    react(),
+    tailwindcss(),  // REQUIRED - compiles Tailwind CSS
+  ],
+})
+```
+
+And `package.json` devDependencies include:
+
+```json
+"@tailwindcss/vite": "^4.1.18"
+```
+
 ### Available Variables
 
 Create `.env.production`:
@@ -427,24 +450,59 @@ Configure in GitHub repository settings:
 
 ## Troubleshooting
 
-### CSS Not Loading
+### CSS Not Loading / No Styles Rendering
 
-**Symptoms:** Application loads but has no styling
+**Symptoms:** Application loads but has no styling, looks unstyled despite CSS file loading with 200 status
+
+**Root Cause:** Missing `@tailwindcss/vite` plugin causes Vite to ship raw, uncompiled Tailwind CSS code (like `@theme { ... }`) directly to browsers. Browsers don't understand Tailwind syntax and ignore the entire stylesheet.
 
 **Diagnosis:**
 
 ```bash
-# Check if CSS file exists
+# Check if CSS file exists and loads
 docker exec langa-dashboard ls -la /usr/share/nginx/html/assets/
+curl -I http://localhost:3000/assets/index-*.css  # Should return 200 OK
 
-# Test CSS file directly
-curl -I http://localhost:3000/assets/index-*.css
+# Check if CSS contains raw Tailwind code (BAD)
+curl http://localhost:3000/assets/index-*.css | head -20
+# If you see @theme, @layer, or other Tailwind directives, CSS is not compiled!
 
-# Check Vite base configuration
-docker exec langa-dashboard cat /usr/share/nginx/html/index.html | grep -E "(href|src)"
+# Verify Vite config has Tailwind plugin
+cat vite.config.ts | grep -A5 "plugins:"
+# Should include: tailwindcss() from '@tailwindcss/vite'
 ```
 
-**Solution:** Rebuild with correct base path (should be `/` in vite.config.ts)
+**Solution:**
+
+1. **Add Tailwind Vite plugin** (if missing):
+   ```bash
+   npm install -D @tailwindcss/vite
+   ```
+
+2. **Update vite.config.ts**:
+   ```typescript
+   import tailwindcss from '@tailwindcss/vite'
+   
+   export default defineConfig({
+     plugins: [
+       react(),
+       tailwindcss(),  // REQUIRED for Tailwind v4
+     ],
+     base: '/',  // Ensure correct asset paths
+   })
+   ```
+
+3. **Rebuild Docker image**:
+   ```bash
+   docker buildx build \
+     --build-arg VITE_API_BASE_URL=your-api-url \
+     -t langa-dashboard .
+   ```
+
+4. **Additional nginx fixes** (if needed):
+   - Fix try_files directive (avoid `$ variable` issues)
+   - Ensure proper MIME types for .css files
+   - Set correct permissions for rootless Docker
 
 ### API Connection Refused
 

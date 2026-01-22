@@ -22,6 +22,7 @@ public enum Errors {
     TEAM_MEMBER_ALREADY(400, "400-203" , "The user you tried to invite is already a team member"),
     TEAM_INVITATION_NOTFOUND_OR_EXPIRED(400, "400-204" , "Team invitation not found or expired"),
     TEAM_INVITATION_INVALID_STATUS(400, "400-205" , "Team invitation invalid status"),
+    TEAM_MEMBER_NOT_FOUND(400, "400-206" , "The user is not part of team members"),
 
 
 

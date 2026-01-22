@@ -243,6 +243,8 @@ The application is containerized using a multi-stage Docker build optimized for 
 - Domain name with DNS configured (optional, for HTTPS)
 - SSL certificate (optional, for HTTPS)
 
+> **⚠️ Critical**: This project uses **Tailwind CSS v4**, which requires the `@tailwindcss/vite` plugin to compile CSS. Without this plugin, the app will have no styling. Ensure `@tailwindcss/vite` is in your `devDependencies` and configured in `vite.config.ts`.
+
 #### Quick Start
 
 **1. Build the Docker image:**
@@ -481,13 +483,7 @@ python -m http.server 8080 --directory dist
 ## 📚 Documentation
 
 - **[Deployment Guide](./DEPLOYMENT.md)** - Complete production deployment instructions
-- **[Deployment Quick Reference](./DEPLOYMENT-QUICKREF.md)** - Quick command reference
 - **[Changelog](./CHANGELOG.md)** - Version history and release notes
-- **[Specification](./documents/01-SPECIFICATION.md)** - Project requirements and architecture
-- **[Tutorial](./documents/02-TUTORIAL.md)** - Getting started guide
-- **[How-To Guides](./documents/03-HOW-TO.md)** - Task-oriented recipes
-- **[Reference](./documents/04-REFERENCE.md)** - API and component reference
-- **[Explanation](./documents/05-EXPLANATION.md)** - Architecture and design decisions
 
 ## 🤝 Contributing
 
@@ -505,8 +501,7 @@ MIT
 ## 💬 Support
 
 - Issues: [GitHub Issues](https://github.com/your-org/langa/issues)
-- Docs: [docs.langa.io](https://docs.langa.io)
-- Email: support@langa.io
+- Email: ...
 
 ---
 

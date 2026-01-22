@@ -41,12 +41,11 @@ public class LogEntryRepositoryImpl implements LogQueryRepository {
     }
 
     @Override
-    public PaginatedResult<LogEntry> findFiltered(String appKey, String accountKey, LogFilter filter, int page, int size) {
+    public PaginatedResult<LogEntry> findFiltered(String appKey, LogFilter filter, int page, int size) {
 
         Query query = new Query();
 
         query.addCriteria(Criteria.where("appKey").is(appKey));
-        query.addCriteria(Criteria.where("accountKey").is(accountKey));
 
         if (filter.getLogLevel() != null && !filter.getLogLevel().isEmpty()) {
           String[] logLevels = filter.getLogLevel().split(",");

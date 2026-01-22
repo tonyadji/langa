@@ -40,7 +40,7 @@ public class GetLogUseCase {
         Set<String> accountKeys = userAccountService.getAllAccountKeys(userEmail);
         app.authorizedToAccess(userEmail, accountKeys);
 
-        PaginatedResult<LogEntry> pageResult = logRepository.findFiltered(app.getKey(), app.getAccountKey(), filter, page, size);
+        PaginatedResult<LogEntry> pageResult = logRepository.findFiltered(app.getKey(), filter, page, size);
 
         return new PaginatedResult<>(
                 pageResult.getContent(),
