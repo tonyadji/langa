@@ -12,5 +12,5 @@ public interface LogQueryRepository {
 
     List<LogEntry> findByAppKeyAndAccountKeyOrderByTimestampDesc(String appKey, String accountKey);
 
-    PaginatedResult<LogEntry> findFiltered(String appKey, String accountKey, LogFilter filter, int page, int size);
+    PaginatedResult<LogEntry> findFiltered(String appKey, LogFilter filter, int page, int size);
 }

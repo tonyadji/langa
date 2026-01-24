@@ -4,7 +4,7 @@ import com.capricedumardi.agent.core.config.AgentConfig;
 import com.capricedumardi.agent.core.config.ConfigLoader;
 import com.capricedumardi.agent.core.config.LangaPrinter;
 import com.capricedumardi.agent.core.helpers.CredentialsHelper;
-import com.capricedumardi.agent.core.config.jmx.AgentManagement;
+import com.capricedumardi.agent.core.config.jmx.AgentDynamicConfig;
 import com.capricedumardi.agent.core.model.SendableRequestDto;
 import com.google.gson.Gson;
 import org.apache.http.Header;
@@ -44,13 +44,13 @@ public class HttpSenderService implements SenderService {
     private final AtomicLong totalCompressed = new AtomicLong(0);
 
     private final AgentConfig agentConfig;
-    private final AgentManagement dynamicConfig; //TODO use it to take advantage on dynamic config
+    private final AgentDynamicConfig dynamicConfig; //TODO use it to take advantage on dynamic config
 
-    public HttpSenderService(String url, CredentialsHelper credentialsHelper, AgentManagement agentManagement) {
+    public HttpSenderService(String url, CredentialsHelper credentialsHelper, AgentDynamicConfig dynamicConfig) {
         this.url = url;
         this.credentialsHelper = credentialsHelper;
         agentConfig = ConfigLoader.getConfigInstance();
-        this.dynamicConfig = agentManagement;
+        this.dynamicConfig = dynamicConfig;
         this.gson = new Gson();
         this.circuitBreaker = new CircuitBreaker("HTTP[" + url + "]",
                 agentConfig.getCircuitBreakerFailureThreshold(),

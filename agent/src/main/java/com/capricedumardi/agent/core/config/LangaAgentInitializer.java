@@ -3,7 +3,7 @@ package com.capricedumardi.agent.core.config;
 import com.capricedumardi.agent.core.buffers.BuffersFactory;
 import com.capricedumardi.agent.core.helpers.EnvironmentUtils;
 import com.capricedumardi.agent.core.helpers.IngestionParamsResolver;
-import com.capricedumardi.agent.core.config.jmx.AgentManagement;
+import com.capricedumardi.agent.core.config.jmx.AgentDynamicConfig;
 import com.capricedumardi.agent.core.services.SenderService;
 import com.capricedumardi.agent.core.services.SenderServiceFactory;
 import org.aspectj.weaver.loadtime.Agent;
@@ -130,7 +130,7 @@ public class LangaAgentInitializer {
     private static void initSenderAndBuffers() {
 
       // Initialize the dynamic management layer (JMX)
-      AgentManagement dynamicConfig = AgentManagement.getInstance();
+      AgentDynamicConfig dynamicConfig = AgentDynamicConfig.getInstance();
 
       // 3. Prepare the Sender
       // Note: You should also pass dynamicConfig to SenderFactory if you want to tune HTTP

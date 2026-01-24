@@ -1,7 +1,7 @@
 package com.capricedumardi.agent.core.buffers;
 
 import com.capricedumardi.agent.core.config.LangaPrinter;
-import com.capricedumardi.agent.core.config.jmx.AgentManagement;
+import com.capricedumardi.agent.core.config.jmx.AgentDynamicConfig;
 import com.capricedumardi.agent.core.model.LogEntry;
 import com.capricedumardi.agent.core.model.LogRequestDto;
 import com.capricedumardi.agent.core.model.MetricEntry;
@@ -30,7 +30,7 @@ public class BuffersFactory {
     private static final int SHUTDOWN_TIMEOUT_SECONDS = 30;
     private static final int FORCED_SHUTDOWN_TIMEOUT_SECONDS = 10;
 
-    private static AgentManagement dynamicConfig;
+    private static AgentDynamicConfig dynamicConfig;
 
     private BuffersFactory() {
     }
@@ -43,7 +43,7 @@ public class BuffersFactory {
      * @throws IllegalStateException if called after shutdown
      */
     public static void init(SenderService senderService, String appKey, String accountKey,
-                            AgentManagement agentManagement) {
+                            AgentDynamicConfig dynamicConfig) {
 
         if (shuttingDown.get()) {
             throw new IllegalStateException("Cannot initialize BuffersFactory after shutdown");
@@ -53,7 +53,7 @@ public class BuffersFactory {
             LangaPrinter.printTrace("BuffersFactory already initialized, skipping re-initialization");
             return;
         }
-        dynamicConfig = agentManagement;
+        BuffersFactory.dynamicConfig = dynamicConfig;
         senderServiceInstance = senderService;
         initScheduler();
 

@@ -62,6 +62,13 @@ public class Team extends AbstractModel {
         }
     }
 
+    public void checkMemberShip(String member) {
+        boolean isTeamMember = this.members.stream().anyMatch(teamMember -> Objects.equals(teamMember.email(), member));
+        if (!isTeamMember) {
+           throw new TeamException("Team Member", null, Errors.TEAM_MEMBER_NOT_FOUND);
+        }
+    }
+
     public void invite(String guest) {
         boolean isAlreadyMember = members.stream()
                 .anyMatch(teamMember -> Objects.equals(teamMember.email(), guest));

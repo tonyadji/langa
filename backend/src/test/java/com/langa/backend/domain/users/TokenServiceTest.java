@@ -44,7 +44,7 @@ class TokenServiceTest {
     void issue_shouldSaveAndReturnRefreshToken() {
         when(repository.save(any(Token.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(tokenProvider.generateToken(anyString(),any(TokenType.class))).thenReturn("refreshToken");
-        Token rt = service.issue(TokenType.REFRESH,"user@example.com");
+        Token rt = service.issue(TokenType.REFRESH, "user@example.com");
 
         assertNotNull(rt);
         assertEquals("user@example.com", rt.getBearer());

@@ -1,6 +1,6 @@
 package com.capricedumardi.agent.core.config.jmx;
 
-public interface AgentManagementMBean {
+public interface AgentDynamicConfigMBean {
 
   // --- 1. Runtime Tuning (Read / Write) ---
   // These are the parameters that can be changed without restarting
