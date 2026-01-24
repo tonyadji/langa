@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Premain-Class: com.capricedumardi.agent.core.config.LangaAgentInitializer
+Agent-Class: com.capricedumardi.agent.core.config.LangaAgentInitializer
+Can-Redefine-Classes: true
+Can-Retransform-Classes: true

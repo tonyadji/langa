@@ -68,3 +68,23 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+############################
+# Security / Credentials
+############################
+# GPG keys
+*.asc
+*.gpg
+*.key
+private-key.*
+
+# Maven settings with credentials
+settings.xml
+settings-security.xml
+
+# Credentials files
+credentials.*
+secrets.*
+*.pem
+*.p12
+*.jks

@@ -7,11 +7,11 @@ import static org.junit.jupiter.api.Assertions.*;
 class UserTest {
 
     @Test
-    void createNew_shouldInitializeFieldsCorrectly() {
+    void createActive_shouldInitializeFieldsCorrectly() {
         String email = "user@example.com";
         String password = "encodedPassword";
 
-        User user = User.createNew(email, password);
+        User user = User.createActive(email, password);
 
         assertEquals(email, user.getEmail());
         assertEquals(password, user.getPassword());

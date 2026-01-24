@@ -1,0 +1,34 @@
+package com.langa.backend.application.listeners.teams;
+
+import com.langa.backend.domain.teams.events.TeamInvitationEmailEvent;
+import com.langa.backend.infra.notifications.NotificationService;
+import com.langa.backend.infra.notifications.builders.MailNotificationBuilder;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
+
+@Component
+@Slf4j
+public class TeamInvitationEmailListener {
+
+    private final NotificationService notificationService;
+    private final MailNotificationBuilder mailNotificationBuilder;
+
+
+    public TeamInvitationEmailListener(NotificationService notificationService, MailNotificationBuilder mailNotificationBuilder) {
+        this.notificationService = notificationService;
+        this.mailNotificationBuilder = mailNotificationBuilder;
+    }
+
+    @Async
+    @EventListener
+    void handleTeamInvitationEmailEvent(TeamInvitationEmailEvent teamInvitationEmailEvent) {
+        log.debug("Event received: {}", teamInvitationEmailEvent);
+        try {
+            notificationService.send(mailNotificationBuilder.build(teamInvitationEmailEvent));
+        } catch (Exception e) {
+            log.error("Error handling event: {}", teamInvitationEmailEvent, e);
+        }
+    }
+}
