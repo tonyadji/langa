@@ -44,4 +44,10 @@ public interface AgentDynamicConfigMBean {
 
   // --- 3. Config reloading ---
   void reloadConfig();
+
+    long getHttpConnectionRequestTimeoutMillis();
+
+    int getHttpBaseRetryDelayMillis();
+
+    int getHttpMaxRetryDelayMillis();
 }

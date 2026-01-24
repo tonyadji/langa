@@ -104,6 +104,7 @@ public class IngestionConsumer {
   private MetricDto mapToMetricDto(Map<String, Object> metricMap) {
     return new MetricDto(
         (String) metricMap.get("name"),
+        (String) metricMap.get("signature"),
         (Integer) metricMap.get("durationMillis"),
         (String) metricMap.get("status"),
         String.valueOf(metricMap.get("timestamp")),

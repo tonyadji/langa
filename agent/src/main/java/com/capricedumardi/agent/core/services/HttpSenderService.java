@@ -3,21 +3,23 @@ package com.capricedumardi.agent.core.services;
 import com.capricedumardi.agent.core.config.AgentConfig;
 import com.capricedumardi.agent.core.config.ConfigLoader;
 import com.capricedumardi.agent.core.config.LangaPrinter;
-import com.capricedumardi.agent.core.helpers.CredentialsHelper;
 import com.capricedumardi.agent.core.config.jmx.AgentDynamicConfig;
+import com.capricedumardi.agent.core.helpers.CredentialsHelper;
 import com.capricedumardi.agent.core.model.SendableRequestDto;
 import com.google.gson.Gson;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.ContentType;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.message.BasicHeader;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
+import org.apache.hc.core5.http.message.BasicHeader;
+import org.apache.hc.core5.util.Timeout;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -53,22 +55,19 @@ public class HttpSenderService implements SenderService {
         this.dynamicConfig = dynamicConfig;
         this.gson = new Gson();
         this.circuitBreaker = new CircuitBreaker("HTTP[" + url + "]",
-                agentConfig.getCircuitBreakerFailureThreshold(),
-                agentConfig.getCircuitBreakerOpenDurationMillis());
+                dynamicConfig.getCircuitBreakerFailureThreshold(),
+                dynamicConfig.getCircuitBreakerOpenDurationMillis());
 
         PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
-        connectionManager.setMaxTotal(agentConfig.getHttpMaxConnectionsTotal());
-        connectionManager.setDefaultMaxPerRoute(agentConfig.getHttpMaxConnectionsPerRoute());
+        connectionManager.setMaxTotal(dynamicConfig.getHttpMaxConnectionsTotal());
+        connectionManager.setDefaultMaxPerRoute(dynamicConfig.getHttpMaxConnectionsPerRoute());
 
         RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(agentConfig.getHttpConnectTimeoutMillis())
-                .setSocketTimeout(agentConfig.getHttpSocketTimeoutMillis())
-                .setConnectionRequestTimeout(agentConfig.getHttpConnectionRequestTimeoutMillis())
+                .setConnectionRequestTimeout(Timeout.of(dynamicConfig.getHttpConnectionRequestTimeoutMillis(), TimeUnit.MILLISECONDS))
                 .build();
 
         this.httpClient = HttpClients.custom()
                 .setConnectionManager(connectionManager)
-                .setConnectionTimeToLive(1, TimeUnit.MINUTES)
                 .setDefaultRequestConfig(requestConfig)
                 .disableAutomaticRetries()
                 .build();
@@ -102,7 +101,7 @@ public class HttpSenderService implements SenderService {
     private boolean sendWithRetry(SendableRequestDto payload) {
         int attempt = 0;
         Exception lastException = null;
-        final int maxRetryAttempts = agentConfig.getHttpMaxRetryAttempts();
+        final int maxRetryAttempts = dynamicConfig.getHttpMaxRetryAttempts();
         while (attempt < maxRetryAttempts) {
             try {
                 return sendOnce(payload);
@@ -152,7 +151,7 @@ public class HttpSenderService implements SenderService {
         addCredentialHeaders(httpPost);
 
         HttpEntity entity;
-        if (agentConfig.isHttpCompressionEnabled() && json.length() > agentConfig.getHttpCompressionThresholdBytes()) {
+        if (dynamicConfig.isHttpCompressionEnabled() && json.length() > dynamicConfig.getHttpCompressionThresholdBytes()) {
             entity = createCompressedEntity(json);
             httpPost.addHeader("Content-Encoding", "gzip");
             totalCompressed.incrementAndGet();
@@ -165,8 +164,13 @@ public class HttpSenderService implements SenderService {
 
         httpPost.setEntity(entity);
 
-        try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-            int statusCode = response.getStatusLine().getStatusCode();
+        try (CloseableHttpResponse response = httpClient.execute(httpPost,
+                HttpClientContext.create(),
+                response1 ->
+                    CloseableHttpResponse.create(response1, (closeable, closeMode) ->
+                        closeable.close())
+                )) {
+            int statusCode = response.getCode();
 
             if (statusCode >= 200 && statusCode < 300) {
                 return true;
@@ -229,11 +233,11 @@ public class HttpSenderService implements SenderService {
      * Calculate retry delay with exponential backoff and jitter.
      */
     private int calculateRetryDelay(int attempt) {
-        int delay = agentConfig.getHttpBaseRetryDelayMillis() * (int) Math.pow(2, attempt);
+        int delay = dynamicConfig.getHttpBaseRetryDelayMillis() * (int) Math.pow(2, attempt);
 
         int jitter = (int) (delay * 0.5 * new Random().nextInt());
 
-        return Math.min(delay + jitter, agentConfig.getHttpMaxRetryDelayMillis());
+        return Math.min(delay + jitter, dynamicConfig.getHttpMaxRetryDelayMillis());
     }
 
     @Override

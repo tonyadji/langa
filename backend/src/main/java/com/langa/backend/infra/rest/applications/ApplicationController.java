@@ -125,6 +125,7 @@ public class ApplicationController {
         List<MetricDto> metricDtos = result.getContent().stream()
                 .map(metric -> new MetricDto(
                         metric.getName(),
+                        metric.getSignature(),
                         metric.getDurationMillis(),
                         metric.getStatus(),
                         metric.getTimestamp().toString(),

@@ -43,9 +43,9 @@ public class SpringMonitoringAspect {
                 int responseStatus = Optional.ofNullable(attributes.getResponse())
                                 .map(HttpServletResponse::getStatus)
                                         .orElse(0);
-                collector.track(monitored.name(), duration, status, request.getRequestURI(), request.getMethod(), responseStatus);
+                collector.track(monitored.name(), joinPoint.getSignature().toLongString(), duration, status, request.getRequestURI(), request.getMethod(), responseStatus);
             } else {
-                collector.track(monitored.name(), duration, status, null, null, 0);
+                collector.track(monitored.name(), joinPoint.getSignature().toLongString(), duration, status, null, null, 0);
             }
 
         }

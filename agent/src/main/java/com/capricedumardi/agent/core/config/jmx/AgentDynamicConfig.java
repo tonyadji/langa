@@ -178,4 +178,19 @@ public class AgentDynamicConfig extends StandardMBean implements AgentDynamicCon
     ConfigLoader.reloadConfig();
     LangaPrinter.printTrace("Configuration reloaded via JMX.");
   }
+
+    @Override
+    public long getHttpConnectionRequestTimeoutMillis() {
+        return staticConfig.getHttpConnectionRequestTimeoutMillis();
+    }
+
+    @Override
+    public int getHttpBaseRetryDelayMillis() {
+        return staticConfig.getHttpBaseRetryDelayMillis();
+    }
+
+    @Override
+    public int getHttpMaxRetryDelayMillis() {
+        return staticConfig.getHttpMaxRetryDelayMillis();
+    }
 }

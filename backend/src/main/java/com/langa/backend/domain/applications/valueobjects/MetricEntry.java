@@ -13,6 +13,7 @@ public class MetricEntry implements Entry {
     private String accountKey;
 
     private String name;
+    private String signature;
     private Integer durationMillis;
     private String status;
     private Instant timestamp;

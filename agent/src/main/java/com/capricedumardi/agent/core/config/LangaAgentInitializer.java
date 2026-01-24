@@ -1,24 +1,24 @@
 package com.capricedumardi.agent.core.config;
 
 import com.capricedumardi.agent.core.buffers.BuffersFactory;
+import com.capricedumardi.agent.core.config.jmx.AgentDynamicConfig;
 import com.capricedumardi.agent.core.helpers.EnvironmentUtils;
 import com.capricedumardi.agent.core.helpers.IngestionParamsResolver;
-import com.capricedumardi.agent.core.config.jmx.AgentDynamicConfig;
 import com.capricedumardi.agent.core.services.SenderService;
 import com.capricedumardi.agent.core.services.SenderServiceFactory;
 import org.aspectj.weaver.loadtime.Agent;
 
 import java.lang.instrument.Instrumentation;
+import java.util.Objects;
 
 public class LangaAgentInitializer {
 
-    private static final int DEFAULT_BATCH_SIZE = 50;
-    private static final int DEFAULT_FLUSH_DELAY_IN_SECONDS = 5;
-    private static final String LOGGING_FRAMEWORK = "LOGGING_FRAMEWORK";
+    private static ClassLoader AGENT_CLASSLOADER;
 
     private LangaAgentInitializer() {}
 
     public static void premain(String agentArgs, Instrumentation inst) {
+        AGENT_CLASSLOADER = LangaAgentInitializer.class.getClassLoader();
         LangaPrinter.agentStarting();
 
         try {
@@ -52,7 +52,7 @@ public class LangaAgentInitializer {
                 break;
         }
 
-        if (!isSpringPresent()) {
+        if (!isSpringPresent(inst)) {
             LangaPrinter.printTrace("Spring NOT detected → using AspectJ weaver for metrics");
             initAspectJWeaver(agentArgs, inst);
         } else {
@@ -73,42 +73,47 @@ public class LangaAgentInitializer {
 
     private static LoggingFramework determineLoggingFramework() {
         String envFramework = ConfigLoader.getConfigInstance().getLoggingFramework();
-
+        LoggingFramework selectedFramework = LoggingFramework.NONE;
         if (envFramework != null && !envFramework.trim().isEmpty()) {
             String framework = envFramework.trim().toLowerCase();
 
-            switch (framework) {
+            selectedFramework = switch (framework) {
                 case "logback":
                     if (isClassPresent("ch.qos.logback.classic.LoggerContext")) {
                         LangaPrinter.printTrace("Using logging configured framework: Logback");
-                        return LoggingFramework.LOGBACK;
+                        yield LoggingFramework.LOGBACK;
                     } else {
                         LangaPrinter.printError("ERROR: LOGGING_FRAMEWORK=logback but Logback not found on classpath!");
                         LangaPrinter.printError("Falling back to classpath detection...");
+                        yield LoggingFramework.NONE;
                     }
-                    break;
 
                 case "log4j2", "log4j":
                     if (isClassPresent("org.apache.logging.log4j.core.LoggerContext")) {
                         LangaPrinter.printTrace("  Using logging configured framework: Log4j2");
-                        return LoggingFramework.LOG4J2;
+                        yield LoggingFramework.LOG4J2;
                     } else {
                         LangaPrinter.printError("ERROR: LOGGING_FRAMEWORK=log4j2 but Log4j2 not found on classpath!");
                         LangaPrinter.printError("Falling back to classpath detection...");
+                        yield LoggingFramework.NONE;
                     }
-                    break;
 
                 case "none","disabled":
-                    LangaPrinter.printTrace("  Log collection explicitly disabled via LOGGING_FRAMEWORK=" + framework);
-                    return LoggingFramework.NONE;
+                    LangaPrinter.printTrace(" No LOGGING_FRAMEWORK found in environment variables or file configuration");
+                    LangaPrinter.printError("Falling back to classpath detection...");
+                    yield LoggingFramework.NONE;
 
                 default:
                     LangaPrinter.printError("WARNING: Unknown LOGGING_FRAMEWORK value: '" + envFramework + "'");
                     LangaPrinter.printError("Valid values: logback, log4j2, none");
                     LangaPrinter.printError("Falling back to classpath detection...");
-            }
+                    yield LoggingFramework.NONE;
+            };
         }
 
+        if (!Objects.equals(selectedFramework, LoggingFramework.NONE)) {
+            return selectedFramework;
+        }
         LangaPrinter.printTrace("LOGGING_FRAMEWORK not set, attempting classpath detection...");
 
         if (isClassPresent("ch.qos.logback.classic.LoggerContext") &&
@@ -149,8 +154,24 @@ public class LangaAgentInitializer {
       );
     }
 
-    private static boolean isSpringPresent() {
-        return isClassPresent("org.springframework.aop.framework.ProxyFactory");
+    private static boolean isSpringPresent(Instrumentation inst) {
+        for (Class<?> clazz : inst.getAllLoadedClasses()) {
+            if (!clazz.getName().startsWith("org.springframework")) {
+                continue;
+            }
+
+            ClassLoader cl = clazz.getClassLoader();
+
+            if (cl == null) {
+                continue;
+            }
+
+            if (cl == AGENT_CLASSLOADER) {
+                continue;
+            }
+            return true;
+        }
+        return false;
     }
 
     private static boolean isClassPresent(String className) {

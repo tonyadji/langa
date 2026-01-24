@@ -17,6 +17,7 @@ public class MetricEntryDocument {
     private String accountKey;
 
     private String name;
+    private String signature;
     private Integer durationMillis;
     private String status;
 
@@ -30,6 +31,7 @@ public class MetricEntryDocument {
     public MetricEntry toMetricEntry() {
         return new MetricEntry()
                 .setName(name)
+                .setSignature(signature)
                 .setDurationMillis(durationMillis)
                 .setStatus(status)
                 .setTimestamp(timestamp)
@@ -43,6 +45,7 @@ public class MetricEntryDocument {
         metricEntryDocument.setAppKey(metricEntry.getAppKey());
         metricEntryDocument.setAccountKey(metricEntry.getAccountKey());
         metricEntryDocument.setName(metricEntry.getName());
+        metricEntryDocument.setSignature(metricEntry.getSignature());
         metricEntryDocument.setDurationMillis(metricEntry.getDurationMillis());
         metricEntryDocument.setStatus(metricEntry.getStatus());
         metricEntryDocument.setTimestamp(metricEntry.getTimestamp());

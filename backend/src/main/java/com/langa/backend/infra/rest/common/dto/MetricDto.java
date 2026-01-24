@@ -7,6 +7,7 @@ import java.time.Instant;
 
 public record MetricDto(
         @NotNull String name,
+        String signature,
         Integer durationMillis,
         @NotNull String status,
         String timestamp,
@@ -19,6 +20,7 @@ public record MetricDto(
     public MetricEntry toMetricEntry () {
         return new MetricEntry()
                 .setName(name)
+                .setSignature(signature)
                 .setDurationMillis(durationMillis)
                 .setStatus(status)
                 .setTimestamp(Instant.parse(timestamp))

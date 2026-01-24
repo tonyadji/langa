@@ -2,6 +2,7 @@ package com.capricedumardi.agent.core.model;
 
 public class MetricEntry {
     private String name;
+    private String signature;
     private long durationMillis;
     private String status;
     private String timestamp;
@@ -10,8 +11,9 @@ public class MetricEntry {
     private String httpMethod;
     private int httpStatus;
 
-    public MetricEntry(String name, long durationMillis, String status, String timestamp) {
+    public MetricEntry(String name, String signature, long durationMillis, String status, String timestamp) {
         this.name = name;
+        this.signature = signature;
         this.durationMillis = durationMillis;
         this.status = status;
         this.timestamp = timestamp;
@@ -71,5 +73,13 @@ public class MetricEntry {
 
     public void setHttpStatus(int httpStatus) {
         this.httpStatus = httpStatus;
+    }
+
+    public void setSignature(String signature) {
+        this.signature = signature;
+    }
+
+    public String getSignature() {
+        return signature;
     }
 }

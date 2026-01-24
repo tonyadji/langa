@@ -5,8 +5,6 @@ import com.capricedumardi.agent.core.buffers.GenericBuffer;
 import com.capricedumardi.agent.core.config.LangaPrinter;
 import com.capricedumardi.agent.core.model.LogEntry;
 import com.capricedumardi.agent.core.model.SendableRequestDto;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.*;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
@@ -22,7 +20,6 @@ import java.util.Map;
         printObject = true)
 public class LangaLog4jAppender extends AbstractAppender {
     private static final String AGENT_PACKAGE_PREFIX = "com.capricedumardi.agent";
-    private static final Logger log = LogManager.getLogger(LangaLog4jAppender.class);
     private final GenericBuffer<LogEntry, SendableRequestDto> logBuffer;
 
     public LangaLog4jAppender(String name, Filter filter, Layout<? extends Serializable> layout) {
@@ -45,11 +42,11 @@ public class LangaLog4jAppender extends AbstractAppender {
 
         try {
             LogEntry entry = createLogEntry(event);
-            log.trace("Adding entry to log buffer");
+            LangaPrinter.printTrace("Adding entry to log buffer");
             logBuffer.add(entry);
 
         } catch (Exception e) {
-            log.error("Error sending log to Langa: {}", e.getMessage(), e);
+            LangaPrinter.printError("Error sending log to Langa: "+ e.getMessage());
         }
     }
 
