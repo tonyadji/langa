@@ -171,7 +171,7 @@ public class BuffersFactory {
 
         if (logBufferInstance != null) {
             try {
-                logBufferInstance.flush();
+                logBufferInstance.shutdown();
                 LangaPrinter.printTrace("Log buffer flushed");
             } catch (Exception e) {
                 LangaPrinter.printError("Error flushing log buffer: " + e.getMessage());
@@ -180,7 +180,7 @@ public class BuffersFactory {
 
         if (metricBufferInstance != null) {
             try {
-                metricBufferInstance.flush();
+                metricBufferInstance.shutdown();
                 LangaPrinter.printTrace("Metric buffer flushed");
             } catch (Exception e) {
                 LangaPrinter.printError("Error flushing metric buffer: " + e.getMessage());
