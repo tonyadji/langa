@@ -9,16 +9,15 @@ import com.capricedumardi.agent.core.services.SenderServiceFactory;
 import org.aspectj.weaver.loadtime.Agent;
 
 import java.lang.instrument.Instrumentation;
-import java.util.Objects;
 
 public class LangaAgentInitializer {
 
-    private static ClassLoader AGENT_CLASSLOADER;
+    private static ClassLoader AGENT_CLASS_LOADER;
 
     private LangaAgentInitializer() {}
 
     public static void premain(String agentArgs, Instrumentation inst) {
-        AGENT_CLASSLOADER = LangaAgentInitializer.class.getClassLoader();
+        AGENT_CLASS_LOADER = LangaAgentInitializer.class.getClassLoader();
         LangaPrinter.agentStarting();
 
         try {
@@ -73,48 +72,43 @@ public class LangaAgentInitializer {
 
     private static LoggingFramework determineLoggingFramework() {
         String envFramework = ConfigLoader.getConfigInstance().getLoggingFramework();
-        LoggingFramework selectedFramework = LoggingFramework.NONE;
+
         if (envFramework != null && !envFramework.trim().isEmpty()) {
             String framework = envFramework.trim().toLowerCase();
 
-            selectedFramework = switch (framework) {
-                case "logback":
+            switch (framework) {
+                case "none", "disabled" -> {
+                    LangaPrinter.printTrace("LOGGING_FRAMEWORK=" + framework + ": log collection explicitly disabled");
+                    return LoggingFramework.NONE;
+                }
+
+                case "logback" -> {
                     if (isClassPresent("ch.qos.logback.classic.LoggerContext")) {
                         LangaPrinter.printTrace("Using logging configured framework: Logback");
-                        yield LoggingFramework.LOGBACK;
-                    } else {
-                        LangaPrinter.printError("ERROR: LOGGING_FRAMEWORK=logback but Logback not found on classpath!");
-                        LangaPrinter.printError("Falling back to classpath detection...");
-                        yield LoggingFramework.NONE;
+                        return LoggingFramework.LOGBACK;
                     }
+                    LangaPrinter.printError("ERROR: LOGGING_FRAMEWORK=logback but Logback not found on classpath!");
+                    LangaPrinter.printError("Falling back to classpath detection...");
+                }
 
-                case "log4j2", "log4j":
+                case "log4j2", "log4j" -> {
                     if (isClassPresent("org.apache.logging.log4j.core.LoggerContext")) {
                         LangaPrinter.printTrace("  Using logging configured framework: Log4j2");
-                        yield LoggingFramework.LOG4J2;
-                    } else {
-                        LangaPrinter.printError("ERROR: LOGGING_FRAMEWORK=log4j2 but Log4j2 not found on classpath!");
-                        LangaPrinter.printError("Falling back to classpath detection...");
-                        yield LoggingFramework.NONE;
+                        return LoggingFramework.LOG4J2;
                     }
-
-                case "none","disabled":
-                    LangaPrinter.printTrace(" No LOGGING_FRAMEWORK found in environment variables or file configuration");
+                    LangaPrinter.printError("ERROR: LOGGING_FRAMEWORK=log4j2 but Log4j2 not found on classpath!");
                     LangaPrinter.printError("Falling back to classpath detection...");
-                    yield LoggingFramework.NONE;
+                }
 
-                default:
+                default -> {
                     LangaPrinter.printError("WARNING: Unknown LOGGING_FRAMEWORK value: '" + envFramework + "'");
                     LangaPrinter.printError("Valid values: logback, log4j2, none");
                     LangaPrinter.printError("Falling back to classpath detection...");
-                    yield LoggingFramework.NONE;
-            };
+                }
+            }
         }
 
-        if (!Objects.equals(selectedFramework, LoggingFramework.NONE)) {
-            return selectedFramework;
-        }
-        LangaPrinter.printTrace("LOGGING_FRAMEWORK not set, attempting classpath detection...");
+        LangaPrinter.printTrace("LOGGING_FRAMEWORK not set (or invalid/unavailable), attempting classpath detection...");
 
         if (isClassPresent("ch.qos.logback.classic.LoggerContext") &&
                 isClassPresent("org.slf4j.LoggerFactory")) {
@@ -166,7 +160,7 @@ public class LangaAgentInitializer {
                 continue;
             }
 
-            if (cl == AGENT_CLASSLOADER) {
+            if (cl == AGENT_CLASS_LOADER) {
                 continue;
             }
             return true;
