@@ -1,6 +1,7 @@
 package com.langa.backend.infra.security.config;
 
 import com.langa.backend.domain.users.repositories.TokenRepository;
+import com.langa.backend.domain.users.services.LoginAttemptLimiter;
 import com.langa.backend.domain.users.services.TokenProvider;
 import com.langa.backend.domain.users.services.TokenService;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,5 +16,10 @@ public class BeansConfig {
                                      @Value("${application.security.jwt.refresh-token.expiration}")long refreshTokenExpiration,
                                      TokenProvider provider) {
         return new TokenService(tokenRepository, refreshTokenExpiration, provider);
+    }
+
+    @Bean
+    public LoginAttemptLimiter loginAttemptLimiter() {
+        return new LoginAttemptLimiter();
     }
 }

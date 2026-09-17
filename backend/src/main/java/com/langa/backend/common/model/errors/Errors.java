@@ -27,6 +27,7 @@ public enum Errors {
 
 
     INVALID_CREDENTIALS(401,"401-000" ,"Invalid credentials"),
+    TOO_MANY_LOGIN_ATTEMPTS(429,"429-000" ,"Too many login attempts, please try again later"),
 
     ACCESS_DENIED(403,"403-000", "Access denied"),
     ILLEGAL_INGESTION_REQUEST(403,"403-001" ,"Illegal ingestion request"),

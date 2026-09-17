@@ -5,10 +5,14 @@ import com.langa.backend.common.commands.Command;
 import com.langa.backend.domain.users.exceptions.UserException;
 
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 public record RegisterUserCommand(
         String username, String password, String confirmationPassword
 ) implements Command<String> {
+
+    private static final Pattern PASSWORD_PATTERN =
+            Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d).{8,128}$");
 
     public RegisterUserCommand {
 
@@ -22,6 +26,12 @@ public record RegisterUserCommand(
 
         if (confirmationPassword == null || confirmationPassword.isEmpty()) {
             throw new UserException("Confirmation is required", null, Errors.VALIDATION_ERROR);
+        }
+
+        if (!PASSWORD_PATTERN.matcher(password).matches()) {
+            throw new UserException(
+                    "Password must be 8-128 characters long and contain at least one letter and one digit",
+                    null, Errors.VALIDATION_ERROR);
         }
 
         if(!Objects.equals(password, confirmationPassword)) {

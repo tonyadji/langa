@@ -38,7 +38,8 @@ application:
       unsecured:
         - /api/auth/**
         - /api/ingestion/**
-        - /api/team-invitations/**
+        - /api/team-invitations/*/public
+        - /api/team-invitations/*/accept
         - /api/first-connection**
         - /api/first-connection/**
     cors:
