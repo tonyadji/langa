@@ -1,20 +1,24 @@
 package com.capricedumardi.agent.core.aspects;
 
+import com.capricedumardi.agent.core.config.LangaPrinter;
 import com.capricedumardi.agent.core.metrics.DefaultMetricsCollector;
 import com.capricedumardi.agent.core.metrics.MetricsCollector;
 import com.capricedumardi.agent.core.metrics.Monitored;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.Optional;
-
+/**
+ * Used on the AspectJ load-time-weaving path (see LangaAgentInitializer), which targets
+ * apps regardless of whether they use Spring or expose HTTP endpoints at all. HTTP request
+ * enrichment is therefore best-effort: it's only attempted when spring-web/servlet-api are
+ * actually present on the host classpath, and any failure falls back to tracking without it
+ * instead of breaking the monitored method call.
+ */
 @Aspect
 public class AspectJMonitoringAspect {
+    private static final boolean SPRING_WEB_AVAILABLE = isSpringWebAvailable();
+
     private final MetricsCollector collector = new DefaultMetricsCollector();
 
     @Around("@annotation(monitored)")
@@ -27,18 +31,37 @@ public class AspectJMonitoringAspect {
             status = "ERROR";
             throw t;
         } finally {
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             long duration = System.currentTimeMillis() - start;
-            if (attributes != null) {
-                HttpServletRequest request = attributes.getRequest();
-                int responseStatus = Optional.ofNullable(attributes.getResponse())
-                        .map(HttpServletResponse::getStatus)
-                        .orElse(0);
-                collector.track(monitored.name(), joinPoint.getSignature().toLongString(), duration, status, request.getRequestURI(), request.getMethod(), responseStatus);
-            } else {
-                collector.track(monitored.name(), joinPoint.getSignature().toLongString(), duration, status, null, null, 0);
-            }
+            track(joinPoint, monitored, duration, status);
+        }
+    }
 
+    private void track(ProceedingJoinPoint joinPoint, Monitored monitored, long duration, String status) {
+        String signature = joinPoint.getSignature().toLongString();
+
+        if (SPRING_WEB_AVAILABLE) {
+            try {
+                SpringWebRequestInfoResolver.RequestInfo info = SpringWebRequestInfoResolver.resolve();
+                if (info != null) {
+                    collector.track(monitored.name(), signature, duration, status,
+                            info.uri(), info.method(), info.status());
+                    return;
+                }
+            } catch (Throwable t) {
+                LangaPrinter.printError("AspectJMonitoringAspect: failed to resolve HTTP request context: " + t.getMessage());
+            }
+        }
+
+        collector.track(monitored.name(), signature, duration, status, null, null, 0);
+    }
+
+    private static boolean isSpringWebAvailable() {
+        try {
+            Class.forName("org.springframework.web.context.request.RequestContextHolder");
+            Class.forName("jakarta.servlet.http.HttpServletRequest");
+            return true;
+        } catch (Throwable t) {
+            return false;
         }
     }
 }
