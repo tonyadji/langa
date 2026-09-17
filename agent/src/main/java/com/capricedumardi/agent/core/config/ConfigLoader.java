@@ -10,7 +10,6 @@ import java.util.Properties;
  * 2. Environment variables (LANGA_XXX=value)
  * 3. Config file (langa-agent.properties)
  * 4. Default values
- *
  * Thread-safe singleton.
  */
 public class ConfigLoader {
@@ -84,7 +83,7 @@ public class ConfigLoader {
     private static void loadBackendConfig(AgentConfig.Builder builder, Properties fileProps) {
       builder.ingestionUrl(getStringProperty("langa.ingestion.url", fileProps, null));
       builder.secret(getStringProperty("langa.ingestion.secret", fileProps, null));
-      builder.loggingFramework(getStringProperty("logging.framework", fileProps, "none"));
+      builder.loggingFramework(getStringProperty("logging.framework", fileProps, null));
     }
 
     private static void loadBufferConfig(AgentConfig.Builder builder, Properties fileProps) {

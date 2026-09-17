@@ -2,7 +2,6 @@ package com.capricedumardi.agent.core.config;
 
 /**
  * Central configuration for Langa Agent.
- *
  * Contains all tunable parameters for buffers, senders, circuit breakers, etc.
  * Immutable once loaded - all fields are final.
  */
@@ -252,7 +251,9 @@ public class AgentConfig {
         // Backend defaults
         private String ingestionUrl = null;
         private String secret = null;
-        private String loggingFramework = "none";
+        // null means "not configured" so LangaAgentInitializer can tell that apart from
+        // an explicit LOGGING_FRAMEWORK=none/disabled and fall back to classpath detection.
+        private String loggingFramework = null;
 
         // Buffer defaults
         private int batchSize = 50;
