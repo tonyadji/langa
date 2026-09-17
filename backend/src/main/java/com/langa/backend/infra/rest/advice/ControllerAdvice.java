@@ -46,6 +46,6 @@ public class ControllerAdvice {
         return ResponseEntity.status(500)
                 .body(ApiError.of(
                         Errors.INTERNAL_SERVER_ERROR.getMessage(),
-                        Errors.INTERNAL_SERVER_ERROR.getCode(), ex.getMessage()));
+                        Errors.INTERNAL_SERVER_ERROR.getCode(), null));
     }
 }

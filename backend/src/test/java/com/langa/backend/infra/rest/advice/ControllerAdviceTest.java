@@ -55,8 +55,8 @@ class ControllerAdviceTest {
     }
 
     @Test
-    void handleAll_shouldReturnInternalServerError() {
-        Exception ex = new RuntimeException("Something went wrong");
+    void handleAll_shouldReturnInternalServerError_withoutLeakingExceptionMessage() {
+        Exception ex = new RuntimeException("Something went wrong - internal details");
 
         ResponseEntity<ApiError> response = controllerAdvice.handleAll(ex);
 
@@ -64,6 +64,6 @@ class ControllerAdviceTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getCode()).isEqualTo(Errors.INTERNAL_SERVER_ERROR.getCode());
         assertThat(response.getBody().getMessage()).isEqualTo(Errors.INTERNAL_SERVER_ERROR.getMessage());
-        assertThat(response.getBody().getDetails()).isEqualTo("Something went wrong");
+        assertThat(response.getBody().getDetails()).isNull();
     }
 }

@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -56,12 +58,18 @@ public class IngestionSecurityImpl implements IngestionSecurity {
         checkTimestampValidity(timestamp);
 
         final String expectedSignature = buildSignature(nonce, appKey, accountKey, agentVersion, timestamp, credentialType, app.getSecret());
-        if (!Objects.equals(expectedSignature, signature)) {
-            log.error("expected {} - received {}", expectedSignature, signature);
+        if (!constantTimeEquals(expectedSignature, signature)) {
+            log.error("Signature mismatch for appKey {}", appKey);
             throw new IngestionSecurityException("Signature mismatch", null, Errors.ILLEGAL_INGESTION_REQUEST);
         }
         applicationNonceRepository.save(appKey, nonce, LocalDateTime.now());
         return true;
+    }
+
+    private boolean constantTimeEquals(String expected, String actual) {
+        return MessageDigest.isEqual(
+                expected.getBytes(StandardCharsets.UTF_8),
+                actual.getBytes(StandardCharsets.UTF_8));
     }
 
     private String buildSignature(String nonce, String appKey, String accountKey, String agentVersion, String timestamp, CredentialType credentialType, String appSecret) {

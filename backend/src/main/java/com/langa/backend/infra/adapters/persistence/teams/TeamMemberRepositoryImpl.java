@@ -21,7 +21,7 @@ public class TeamMemberRepositoryImpl implements TeamMemberRepository {
     @Override
     public TeamMember save(TeamMember teamMember) {
         return findByEmailAndTeamKey(teamMember.email(), teamMember.teamKey())
-                .orElse(mongoTeamMemberDao.save(TeamMemberDocument.of(teamMember)).toTeamMember());
+                .orElseGet(() -> mongoTeamMemberDao.save(TeamMemberDocument.of(teamMember)).toTeamMember());
     }
 
     @Override

@@ -39,6 +39,7 @@ public class Application extends AbstractModel {
         this.secret = KeyGenerator.generateAppSecret();
         this.ingestionUri = KeyGenerator.generateIngestionUri(owner.accountKey(), appId.key());
         sharedWith = new HashSet<>();
+        usage = ApplicationUsage.empty();
         retentionPolicy = RetentionPolicy.defaultPolicy();
     }
 

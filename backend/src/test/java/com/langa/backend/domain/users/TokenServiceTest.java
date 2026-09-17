@@ -99,6 +99,19 @@ class TokenServiceTest {
     }
 
     @Test
+    void validateAndGetUserEmail_shouldThrowException_whenTokenIsAccessType() {
+        Token accessToken = new Token("accessToken", "user@example.com",
+                Instant.now().plusSeconds(3600), TokenType.ACCESS);
+
+        when(repository.findByToken("accessToken")).thenReturn(Optional.of(accessToken));
+
+        GenericException ex = assertThrows(GenericException.class,
+                () -> service.validateAndGetUserEmail("accessToken"));
+
+        assertEquals(Errors.INVALID_CREDENTIALS, ex.getError());
+    }
+
+    @Test
     void rotate_shouldCallRepositoryRevokeByToken() {
         service.rotate("oldToken123");
 

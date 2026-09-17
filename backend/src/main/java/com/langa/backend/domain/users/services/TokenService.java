@@ -37,6 +37,9 @@ public class TokenService {
     public String validateAndGetUserEmail(String token) {
         Token foundToken = repository.findByToken(token).orElseThrow(() ->
                 new GenericException("Refresh token not found", null, Errors.INVALID_CREDENTIALS));
+        if (foundToken.getType() != TokenType.REFRESH) {
+            throw new GenericException("Token is not a refresh token", null, Errors.INVALID_CREDENTIALS);
+        }
         if (foundToken.isRevoked() || foundToken.isExpired()) {
             throw new GenericException("Refresh token invalid or expired", null, Errors.INVALID_CREDENTIALS);
         }

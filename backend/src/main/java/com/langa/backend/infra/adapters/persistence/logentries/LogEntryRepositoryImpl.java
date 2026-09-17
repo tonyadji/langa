@@ -56,12 +56,15 @@ public class LogEntryRepositoryImpl implements LogQueryRepository {
             query.addCriteria(Criteria.where("message").regex(".*" + filter.getKeyword() + ".*", "i"));
         }
 
-        if (filter.getStartDate() != null) {
-            query.addCriteria(Criteria.where("timestamp").gte(filter.getStartDate()));
-        }
-
-        if (filter.getEndDate() != null) {
-            query.addCriteria(Criteria.where("timestamp").lt(filter.getEndDate()));
+        if (filter.getStartDate() != null || filter.getEndDate() != null) {
+            Criteria timestampCriteria = Criteria.where("timestamp");
+            if (filter.getStartDate() != null) {
+                timestampCriteria = timestampCriteria.gte(filter.getStartDate());
+            }
+            if (filter.getEndDate() != null) {
+                timestampCriteria = timestampCriteria.lt(filter.getEndDate());
+            }
+            query.addCriteria(timestampCriteria);
         }
 
         int skip = page * size;

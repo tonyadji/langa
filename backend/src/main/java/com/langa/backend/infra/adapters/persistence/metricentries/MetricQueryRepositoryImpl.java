@@ -49,12 +49,17 @@ public class MetricQueryRepositoryImpl implements MetricQueryRepository {
 
         setNameCriteria(filter, query);
 
-        if (filter.getDurationGreaterThan() != null && filter.getDurationGreaterThan() > 0) {
-            query.addCriteria(Criteria.where("durationMillis").gt(filter.getDurationGreaterThan()));
-        }
-
-        if (filter.getDurationLessThan() != null && filter.getDurationLessThan() > 0) {
-            query.addCriteria(Criteria.where("durationMillis").lt(filter.getDurationLessThan()));
+        boolean hasDurationGreaterThan = filter.getDurationGreaterThan() != null && filter.getDurationGreaterThan() > 0;
+        boolean hasDurationLessThan = filter.getDurationLessThan() != null && filter.getDurationLessThan() > 0;
+        if (hasDurationGreaterThan || hasDurationLessThan) {
+            Criteria durationCriteria = Criteria.where("durationMillis");
+            if (hasDurationGreaterThan) {
+                durationCriteria = durationCriteria.gt(filter.getDurationGreaterThan());
+            }
+            if (hasDurationLessThan) {
+                durationCriteria = durationCriteria.lt(filter.getDurationLessThan());
+            }
+            query.addCriteria(durationCriteria);
         }
 
         if (filter.getHttpMethod() != null && !filter.getHttpMethod().isEmpty()) {
@@ -73,12 +78,15 @@ public class MetricQueryRepositoryImpl implements MetricQueryRepository {
             query.addCriteria(Criteria.where("httpStatus").is(filter.getHttpStatus()));
         }
 
-        if (filter.getStartDate() != null) {
-            query.addCriteria(Criteria.where(TIMESTAMP).gte(filter.getStartDate()));
-        }
-
-        if (filter.getEndDate() != null) {
-            query.addCriteria(Criteria.where(TIMESTAMP).lt(filter.getEndDate()));
+        if (filter.getStartDate() != null || filter.getEndDate() != null) {
+            Criteria timestampCriteria = Criteria.where(TIMESTAMP);
+            if (filter.getStartDate() != null) {
+                timestampCriteria = timestampCriteria.gte(filter.getStartDate());
+            }
+            if (filter.getEndDate() != null) {
+                timestampCriteria = timestampCriteria.lt(filter.getEndDate());
+            }
+            query.addCriteria(timestampCriteria);
         }
 
         int skip = page * size;

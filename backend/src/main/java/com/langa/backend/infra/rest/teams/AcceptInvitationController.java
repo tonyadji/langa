@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/team-invitations")
-@CrossOrigin(origins = "*")
 public class AcceptInvitationController {
 
     private final CommandBusDispatcher commandBusDispatcher;

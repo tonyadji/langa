@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/team-invitations")
-@CrossOrigin(origins = "*")
 public class GetTeamInvitationController {
 
     private final GetInvitationUseCase getInvitationUseCase;

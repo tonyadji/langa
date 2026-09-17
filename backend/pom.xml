@@ -125,6 +125,15 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.13</version>
+                <configuration>
+                    <excludes>
+                        <exclude>com/langa/backend/LangaBackendApplication.class</exclude>
+                        <exclude>com/langa/backend/infra/config/**</exclude>
+                        <exclude>com/langa/backend/infra/security/config/SecurityConfig.class</exclude>
+                        <exclude>com/langa/backend/infra/security/config/BeansConfig.class</exclude>
+                        <exclude>**/*Document.class</exclude>
+                    </excludes>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
@@ -146,12 +155,12 @@
                         <configuration>
                             <rules>
                                 <rule>
-                                    <element>PACKAGE</element>
+                                    <element>BUNDLE</element>
                                     <limits>
                                         <limit>
                                             <counter>LINE</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.0</minimum>
+                                            <minimum>0.75</minimum>
                                         </limit>
                                     </limits>
                                 </rule>
