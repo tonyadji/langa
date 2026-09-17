@@ -41,6 +41,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <gpg.executable>gpg</gpg.executable>
         <spring.boot.version>3.5.5</spring.boot.version>
+        <log4j.version>2.25.3</log4j.version>
     </properties>
 
     <dependencyManagement>
@@ -56,32 +57,46 @@
     </dependencyManagement>
 
     <dependencies>
+        <!-- Internal-only: used solely by the agent's own diagnostics/logging facade
+             and self-contained buffer/HMAC code. Bundled and relocated so it never
+             clashes with whatever the host app itself runs on. -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
-            <version>2.25.1</version>
+            <version>${log4j.version}</version>
+            <optional>true</optional>
         </dependency>
+
+        <!-- Host-provided: LangaLog4jAppender/LangaLogbackAppender must be the exact
+             same classes as the host app's own Log4j2/Logback runtime to register as
+             appenders in it (a relocated or bundled copy would not be recognized by
+             the host's LoggerContext/Joran config, and could clash with the host's
+             own version). Never bundle or relocate these. -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
-            <version>2.25.3</version>
+            <version>${log4j.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>1.5.25</version>
+            <scope>provided</scope>
         </dependency>
 
+        <!-- Internal-only: bundled and relocated, no interop requirement with the host app. -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.13.2</version>
+            <optional>true</optional>
         </dependency>
-
         <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>
             <artifactId>httpclient5</artifactId>
             <version>5.6</version>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
@@ -95,23 +110,24 @@
             <version>1.9.25.1</version>
         </dependency>
 
+        <!-- Host-provided: SpringMonitoringAspect must be the exact same @Component/@Aspect
+             classes as the host app's own Spring context to be picked up by it. A relocated
+             copy would be invisible to the host's component scan. Versions are inherited from
+             the spring-boot-dependencies BOM above, so they stay aligned with spring.boot.version. -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-aop</artifactId>
-            <version>7.0.3</version>
-            <scope>compile</scope>
-            <optional>true</optional>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
-            <version>7.0.3</version>
-            <optional>true</optional>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-web</artifactId>
-            <version>7.0.3</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>jakarta.servlet</groupId>
@@ -120,10 +136,15 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Internal-only (own KafkaProducer instance, no interop requirement with the
+             host's own Kafka usage): bundled and relocated so it never clashes with a
+             different kafka-clients version the host app might already depend on, and
+             optional so apps that only use HTTP ingestion don't get it forced on them. -->
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
             <version>${kafka.version}</version>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -131,17 +152,16 @@
             <scope>test</scope>
         </dependency>
 
-       <!-- Actuator for metrics collection -->
+       <!-- Actuator for metrics collection. Versions inherited from the spring-boot-dependencies
+            BOM above so they stay aligned with spring.boot.version instead of drifting. -->
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-actuator</artifactId>
-        <version>3.1.6</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-autoconfigure</artifactId>
-        <version>3.1.0</version>
         <scope>provided</scope>
       </dependency>
     </dependencies>
@@ -158,7 +178,7 @@
                         <path>
                             <groupId>org.apache.logging.log4j</groupId>
                             <artifactId>log4j-core</artifactId>
-                            <version>2.25.1</version>
+                            <version>${log4j.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
@@ -196,26 +216,31 @@
                                     <shadedPattern>langa.shaded.hc.core5</shadedPattern>
                                 </relocation>
                                 <relocation>
-                                    <pattern>org.springframework</pattern>
-                                    <shadedPattern>langa.shaded.springframework</shadedPattern>
-                                </relocation>
-                                <relocation>
                                     <pattern>com.google</pattern>
                                     <shadedPattern>langa.shaded.google</shadedPattern>
                                 </relocation>
-
-                                <!--relocation>
-                                    <pattern>ch.qos.logback</pattern>
-                                    <shadedPattern>langa.shaded.logback</shadedPattern>
+                                <!-- kafka-clients is bundled for standalone -javaagent use but relocated so it
+                                     never clashes with a different kafka-clients version already on the host
+                                     app's own classpath. -->
+                                <relocation>
+                                    <pattern>org.apache.kafka</pattern>
+                                    <shadedPattern>langa.shaded.kafka</shadedPattern>
                                 </relocation>
+                                <!-- log4j-api is only used internally (LangaPrinter-adjacent diagnostics, HMAC
+                                     helpers, buffers), so it's relocated like the other internal-only deps.
+                                     log4j-core is excluded: it stays "provided" (never bundled) so
+                                     LangaLog4jAppender registers against the HOST app's own LoggerContext. -->
                                 <relocation>
                                     <pattern>org.apache.logging.log4j</pattern>
                                     <shadedPattern>langa.shaded.log4j</shadedPattern>
+                                    <excludes>
+                                        <exclude>org.apache.logging.log4j.core.**</exclude>
+                                    </excludes>
                                 </relocation>
-                                <relocation>
-                                    <pattern>org.slf4j</pattern>
-                                    <shadedPattern>langa.shaded.slf4j</shadedPattern>
-                                </relocation>-->
+                                <!-- spring-* and logback-classic are NOT relocated: they stay "provided" so
+                                     SpringMonitoringAspect/LangaLogbackAppender interoperate with the exact
+                                     Spring context / Logback runtime the host app already has (see pom
+                                     dependency comments). -->
                             </relocations>
 
                             <filters>
