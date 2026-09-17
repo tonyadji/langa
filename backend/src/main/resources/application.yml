@@ -4,6 +4,7 @@ spring:
   data:
     mongodb:
       uri: ${MONGODB_URI}
+      auto-index-creation: true
   servlet:
     multipart:
       max-file-size: ${MULTIPART_MAX_FILE_SIZE}

@@ -2,6 +2,7 @@ package com.langa.backend.infra.adapters.persistence.applications.mongo.document
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
@@ -10,15 +11,21 @@ import java.time.LocalDateTime;
 @Document(collection = "c_application_nonce")
 public class ApplicationNonceEntries {
 
+
+    private static final long NONCE_TTL_SECONDS = 600;
+
     @Id
     private String id;
     private String appKey;
     private String nonce;
     private LocalDateTime usageDate;
+    @Indexed(name = "ttl_dynamic_index", expireAfter = "0")
+    private LocalDateTime expiresAt;
 
     public ApplicationNonceEntries(String appKey, String nonce, LocalDateTime usageDate) {
         this.appKey = appKey;
         this.nonce = nonce;
         this.usageDate = usageDate;
+        this.expiresAt = usageDate.plusSeconds(NONCE_TTL_SECONDS);
     }
 }
