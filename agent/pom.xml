@@ -57,14 +57,27 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- Internal-only: used solely by the agent's own diagnostics/logging facade
-             and self-contained buffer/HMAC code. Bundled and relocated so it never
-             clashes with whatever the host app itself runs on. -->
+        <!-- Host-provided, same as log4j-core below: log4j-core's public API (LogEvent,
+             LoggerConfig, ...) is typed throughout with log4j-api classes (Level, Message,
+             the spi/util packages ProviderUtil/ThreadContextMapFactory/etc. depend on).
+             Bundling+relocating log4j-api while keeping log4j-core unshaded put two
+             incompatible copies of interdependent classes on the classpath (the agent's
+             relocated-except-for-a-few-classes copy vs the host's real one) and broke at
+             runtime with NoSuchMethodError/NoClassDefFoundError no matter how many
+             individual classes were carved out of the relocation. log4j-core already
+             requires a compatible log4j-api on the host's own classpath to run at all, so
+             there's nothing left to bundle it for. NOTE: this means the agent's internal
+             diagnostics/HMAC/buffer code that logs via log4j-api's LogManager will throw
+             NoClassDefFoundError if the host app has no log4j-api on its classpath at all
+             (e.g. a Logback-only app with no log4j-core/log4j-api dependency).
+             TODO: work on a more elegant solution for this
+             (e.g. have the internal diagnostics code stop depending on log4j-api at all)
+             so the agent doesn't regress on hosts with no log4j on their classpath. -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
             <version>${log4j.version}</version>
-            <optional>true</optional>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Host-provided: LangaLog4jAppender/LangaLogbackAppender must be the exact
@@ -266,17 +279,10 @@
                                     <pattern>org.apache.kafka</pattern>
                                     <shadedPattern>langa.shaded.kafka</shadedPattern>
                                 </relocation>
-                                <!-- log4j-api is only used internally (LangaPrinter-adjacent diagnostics, HMAC
-                                     helpers, buffers), so it's relocated like the other internal-only deps.
-                                     log4j-core is excluded: it stays "provided" (never bundled) so
-                                     LangaLog4jAppender registers against the HOST app's own LoggerContext. -->
-                                <relocation>
-                                    <pattern>org.apache.logging.log4j</pattern>
-                                    <shadedPattern>langa.shaded.log4j</shadedPattern>
-                                    <excludes>
-                                        <exclude>org.apache.logging.log4j.core.**</exclude>
-                                    </excludes>
-                                </relocation>
+                                <!-- org.apache.logging.log4j (both log4j-api and log4j-core) is NOT relocated
+                                     or bundled: both are now "provided" (see pom dependency comments), so
+                                     LangaLog4jAppender/AppenderBinding always see the exact same, single copy
+                                     of these classes as the host app's own Log4j2 runtime. -->
                                 <!-- spring-* and logback-classic are NOT relocated: they stay "provided" so
                                      SpringMonitoringAspect/LangaLogbackAppender interoperate with the exact
                                      Spring context / Logback runtime the host app already has (see pom
