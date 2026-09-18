@@ -1,0 +1,85 @@
+package com.capricedumardi.agent.core.model;
+
+public class MetricEntry {
+    private String name;
+    private String signature;
+    private long durationMillis;
+    private String status;
+    private String timestamp;
+
+    private String uri;
+    private String httpMethod;
+    private int httpStatus;
+
+    public MetricEntry(String name, String signature, long durationMillis, String status, String timestamp) {
+        this.name = name;
+        this.signature = signature;
+        this.durationMillis = durationMillis;
+        this.status = status;
+        this.timestamp = timestamp;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public long getDurationMillis() {
+        return durationMillis;
+    }
+
+    public void setDurationMillis(long durationMillis) {
+        this.durationMillis = durationMillis;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public String getUri() {
+        return uri;
+    }
+
+    public void setUri(String uri) {
+        this.uri = uri;
+    }
+
+    public String getHttpMethod() {
+        return httpMethod;
+    }
+
+    public void setHttpMethod(String httpMethod) {
+        this.httpMethod = httpMethod;
+    }
+
+    public int getHttpStatus() {
+        return httpStatus;
+    }
+
+    public void setHttpStatus(int httpStatus) {
+        this.httpStatus = httpStatus;
+    }
+
+    public void setSignature(String signature) {
+        this.signature = signature;
+    }
+
+    public String getSignature() {
+        return signature;
+    }
+}

@@ -1,0 +1,44 @@
+package com.langa.backend.application.listeners.teams;
+
+import com.langa.backend.domain.teams.events.InvitationAcceptedMailEvent;
+import com.langa.backend.infra.notifications.NotificationService;
+import com.langa.backend.infra.notifications.builders.MailNotificationBuilder;
+import com.langa.backend.infra.notifications.model.Notification;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class InvitationAcceptedMailListenerTest {
+
+    @Mock
+    private NotificationService notificationService;
+    @Mock
+    private MailNotificationBuilder mailNotificationBuilder;
+
+    @Test
+    void handleTeamInvitationEmailEvent_shouldSendNotification() {
+        InvitationAcceptedMailListener listener = new InvitationAcceptedMailListener(notificationService, mailNotificationBuilder);
+        InvitationAcceptedMailEvent event = new InvitationAcceptedMailEvent("team-1", "Dev Team", "guest@example.com");
+        Notification notification = mock(Notification.class);
+        when(mailNotificationBuilder.build(event)).thenReturn(notification);
+
+        listener.handleTeamInvitationEmailEvent(event);
+
+        verify(notificationService).send(notification);
+    }
+
+    @Test
+    void handleTeamInvitationEmailEvent_shouldSwallowException() {
+        InvitationAcceptedMailListener listener = new InvitationAcceptedMailListener(notificationService, mailNotificationBuilder);
+        InvitationAcceptedMailEvent event = new InvitationAcceptedMailEvent("team-1", "Dev Team", "guest@example.com");
+        when(mailNotificationBuilder.build(event)).thenThrow(new RuntimeException("boom"));
+
+        listener.handleTeamInvitationEmailEvent(event);
+
+        verifyNoInteractions(notificationService);
+    }
+}

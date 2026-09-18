@@ -3,15 +3,42 @@ package com.langa.backend.domain.applications.valueobjects;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
 
 @Data
 @Accessors(chain = true)
-public class LogEntry {
+public class LogEntry implements Entry {
     private String appKey;
     private String accountKey;
     private String message;
     private String level;
     private String loggerName;
-    private LocalDateTime timestamp;
+    private Instant timestamp;
+    private String threadName;
+    private String stackTrace;
+    private Map<String, String> mdc;
+    private RetentionPolicy retention;
+
+    @Override
+    public long getSizeInBytes() {
+        long sizeInBytes = BASE_DOCUMENT_OVERHEAD;
+        sizeInBytes += getStringSize(appKey);
+        sizeInBytes += getStringSize(accountKey);
+        sizeInBytes += getStringSize(message);
+        sizeInBytes += getStringSize(level);
+        sizeInBytes += getStringSize(loggerName);
+        sizeInBytes += getStringSize(timestamp.toString());
+        sizeInBytes += TIMESTAMP_SIZE;
+        return sizeInBytes;
+    }
+
+    public long getRetentionDuration() {
+        return retention.duration();
+    }
+
+    public ChronoUnit getRetentionUnit() {
+        return retention.unit();
+    }
 }

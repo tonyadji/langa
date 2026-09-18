@@ -1,0 +1,325 @@
+# GitHub Actions Workflow: Deploy Langa Dashboard to VPS
+# 
+# This workflow automates the deployment of the React dashboard to a VPS server
+# Triggers: Push to main branch or manual workflow dispatch
+#
+# PROJECT STRUCTURE:
+# ==================
+# The frontend project is located in the /frontend directory, not at the root.
+# All build commands and Docker context are adjusted accordingly.
+#
+# REQUIRED GITHUB SECRETS:
+# ========================
+# Docker Registry:
+#   - DOCKER_USERNAME: Docker Hub username (or GitHub username for GHCR)
+#   - DOCKER_PASSWORD: Docker Hub access token (or GitHub PAT for GHCR)
+#
+# VPS Access:
+#   - VPS_HOST: VPS server hostname or IP address
+#   - VPS_USER: SSH user on VPS (e.g., 'root' or 'deploy')
+#   - VPS_SSH_KEY: Private SSH key for authentication (RSA or ED25519)
+#   - VPS_PORT: SSH port (default: 22)
+#
+# Application Configuration:
+#   - VITE_API_BASE_URL: Backend API URL (e.g., https://api.langa.example.com)
+#   - APP_PORT: Port to expose container on VPS (default: 3000)
+#
+# Optional Secrets:
+#   - SLACK_WEBHOOK_URL: For deployment notifications
+#   - SENTRY_DSN: For error tracking
+#
+# SETUP INSTRUCTIONS:
+# ===================
+# 1. Generate SSH key pair on VPS:
+#    ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/github_deploy
+#    cat ~/.ssh/github_deploy.pub >> ~/.ssh/authorized_keys
+#    cat ~/.ssh/github_deploy  # Copy private key to GitHub Secrets as VPS_SSH_KEY
+#
+# 2. Docker Configuration:
+#    This workflow supports both standard and rootless Docker installations
+#    For rootless Docker (already configured), no additional setup needed
+#    Docker commands will run without sudo as the deployment user
+#
+# 3. Add secrets to GitHub repository:
+#    Settings → Secrets and variables → Actions → New repository secret
+#
+# 4. Optional: Set DOCKER_COMPOSE_FILE secret if using docker-compose
+#
+# 5. Update environment variables in this file if needed
+
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-vps.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  DOCKER_IMAGE_NAME: langa-dashboard
+  DOCKER_REGISTRY: docker.io  # Change to ghcr.io for GitHub Container Registry
+  CONTAINER_NAME: langa-dashboard
+  NODE_VERSION: '18'
+  DEPLOY_METHOD: docker-run  # Options: docker-run, docker-compose
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run type check
+        run: npm run check:types
+
+      - name: Run unit tests
+        run: npm run test -- --run
+
+      - name: Build application
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+        run: npm run build
+
+      - name: Check bundle size
+        run: |
+          if [ -f "./scripts/check-bundle-size.sh" ]; then
+            npm run check:bundle
+          else
+            echo "Bundle size check script not found, skipping"
+          fi
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: frontend/dist/
+          retention-days: 7
+
+  build-docker-image:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+
+      - name: Image digest
+        run: echo "Image digest:${{ steps.build.outputs.digest }}"
+
+  deploy-to-vps:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: build-docker-image
+    environment: 
+      name: ${{ github.event.inputs.environment || 'production' }}
+      url: http://${{ secrets.VPS_HOST }}:${{ secrets.APP_PORT || '3000' }}
+    
+    steps:
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
+
+      - name: Deploy to VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          DOCKER_REGISTRY: ${{ env.DOCKER_REGISTRY }}
+          DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
+          CONTAINER_NAME: ${{ env.CONTAINER_NAME }}
+          APP_PORT: ${{ secrets.APP_PORT || '3000' }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          DEPLOY_METHOD: ${{ env.DEPLOY_METHOD }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -p $VPS_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
+            set -e
+            
+            # Rootless Docker: Commands run without sudo
+            echo "ℹ️  Using rootless Docker configuration"
+            
+            echo "🔐 Logging into Docker registry..."
+            echo "$DOCKER_PASSWORD" | docker login $DOCKER_REGISTRY -u $DOCKER_USERNAME --password-stdin
+            
+            echo "📦 Pulling latest Docker image..."
+            docker pull $DOCKER_REGISTRY/$DOCKER_USERNAME/$DOCKER_IMAGE_NAME:latest
+            
+            if [ "$DEPLOY_METHOD" = "docker-compose" ]; then
+              echo "🚀 Deploying with docker-compose..."
+              
+              # Create docker-compose.yml if it doesn't exist
+              cat > ~/langa-dashboard/docker-compose.yml << 'COMPOSE_EOF'
+version: '3.8'
+
+services:
+  langa-dashboard:
+    image: ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${DOCKER_IMAGE_NAME}:latest
+    container_name: ${CONTAINER_NAME}
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT}:80"
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL}
+COMPOSE_EOF
+              
+              cd ~/langa-dashboard
+              docker-compose down || true
+              docker-compose up -d
+              
+            else
+              echo "🚀 Deploying with docker run..."
+              
+              echo "🛑 Stopping existing container (if running)..."
+              docker stop $CONTAINER_NAME 2>/dev/null || true
+              docker rm $CONTAINER_NAME 2>/dev/null || true
+              
+              echo "🚀 Starting new container..."
+              docker run -d \
+                --name $CONTAINER_NAME \
+                --restart unless-stopped \
+                -p $APP_PORT:80 \
+                -e VITE_API_BASE_URL=$VITE_API_BASE_URL \
+                $DOCKER_REGISTRY/$DOCKER_USERNAME/$DOCKER_IMAGE_NAME:latest
+            fi
+            
+            echo "🧹 Cleaning up old images..."
+            docker image prune -af --filter "until=168h"
+            
+            echo "✅ Deployment completed successfully!"
+            docker ps --filter "name=$CONTAINER_NAME" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+          ENDSSH
+
+      - name: Health check
+        run: |
+          echo "⏳ Waiting for application to start (30s)..."
+          sleep 30
+          
+          echo "🏥 Performing health check..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.VPS_HOST }}:${{ secrets.APP_PORT || '3000' }})
+          
+          if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "304" ]; then
+            echo "✅ Health check passed! Application is running (HTTP $HTTP_CODE)"
+          else
+            echo "❌ Health check failed! HTTP status: $HTTP_CODE"
+            exit 1
+          fi
+
+      - name: Cleanup SSH
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
+
+  notify:
+    name: Send Deployment Notification
+    runs-on: ubuntu-latest
+    needs: [build-and-test, build-docker-image, deploy-to-vps]
+    if: always()
+    
+    steps:
+      - name: Deployment Status
+        run: |
+          if [ "${{ needs.deploy-to-vps.result }}" == "success" ]; then
+            echo "✅ Deployment succeeded!"
+          else
+            echo "❌ Deployment failed!"
+            exit 1
+          fi
+
+      - name: Slack Notification
+        if: secrets.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "Deployment to VPS ${{ needs.deploy-to-vps.result == 'success' && 'succeeded ✅' || 'failed ❌' }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Langa Dashboard Deployment*\n*Status:* ${{ needs.deploy-to-vps.result == 'success' && '✅ Success' || '❌ Failed' }}\n*Environment:* ${{ github.event.inputs.environment || 'production' }}\n*Commit:* <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>\n*Author:* ${{ github.actor }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

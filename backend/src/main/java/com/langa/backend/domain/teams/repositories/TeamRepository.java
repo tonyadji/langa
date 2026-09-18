@@ -1,0 +1,24 @@
+package com.langa.backend.domain.teams.repositories;
+
+import com.langa.backend.domain.teams.Team;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+public interface TeamRepository {
+
+    Team save(Team team);
+
+    Optional<Team> findByOwnerAndName(String owner, String name);
+
+    Optional<Team> findByKey(String key);
+
+    Optional<Team> findById(String id);
+
+    List<Team> findByOwner(String owner);
+
+    Set<String> findTeamsKeysByMemberUsername(String username);
+
+    List<Team> findByOwnerOrTeamMember(String owner);
+}

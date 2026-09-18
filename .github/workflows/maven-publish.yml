@@ -1,0 +1,67 @@
+name: Publish Agent to Maven Central
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish to Maven Central'
+        required: true
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+          
+      - name: Import GPG key
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+          gpg --list-secret-keys --keyid-format LONG
+          
+      - name: Configure Maven settings
+        uses: whelk-io/maven-settings-xml-action@v21
+        with:
+          servers: |
+            [
+              {
+                "id": "central",
+                "username": "${{ secrets.CENTRAL_USERNAME }}",
+                "password": "${{ secrets.CENTRAL_TOKEN }}"
+              }
+            ]
+            
+      - name: Build and Test Agent
+        working-directory: ./agent
+        run: mvn clean verify
+        
+      - name: Publish to Maven Central
+        working-directory: ./agent
+        env:
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          mvn deploy -P release -DskipTests
+            
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: langa-agent-artifacts
+          path: agent/target/*.jar

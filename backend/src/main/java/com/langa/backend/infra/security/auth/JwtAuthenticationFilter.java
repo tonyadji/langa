@@ -1,7 +1,6 @@
 package com.langa.backend.infra.security.auth;
 
 import com.langa.backend.infra.security.utils.JwtUtils;
-import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Map;
 
 @Component
 @Slf4j
@@ -39,7 +39,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                auth.setDetails(Map.of("token", token, "request", new WebAuthenticationDetailsSource().buildDetails(request)));
+
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
         }

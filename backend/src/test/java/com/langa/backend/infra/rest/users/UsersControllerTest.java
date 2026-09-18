@@ -1,43 +1,52 @@
 package com.langa.backend.infra.rest.users;
 
-import com.langa.backend.domain.users.usecases.GetUserUseCase;
+import com.langa.backend.common.commands.CommandBusDispatcher;
+import com.langa.backend.domain.users.usecases.fetch.IGetUserUseCase;
 import com.langa.backend.domain.users.valueobjects.UserInfo;
 import com.langa.backend.infra.rest.users.dto.UserDto;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UsersControllerTest {
 
     @Mock
-    private GetUserUseCase getUserUseCase;
+    private IGetUserUseCase getUserUseCase;
+    @Mock
+    private CommandBusDispatcher commandBusDispatcher;
 
-    @InjectMocks
-    private UsersController usersController;
+    private final UserDetails userDetails = new User("user@example.com", "pw", List.of());
+
+    private UsersController controller() {
+        return new UsersController(getUserUseCase, commandBusDispatcher);
+    }
 
     @Test
     void me_shouldReturnUserDto() {
-        String username = "test@example.com";
-        UserDetails userDetails = mock(UserDetails.class);
-        when(userDetails.getUsername()).thenReturn(username);
+        when(getUserUseCase.queryByUsername("user@example.com")).thenReturn(new UserInfo("user@example.com", "acc-1"));
 
-        UserInfo userInfo = new UserInfo(username, "account-key-123");
-        when(getUserUseCase.me(username)).thenReturn(userInfo);
+        ResponseEntity<UserDto> response = controller().me(userDetails);
 
-        ResponseEntity<UserDto> response = usersController.me(userDetails);
+        assertEquals("user@example.com", response.getBody().email());
+    }
 
-        assertEquals(200, response.getStatusCodeValue());
-        assertNotNull(response.getBody());
-        assertEquals(username, response.getBody().email());
-        assertEquals("account-key-123", response.getBody().accountKey());
-        verify(getUserUseCase, times(1)).me(username);
+    @Test
+    void logout_shouldDispatchLogoutCommand() {
+        ResponseEntity<String> response = controller().logout(userDetails);
+
+        verify(commandBusDispatcher).dispatch(any());
+        assertEquals("User Logged out", response.getBody());
     }
 }

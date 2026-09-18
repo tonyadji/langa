@@ -2,62 +2,201 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.5</version>
-        <relativePath/> <!-- lookup parent from repository -->
-    </parent>
-    <groupId>com.langa</groupId>
+
+    <groupId>com.capricedumardi</groupId>
     <artifactId>langa-agent</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2-M1</version>
     <name>Langa-Agent</name>
-    <description>Langa-Agent</description>
-    <url/>
+    <description>Java Agent for collecting logs and metrics with support for Log4j2, Logback, and AOP-based monitoring</description>
+    <url>https://github.com/langa-org/langa</url>
+    
     <licenses>
-        <license/>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
     </licenses>
+    
     <developers>
-        <developer/>
+        <developer>
+            <id>tonyadji</id>
+            <name>Tony Adji</name>
+            <email>contact@capricedumardi.com</email>
+            <organization>Caprice du Mardi</organization>
+            <organizationUrl>https://github.com/tonyadji</organizationUrl>
+        </developer>
     </developers>
+    
     <scm>
-        <connection/>
-        <developerConnection/>
-        <tag/>
-        <url/>
+        <connection>scm:git:git://github.com/langa-org/langa.git</connection>
+        <developerConnection>scm:git:ssh://github.com:langa-org/langa.git</developerConnection>
+        <url>https://github.com/langa-org/langa/tree/main</url>
+        <tag>HEAD</tag>
     </scm>
     <properties>
         <java.version>17</java.version>
+        <kafka.version>4.1.1</kafka.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <gpg.executable>gpg</gpg.executable>
+        <spring.boot.version>3.5.5</spring.boot.version>
+        <log4j.version>2.25.3</log4j.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
+        <!-- Host-provided, same as log4j-core below: log4j-core's public API (LogEvent,
+             LoggerConfig, ...) is typed throughout with log4j-api classes (Level, Message,
+             the spi/util packages ProviderUtil/ThreadContextMapFactory/etc. depend on).
+             Bundling+relocating log4j-api while keeping log4j-core unshaded put two
+             incompatible copies of interdependent classes on the classpath (the agent's
+             relocated-except-for-a-few-classes copy vs the host's real one) and broke at
+             runtime with NoSuchMethodError/NoClassDefFoundError no matter how many
+             individual classes were carved out of the relocation. log4j-core already
+             requires a compatible log4j-api on the host's own classpath to run at all, so
+             there's nothing left to bundle it for. NOTE: this means the agent's internal
+             diagnostics/HMAC/buffer code that logs via log4j-api's LogManager will throw
+             NoClassDefFoundError if the host app has no log4j-api on its classpath at all
+             (e.g. a Logback-only app with no log4j-core/log4j-api dependency).
+             TODO: work on a more elegant solution for this
+             (e.g. have the internal diagnostics code stop depending on log4j-api at all)
+             so the agent doesn't regress on hosts with no log4j on their classpath. -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
-            <version>2.25.1</version>
+            <version>${log4j.version}</version>
+            <scope>provided</scope>
         </dependency>
+
+        <!-- Host-provided: LangaLog4jAppender/LangaLogbackAppender must be the exact
+             same classes as the host app's own Log4j2/Logback runtime to register as
+             appenders in it (a relocated or bundled copy would not be recognized by
+             the host's LoggerContext/Joran config, and could clash with the host's
+             own version). Never bundle or relocate these. -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
-            <version>2.25.1</version>
+            <version>${log4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.5.25</version>
+            <scope>provided</scope>
         </dependency>
 
+        <!-- Internal-only: bundled and relocated, no interop requirement with the host app. -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.13.1</version>
+            <version>2.13.2</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+            <version>5.6</version>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp</artifactId>
-            <version>5.1.0</version>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjrt</artifactId>
+            <version>1.9.25.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+            <version>1.9.25.1</version>
         </dependency>
 
+        <!-- Host-provided: SpringMonitoringAspect must be the exact same @Component/@Aspect
+             classes as the host app's own Spring context to be picked up by it. A relocated
+             copy would be invisible to the host's component scan. Versions are inherited from
+             the spring-boot-dependencies BOM above, so they stay aligned with spring.boot.version. -->
         <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.14</version>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aop</artifactId>
+            <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>6.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Internal-only (own KafkaProducer instance, no interop requirement with the
+             host's own Kafka usage): bundled and relocated so it never clashes with a
+             different kafka-clients version the host app might already depend on, and
+             optional so apps that only use HTTP ingestion don't get it forced on them. -->
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>${kafka.version}</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+       <!-- Actuator for metrics collection. Versions inherited from the spring-boot-dependencies
+            BOM above so they stay aligned with spring.boot.version instead of drifting. -->
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-actuator</artifactId>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-autoconfigure</artifactId>
+        <scope>provided</scope>
+      </dependency>
     </dependencies>
 
     <build>
@@ -67,16 +206,195 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
+                    <release>17</release>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.apache.logging.log4j</groupId>
                             <artifactId>log4j-core</artifactId>
-                            <version>2.25.1</version>
+                            <version>${log4j.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.12</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.5.0</version>
+                <configuration>
+                    <archive>
+                        <manifestFile>src/main/resources/META-INF/MANIFEST.MF</manifestFile>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+
+                            <relocations>
+                                <relocation>
+                                    <pattern>org.apache.hc.client5</pattern>
+                                    <shadedPattern>langa.shaded.hc.client5</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.apache.hc.core5</pattern>
+                                    <shadedPattern>langa.shaded.hc.core5</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.google</pattern>
+                                    <shadedPattern>langa.shaded.google</shadedPattern>
+                                </relocation>
+                                <!-- kafka-clients is bundled for standalone -javaagent use but relocated so it
+                                     never clashes with a different kafka-clients version already on the host
+                                     app's own classpath. -->
+                                <relocation>
+                                    <pattern>org.apache.kafka</pattern>
+                                    <shadedPattern>langa.shaded.kafka</shadedPattern>
+                                </relocation>
+                                <!-- org.apache.logging.log4j (both log4j-api and log4j-core) is NOT relocated
+                                     or bundled: both are now "provided" (see pom dependency comments), so
+                                     LangaLog4jAppender/AppenderBinding always see the exact same, single copy
+                                     of these classes as the host app's own Log4j2 runtime. -->
+                                <!-- spring-* and logback-classic are NOT relocated: they stay "provided" so
+                                     SpringMonitoringAspect/LangaLogbackAppender interoperate with the exact
+                                     Spring context / Logback runtime the host app already has (see pom
+                                     dependency comments). -->
+                            </relocations>
+
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+
+                            </filters>
+
+
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
+    
+    <profiles>
+        <!-- Profile for Maven Central deployment -->
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <!-- Maven Source Plugin - Required for Maven Central -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.4.0</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources-release</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    
+                    <!-- Maven Javadoc Plugin - Required for Maven Central -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.12.0</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs-release</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <doclint>none</doclint>
+                            <source>17</source>
+                        </configuration>
+                    </plugin>
+                    
+                    <!-- Maven GPG Plugin - For signing artifacts -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.8</version>
+                        <configuration>
+                          <!--suppress UnresolvedMavenProperty -->
+                          <passphrase>${env.MAVEN_GPG_PASSPHRASE}</passphrase>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    
+                    <!-- Central Publishing Maven Plugin - For deploying to Maven Central -->
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.10.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+            
+            <distributionManagement>
+                <snapshotRepository>
+                    <id>central</id>
+                    <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+                </snapshotRepository>
+                <repository>
+                    <id>central</id>
+                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                </repository>
+            </distributionManagement>
+        </profile>
+    </profiles>
 
 </project>
