@@ -13,7 +13,7 @@
  * - Enabled/disabled state
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
@@ -62,7 +62,7 @@ const mockMetricsResponse: MetricsResponse = {
 };
 
 const handlers = [
-  http.get(`${API_BASE_URL}/applications/:appId/metrics`, ({ params, request }) => {
+  http.get(`${API_BASE_URL}/applications/:appId/metrics`, ({ request }) => {
     const url = new URL(request.url);
     const name = url.searchParams.get('name');
     const status = url.searchParams.get('status');
@@ -108,14 +108,17 @@ describe('useMetrics Hook - Unit Tests', () => {
 
     // Initially loading
     expect(result.current.isLoading).toBe(true);
-    expect(result.current.metrics).toBeNull();
+    expect(result.current.metrics).toEqual([]);
 
     // Wait for data to load
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(result.current.metrics).toEqual(mockMetricsResponse);
+    expect(result.current.metrics).toEqual(mockMetricsResponse.paginatedMetrics.content);
+    expect(result.current.appName).toBe(mockMetricsResponse.appName);
+    expect(result.current.total).toBe(3);
+    expect(result.current.totalPages).toBe(1);
     expect(result.current.error).toBeNull();
   });
 
@@ -130,7 +133,7 @@ describe('useMetrics Hook - Unit Tests', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(result.current.metrics).toBeTruthy();
+    expect(result.current.metrics).toHaveLength(3);
   });
 
   it('should handle errors', async () => {
@@ -152,7 +155,7 @@ describe('useMetrics Hook - Unit Tests', () => {
     });
 
     expect(result.current.error).toBeTruthy();
-    expect(result.current.metrics).toBeNull();
+    expect(result.current.metrics).toEqual([]);
   });
 
   it('should filter metrics by name', async () => {
@@ -167,9 +170,9 @@ describe('useMetrics Hook - Unit Tests', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(result.current.metrics?.paginatedMetrics.content).toHaveLength(3);
+    expect(result.current.metrics).toHaveLength(3);
     expect(
-      result.current.metrics?.paginatedMetrics.content.every(m => m.name === 'api.request')
+      result.current.metrics.every(m => m.name === 'api.request')
     ).toBe(true);
   });
 
@@ -185,9 +188,9 @@ describe('useMetrics Hook - Unit Tests', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(result.current.metrics?.paginatedMetrics.content).toHaveLength(2);
+    expect(result.current.metrics).toHaveLength(2);
     expect(
-      result.current.metrics?.paginatedMetrics.content.every(m => m.status === 'SUCCESS')
+      result.current.metrics.every(m => m.status === 'SUCCESS')
     ).toBe(true);
   });
 
@@ -222,7 +225,7 @@ describe('useMetrics Hook - Unit Tests', () => {
 
     // Should remain in initial state
     expect(result.current.isLoading).toBe(false);
-    expect(result.current.metrics).toBeNull();
+    expect(result.current.metrics).toEqual([]);
     expect(result.current.error).toBeNull();
   });
 
@@ -234,7 +237,7 @@ describe('useMetrics Hook - Unit Tests', () => {
     );
 
     expect(result.current.isLoading).toBe(false);
-    expect(result.current.metrics).toBeNull();
+    expect(result.current.metrics).toEqual([]);
   });
 
   it('should apply multiple filters simultaneously', async () => {
@@ -250,8 +253,8 @@ describe('useMetrics Hook - Unit Tests', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(result.current.metrics?.paginatedMetrics.content).toHaveLength(1);
-    const metric = result.current.metrics?.paginatedMetrics.content[0];
+    expect(result.current.metrics).toHaveLength(1);
+    const metric = result.current.metrics[0];
     expect(metric?.name).toBe('api.request');
     expect(metric?.status).toBe('FAILURE');
   });

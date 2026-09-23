@@ -8,8 +8,8 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import axios from 'axios';
-import { Team, TeamMember, TeamRole, CreateTeamRequest } from '@/types/team';
+import axios, { type AxiosError } from 'axios';
+import { Team, TeamRole, CreateTeamRequest } from '@/types/team';
 
 const API_BASE_URL = 'http://localhost:8080';
 
@@ -98,9 +98,10 @@ describe('POST /api/teams - Contract Tests', () => {
     try {
       await axios.post(`${API_BASE_URL}/api/teams`, request);
       expect.fail('Should have thrown error');
-    } catch (error: any) {
-      expect(error.response.status).toBe(400);
-      expect(error.response.data.error).toContain('required');
+    } catch (caught) {
+      const error = caught as AxiosError<{ error: string }>;
+      expect(error.response?.status).toBe(400);
+      expect(error.response?.data.error).toContain('required');
     }
   });
   
@@ -112,9 +113,10 @@ describe('POST /api/teams - Contract Tests', () => {
     try {
       await axios.post(`${API_BASE_URL}/api/teams`, request);
       expect.fail('Should have thrown error');
-    } catch (error: any) {
-      expect(error.response.status).toBe(409);
-      expect(error.response.data.error).toContain('already exists');
+    } catch (caught) {
+      const error = caught as AxiosError<{ error: string }>;
+      expect(error.response?.status).toBe(409);
+      expect(error.response?.data.error).toContain('already exists');
     }
   });
   

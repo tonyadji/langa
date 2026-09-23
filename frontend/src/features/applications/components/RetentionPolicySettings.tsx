@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { RetentionUnit } from '@/types';
 import type { RetentionPolicy } from '@/types';
 import { Button } from '@/components/common/Button';
@@ -20,13 +20,15 @@ export const RetentionPolicySettings: React.FC<RetentionPolicySettingsProps> = (
   const [unit, setUnit] = useState<RetentionUnit>(initialPolicy?.unit || RetentionUnit.Days);
   const [showSuccess, setShowSuccess] = useState(false);
   
-  // Update local state when initialPolicy changes (e.g. after fetch)
-  useEffect(() => {
+  // Update local state when initialPolicy changes (e.g. after fetch), while rendering: no effect needed
+  const [previousPolicy, setPreviousPolicy] = useState(initialPolicy);
+  if (initialPolicy !== previousPolicy) {
+    setPreviousPolicy(initialPolicy);
     if (initialPolicy) {
-        setDuration(initialPolicy.duration);
-        setUnit(initialPolicy.unit);
+      setDuration(initialPolicy.duration);
+      setUnit(initialPolicy.unit);
     }
-  }, [initialPolicy]);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +36,7 @@ export const RetentionPolicySettings: React.FC<RetentionPolicySettingsProps> = (
       await onSave(duration, unit);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-    } catch (e) {
+    } catch {
       // Error handled by parent
     }
   };

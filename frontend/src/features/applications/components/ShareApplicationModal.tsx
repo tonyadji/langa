@@ -5,7 +5,7 @@
  * Provides form for entering email/team key and selecting share type.
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X } from 'lucide-react';
 import { useShareApplication } from '../hooks/useShareApplication';
 import { SharedWithProfile } from '@/types';
@@ -29,10 +29,19 @@ export const ShareApplicationModal = ({
   const [profile, setProfile] = useState<SharedWithProfile>(SharedWithProfile.USER);
   const [validationError, setValidationError] = useState('');
 
-  const { shareApplication, isLoading, isSuccess, isError, error, reset } =
-    useShareApplication();
+  const { shareApplication, isLoading, isError, error, reset } = useShareApplication();
 
-  // Move handleClose before useEffect that uses it
+  // Reset the form each time the modal opens (adjusting state while rendering, no effect needed)
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (isOpen !== wasOpen) {
+    setWasOpen(isOpen);
+    if (isOpen) {
+      setSharedWith('');
+      setProfile(SharedWithProfile.USER);
+      setValidationError('');
+    }
+  }
+
   const handleClose = () => {
     setSharedWith('');
     setProfile(SharedWithProfile.USER);
@@ -40,22 +49,6 @@ export const ShareApplicationModal = ({
     reset();
     onClose();
   };
-
-  useEffect(() => {
-    if (isSuccess) {
-      onSuccess?.();
-      handleClose();
-    }
-  }, [isSuccess, onSuccess, handleClose]);
-
-  // Reset form when modal initially opens (not on every render)
-  useEffect(() => {
-    if (isOpen) {
-      setSharedWith('');
-      setProfile(SharedWithProfile.USER);
-      setValidationError('');
-    }
-  }, [isOpen]);
 
   const validateForm = (): boolean => {
     if (!sharedWith.trim()) {
@@ -87,9 +80,12 @@ export const ShareApplicationModal = ({
         shareWith: sharedWith,
         profile,
       });
-    } catch (error) {
-      // Error is handled by the hook state
+    } catch {
+      // Error is displayed from the hook state
+      return;
     }
+    onSuccess?.();
+    handleClose();
   };
 
   if (!isOpen) {

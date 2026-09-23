@@ -53,5 +53,5 @@ if (typeof global.ProgressEvent === 'undefined') {
       this.total = eventInitDict?.total || 0;
     }
   }
-  global.ProgressEvent = ProgressEvent as any;
+  global.ProgressEvent = ProgressEvent as unknown as typeof global.ProgressEvent;
 }

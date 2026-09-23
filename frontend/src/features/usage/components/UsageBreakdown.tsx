@@ -36,6 +36,31 @@ interface UsageBreakdownProps {
   onTimePeriodChange?: (period: TimePeriod) => void;
 }
 
+/** Props injected by Recharts into the tooltip content */
+interface TrendTooltipProps {
+  active?: boolean;
+  payload?: Array<{ value: number; payload: { date: string } }>;
+}
+
+function TrendTooltip({ active, payload }: TrendTooltipProps) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg">
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+          {payload[0].payload.date}
+        </p>
+        <p className="text-sm text-blue-600 dark:text-blue-400">
+          Logs: {formatBytes(payload[0].value)}
+        </p>
+        <p className="text-sm text-green-600 dark:text-green-400">
+          Metrics: {formatBytes(payload[1]?.value ?? 0)}
+        </p>
+      </div>
+    );
+  }
+  return null;
+}
+
 export function UsageBreakdown({
   usage,
   isLoading,
@@ -123,26 +148,6 @@ export function UsageBreakdown({
 
   const trendData = generateTrendData(timePeriod);
 
-  // Custom tooltip formatter
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg">
-          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-            {payload[0].payload.date}
-          </p>
-          <p className="text-sm text-blue-600 dark:text-blue-400">
-            Logs: {formatBytes(payload[0].value)}
-          </p>
-          <p className="text-sm text-green-600 dark:text-green-400">
-            Metrics: {formatBytes(payload[1].value)}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
     <div
       data-testid="usage-breakdown"
@@ -215,7 +220,7 @@ export function UsageBreakdown({
               tick={{ fill: isDark ? '#9ca3af' : '#6b7280', fontSize: 12 }}
               stroke={isDark ? '#6b7280' : '#9ca3af'}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<TrendTooltip />} />
             <Legend
               wrapperStyle={{ paddingTop: '20px' }}
               iconType="line"

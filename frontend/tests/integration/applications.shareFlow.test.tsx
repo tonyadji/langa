@@ -33,26 +33,6 @@ const mockApplication: Application = {
   createdAt: '2025-01-01T00:00:00.000Z',
 };
 
-const mockSharedApplication: Application = {
-  ...mockApplication,
-  sharedWith: [
-    {
-      key: 'user-456',
-      profile: 'USER',
-      sharedDate: '2025-01-01T12:00:00.000Z',
-    },
-  ],
-  // Shared users don't see secrets
-  key: undefined,
-  secret: undefined,
-};
-
-const mockShareResponse: ShareWith = {
-  key: 'user-456',
-  profile: 'USER',
-  sharedDate: '2025-01-01T12:00:00.000Z',
-};
-
 let applicationSharedWith: ShareWith[] = [];
 
 const handlers = [
@@ -87,9 +67,7 @@ const handlers = [
   }),
 
   // Revoke access
-  http.post(`${API_BASE_URL}/applications/app-123/revoke`, async ({ request }) => {
-    const body = (await request.json()) as { sharedWith: string; profile: string };
-    
+  http.post(`${API_BASE_URL}/applications/app-123/revoke-sharing`, async () => {
     applicationSharedWith = applicationSharedWith.filter(
       (share) => share.key !== 'user-456'
     );

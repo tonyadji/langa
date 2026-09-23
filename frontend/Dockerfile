@@ -18,7 +18,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install all dependencies (dev + production)
-RUN npm ci && npm install -D terser
+RUN npm ci
 
 # Copy all configuration files
 COPY tsconfig.json tsconfig.app.json tsconfig.node.json ./

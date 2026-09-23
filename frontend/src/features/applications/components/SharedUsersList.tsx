@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { Trash2, User, Users } from 'lucide-react';
 import { useShareApplication } from '../hooks/useShareApplication';
 import type { ShareWith } from '@/types';
+import { getApiErrorMessage } from '@/services/apiError';
 
 interface SharedUsersListProps {
   applicationId: string;
@@ -46,20 +47,9 @@ export const SharedUsersList = ({
       if (onRevokeSuccess) {
         await onRevokeSuccess();
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to revoke access:', err);
-      // Extract error message from various error formats
-      let errorMessage = 'Failed to revoke access. Please try again.';
-      
-      if (err?.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err instanceof Error) {
-        errorMessage = err.message;
-      } else if (typeof err === 'string') {
-        errorMessage = err;
-      }
-      
-      setError(errorMessage);
+      setError(getApiErrorMessage(err, 'Failed to revoke access. Please try again.'));
     }
   };
 

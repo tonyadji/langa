@@ -26,6 +26,7 @@ export interface AuthContextType extends AuthState {
 // Context
 // ============================================================================
 
+// eslint-disable-next-line react-refresh/only-export-components -- the context belongs with its provider
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 // ============================================================================

@@ -400,33 +400,12 @@ VITE_ENABLE_DEBUG=false
 
 #### CI/CD with GitHub Actions
 
-The repository includes a GitHub Actions workflow for automated deployment:
+Workflows live at the repository root (`.github/workflows`):
 
-**.github/workflows/deploy-vps.yml**
-
-```yaml
-name: Deploy to VPS
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
-        with:
-          context: ./frontend
-          platforms: linux/amd64
-          push: true
-          tags: ktac95/langa-dashboard:latest
-          build-args: |
-            VITE_API_BASE_URL=https://langa-production.up.railway.app/api
-```
+- **frontend-ci.yml**: lint, type check, tests, build and dependency audit on every push / pull request touching `frontend/`.
+- **frontend-deploy.yml**: on `main`, builds the Docker image (Vite settings baked in from the repository
+  variables `VITE_API_BASE_URL`, `VITE_AUTH_PROVIDER`, `VITE_ENTRA_*`), pushes it and deploys it to the VPS over SSH.
+  Required secrets and variables are listed at the top of the workflow.
 
 #### Health Checks
 

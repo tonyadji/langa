@@ -10,6 +10,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { useTeamInvitations } from '@/features/teams/hooks/useTeamInvitations';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { getApiErrorMessage } from '@/services/apiError';
 
 export const AcceptInvitationPage: React.FC = () => {
   const { teamId, token } = useParams<{ teamId: string; token: string }>();
@@ -45,7 +46,7 @@ export const AcceptInvitationPage: React.FC = () => {
       }
 
       try {
-        const response = await acceptInvitation(teamId, token, currentUserEmail);
+        const response = await acceptInvitation(teamId, token);
         setTeamName(response.team);
         setStatus('success');
         
@@ -53,10 +54,9 @@ export const AcceptInvitationPage: React.FC = () => {
         setTimeout(() => {
           navigate('/teams');
         }, 3000);
-      } catch (err: any) {
+      } catch (err) {
         setStatus('error');
-        const message = err?.response?.data?.error || err.message || 'Failed to accept invitation';
-        setErrorMessage(message);
+        setErrorMessage(getApiErrorMessage(err, 'Failed to accept invitation'));
       }
     };
 

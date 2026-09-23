@@ -12,7 +12,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { ProfilePage } from './ProfilePage';
-import { AuthContext } from '@/features/auth/context/AuthContext';
+import { AuthContext, type AuthContextType } from '@/features/auth/context/AuthContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 
 const mockLogout = vi.fn();
 const mockNavigate = vi.fn();
@@ -25,20 +26,21 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-const mockAuthContextValue = {
+const mockAuthContextValue: AuthContextType = {
   user: {
-    id: '123',
     email: 'user@example.com',
-    createdAt: '2025-01-01T00:00:00Z',
+    username: 'user@example.com',
+    accountKey: 'acc-123',
+    role: 'USER',
+    firstConnection: false,
   },
   isAuthenticated: true,
   isLoading: false,
-  accessToken: 'mock-token',
-  refreshToken: 'mock-refresh-token',
   login: vi.fn(),
   register: vi.fn(),
   logout: mockLogout,
-  refreshTokens: vi.fn(),
+  updateUser: vi.fn(),
+  fetchUserProfile: vi.fn().mockResolvedValue(undefined),
 };
 
 describe('ProfilePage Component Tests', () => {
@@ -48,11 +50,13 @@ describe('ProfilePage Component Tests', () => {
 
   it('should render user profile information', () => {
     render(
-      <BrowserRouter>
+      <ThemeProvider>
+        <BrowserRouter>
         <AuthContext.Provider value={mockAuthContextValue}>
           <ProfilePage />
         </AuthContext.Provider>
       </BrowserRouter>
+        </ThemeProvider>
     );
     
     expect(screen.getByText(/profile/i)).toBeInTheDocument();
@@ -61,11 +65,13 @@ describe('ProfilePage Component Tests', () => {
 
   it('should display user email', () => {
     render(
-      <BrowserRouter>
+      <ThemeProvider>
+        <BrowserRouter>
         <AuthContext.Provider value={mockAuthContextValue}>
           <ProfilePage />
         </AuthContext.Provider>
       </BrowserRouter>
+        </ThemeProvider>
     );
     
     expect(screen.getByText('user@example.com')).toBeInTheDocument();
@@ -73,11 +79,13 @@ describe('ProfilePage Component Tests', () => {
 
   it('should have a logout button', () => {
     render(
-      <BrowserRouter>
+      <ThemeProvider>
+        <BrowserRouter>
         <AuthContext.Provider value={mockAuthContextValue}>
           <ProfilePage />
         </AuthContext.Provider>
       </BrowserRouter>
+        </ThemeProvider>
     );
     
     const logoutButton = screen.getByRole('button', { name: /log out/i });
@@ -88,11 +96,13 @@ describe('ProfilePage Component Tests', () => {
     const user = userEvent.setup();
     
     render(
-      <BrowserRouter>
+      <ThemeProvider>
+        <BrowserRouter>
         <AuthContext.Provider value={mockAuthContextValue}>
           <ProfilePage />
         </AuthContext.Provider>
       </BrowserRouter>
+        </ThemeProvider>
     );
     
     const logoutButton = screen.getByRole('button', { name: /log out/i });
@@ -105,11 +115,13 @@ describe('ProfilePage Component Tests', () => {
     const user = userEvent.setup();
     
     render(
-      <BrowserRouter>
+      <ThemeProvider>
+        <BrowserRouter>
         <AuthContext.Provider value={mockAuthContextValue}>
           <ProfilePage />
         </AuthContext.Provider>
       </BrowserRouter>
+        </ThemeProvider>
     );
     
     const logoutButton = screen.getByRole('button', { name: /log out/i });
@@ -120,16 +132,18 @@ describe('ProfilePage Component Tests', () => {
     });
   });
 
-  it('should show user ID if available', () => {
+  it('should show the account key', () => {
     render(
-      <BrowserRouter>
+      <ThemeProvider>
+        <BrowserRouter>
         <AuthContext.Provider value={mockAuthContextValue}>
           <ProfilePage />
         </AuthContext.Provider>
       </BrowserRouter>
+        </ThemeProvider>
     );
     
-    expect(screen.getByText(/123/)).toBeInTheDocument();
+    expect(screen.getByText('acc-123')).toBeInTheDocument();
   });
 
   it('should redirect to login if user is not authenticated', () => {
@@ -140,11 +154,13 @@ describe('ProfilePage Component Tests', () => {
     };
 
     render(
-      <BrowserRouter>
+      <ThemeProvider>
+        <BrowserRouter>
         <AuthContext.Provider value={unauthenticatedContext}>
           <ProfilePage />
         </AuthContext.Provider>
       </BrowserRouter>
+        </ThemeProvider>
     );
     
     // Should redirect immediately

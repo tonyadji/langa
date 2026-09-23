@@ -6,14 +6,15 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import api from '@/services/api';
-import type { TeamInvitation, AcceptInvitationRequest, AcceptInvitationResponse, InviteMemberRequest, Team } from '@/types/team';
+import type { TeamInvitation, AcceptInvitationResponse, InviteMemberRequest, Team } from '@/types/team';
 
 interface UseTeamInvitationsReturn {
   invitations: TeamInvitation[];
   isLoading: boolean;
   error: Error | null;
   inviteMember: (data: InviteMemberRequest) => Promise<Team>;
-  acceptInvitation: (teamId: string, invitationToken: string, guest: string) => Promise<AcceptInvitationResponse>;
+  /** Accepts an invitation for the signed-in user (the backend takes the guest from the access token). */
+  acceptInvitation: (teamId: string, invitationToken: string) => Promise<AcceptInvitationResponse>;
   refetch: () => Promise<void>;
 }
 
@@ -47,9 +48,10 @@ export const useTeamInvitations = (): UseTeamInvitationsReturn => {
     return response.data;
   }, []);
 
-  const acceptInvitation = useCallback(async (teamId: string, invitationToken: string, guest: string): Promise<AcceptInvitationResponse> => {
-    const data: AcceptInvitationRequest = { guest, invitationToken };
-    const response = await api.post<AcceptInvitationResponse>(`/team-invitations/${teamId}/accept?invitationToken=${invitationToken}`, data);
+  const acceptInvitation = useCallback(async (teamId: string, invitationToken: string): Promise<AcceptInvitationResponse> => {
+    const response = await api.post<AcceptInvitationResponse>(`/team-invitations/${teamId}/accept`, undefined, {
+      params: { invitationToken },
+    });
     await fetchInvitations(); // Refetch to update list
     return response.data;
   }, [fetchInvitations]);
