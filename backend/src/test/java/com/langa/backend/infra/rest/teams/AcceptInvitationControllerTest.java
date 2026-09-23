@@ -6,13 +6,15 @@ import com.langa.backend.domain.teams.valueobjects.TeamInvitation;
 import com.langa.backend.domain.teams.valueobjects.TeamInvitationIdentity;
 import com.langa.backend.domain.teams.valueobjects.TeamInvitationPeriod;
 import com.langa.backend.domain.teams.valueobjects.TeamInvitationStakeHolders;
-import com.langa.backend.infra.rest.teams.dto.AcceptInvitationRequest;
 import com.langa.backend.infra.rest.teams.dto.GetInvitationResponseDto;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.ArgumentCaptor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.User;
+import com.langa.backend.domain.teams.usecases.invitations.accept.AcceptInvitationCommand;
 
 import java.time.LocalDateTime;
 
@@ -37,8 +39,11 @@ class AcceptInvitationControllerTest {
         when(commandBusDispatcher.dispatch(any())).thenReturn(invitation);
 
         ResponseEntity<GetInvitationResponseDto> response = controller.acceptInvitation(
-                "team-1", "token-1", new AcceptInvitationRequest("guest@example.com", "token-1"));
+                new User("guest@example.com", "", java.util.List.of()), "team-1", "token-1");
 
         assertEquals(InvitationStatus.ACCEPTED, response.getBody().status());
+        ArgumentCaptor<AcceptInvitationCommand> command = ArgumentCaptor.forClass(AcceptInvitationCommand.class);
+        org.mockito.Mockito.verify(commandBusDispatcher).dispatch(command.capture());
+        assertEquals("guest@example.com", command.getValue().guest(), "the guest is the signed-in user");
     }
 }

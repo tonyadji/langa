@@ -18,14 +18,9 @@ export const TeamsPage: React.FC = () => {
   const { invitations, acceptInvitation, refetch: refetchInvitations } = useTeamInvitations();
 
   const handleAcceptInvitation = async (invitationToken: string) => {
-    // Extract teamId and guest from the first invitation
     const invitation = invitations.find(inv => inv.identity.invitationToken === invitationToken);
     if (invitation) {
-      await acceptInvitation(
-        invitation.identity.teamId,
-        invitationToken,
-        invitation.stakeHolders.guest
-      );
+      await acceptInvitation(invitation.identity.teamId, invitationToken);
       await refetchInvitations();
     }
   };

@@ -6,6 +6,11 @@ FROM --platform=linux/amd64 node:20-alpine AS builder
 
 # Accept build arguments
 ARG VITE_API_BASE_URL=https://langa-production.up.railway.app/api
+# Identity provider and Microsoft Entra External ID settings (example values: override with --build-arg)
+ARG VITE_AUTH_PROVIDER=entra
+ARG VITE_ENTRA_CLIENT_ID=22222222-2222-2222-2222-222222222222
+ARG VITE_ENTRA_AUTHORITY=https://your-tenant.ciamlogin.com/00000000-0000-0000-0000-000000000000/
+ARG VITE_ENTRA_API_SCOPE=api://11111111-1111-1111-1111-111111111111/access_as_user
 
 WORKDIR /app
 
@@ -13,7 +18,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install all dependencies (dev + production)
-RUN npm ci && npm install -D terser
+RUN npm ci
 
 # Copy all configuration files
 COPY tsconfig.json tsconfig.app.json tsconfig.node.json ./
@@ -26,6 +31,10 @@ COPY public ./public
 
 # Set environment variable for build
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_AUTH_PROVIDER=$VITE_AUTH_PROVIDER
+ENV VITE_ENTRA_CLIENT_ID=$VITE_ENTRA_CLIENT_ID
+ENV VITE_ENTRA_AUTHORITY=$VITE_ENTRA_AUTHORITY
+ENV VITE_ENTRA_API_SCOPE=$VITE_ENTRA_API_SCOPE
 
 # Build the application with TypeScript type checking
 RUN npm run build

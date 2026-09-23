@@ -1,5 +1,6 @@
 package com.langa.backend.infra.adapters.persistence.logentries;
 
+import java.util.regex.Pattern;
 import com.langa.backend.domain.applications.repositories.LogQueryRepository;
 import com.langa.backend.domain.applications.valueobjects.LogEntry;
 import com.langa.backend.domain.applications.valueobjects.LogFilter;
@@ -53,7 +54,8 @@ public class LogEntryRepositoryImpl implements LogQueryRepository {
         }
 
         if (filter.getKeyword() != null && !filter.getKeyword().isEmpty()) {
-            query.addCriteria(Criteria.where("message").regex(".*" + filter.getKeyword() + ".*", "i"));
+            // The keyword is matched literally: user input must never be interpreted as a regular expression
+            query.addCriteria(Criteria.where("message").regex(Pattern.quote(filter.getKeyword()), "i"));
         }
 
         if (filter.getStartDate() != null || filter.getEndDate() != null) {

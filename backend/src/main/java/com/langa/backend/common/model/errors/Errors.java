@@ -26,17 +26,28 @@ public enum Errors {
 
 
 
+    DEV_TOKEN_SIGN_IN_UNSUPPORTED(400, "400-300", "This account cannot sign in with an email code"),
+    DEV_TOKEN_SESSION_EXPIRED(400, "400-301", "Sign-in session expired, start again"),
+    DEV_TOKEN_ATTRIBUTES_REQUIRED(400, "400-302", "The sign-up requires attributes that cannot be provided"),
+    DEV_TOKEN_INVALID_CONTINUATION(400, "400-303", "Invalid continuation token, start again"),
+
     INVALID_CREDENTIALS(401,"401-000" ,"Invalid credentials"),
+    DEV_TOKEN_INVALID_CODE(401, "401-001", "Invalid verification code"),
     TOO_MANY_LOGIN_ATTEMPTS(429,"429-000" ,"Too many login attempts, please try again later"),
 
     ACCESS_DENIED(403,"403-000", "Access denied"),
     ILLEGAL_INGESTION_REQUEST(403,"403-001" ,"Illegal ingestion request"),
 
+    INGESTION_PAYLOAD_TOO_LARGE(413, "413-000", "Ingestion payload too large"),
+    INGESTION_RATE_LIMITED(429, "429-001", "Too many ingestion requests, please retry later"),
+
     VALIDATION_ERROR(400,"400", "Validation error"),
 
     INTERNAL_SERVER_ERROR(500,"500", "Internal server error"),
 
-    NOTIFICATION_MAIL_ERROR(500,"500-001" , "Error sending notification email" );
+    NOTIFICATION_MAIL_ERROR(500,"500-001" , "Error sending notification email" ),
+
+    IDENTITY_PROVIDER_ERROR(502, "502-000", "Identity provider error");
 
     private final int httpCode;
     private final String code;

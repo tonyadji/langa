@@ -24,6 +24,7 @@ public class OutboxEventDocument {
     private LocalDateTime processedDate;
     private boolean processed;
     private boolean errored;
+    private int attempts;
 
     public OutboxEvent toOutboxEvent() {
         return new OutboxEvent()
@@ -34,6 +35,7 @@ public class OutboxEventDocument {
                 .setPayload(payload)
                 .setProcessed(processed)
                 .setError(errored)
+                .setAttempts(attempts)
                 .setCreatedDate(createdDate)
                 .setProcessedDate(processedDate);
     }
@@ -49,6 +51,7 @@ public class OutboxEventDocument {
                 .processedDate(outboxEvent.getProcessedDate())
                 .processed(outboxEvent.isProcessed())
                 .errored(outboxEvent.isError())
+                .attempts(outboxEvent.getAttempts())
                 .build();
     }
 }

@@ -6,9 +6,9 @@
  */
 
 import { useState, useCallback } from 'react';
-import { AxiosError } from 'axios';
 import { applicationApi } from '@/services/applicationApi';
 import type { Application } from '@/types';
+import { getApiErrorMessage } from '@/services/apiError';
 
 interface CreateApplicationInput {
   name: string;
@@ -45,15 +45,7 @@ export function useCreateApplication(
         onSuccess?.(application);
         return application;
       } catch (err) {
-        let errorMessage = 'Failed to create application';
-        
-        if (err instanceof AxiosError && err.response?.data?.error) {
-          errorMessage = err.response.data.error;
-        } else if (err instanceof Error) {
-          errorMessage = err.message;
-        }
-        
-        const error = new Error(errorMessage);
+        const error = new Error(getApiErrorMessage(err, 'Failed to create application'));
         setError(error);
         onError?.(error);
         throw error;

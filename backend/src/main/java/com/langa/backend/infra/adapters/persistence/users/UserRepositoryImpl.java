@@ -30,8 +30,14 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public Optional<User> findByFistConnectionToken(String token) {
-        return mongoUserDao.findByFirstConnectionToken(token)
+    public Optional<User> findByEmailIgnoreCase(String email) {
+        return mongoUserDao.findFirstByEmailIgnoreCase(email)
+                .map(UserDocument::toUser);
+    }
+
+    @Override
+    public Optional<User> findByExternalIdentity(String provider, String subject) {
+        return mongoUserDao.findByIdentityProviderAndExternalId(provider, subject)
                 .map(UserDocument::toUser);
     }
 

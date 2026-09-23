@@ -44,27 +44,6 @@ export interface User {
   registrationDate?: string;
 }
 
-export interface RegisterRequest {
-  username: string;
-  password: string;
-  confirmationPassword: string;
-}
-
-export interface LoginRequest {
-  username: string; // Can be username, email, or any identifier
-  password: string;
-}
-
-export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  email: string;
-}
-
-export interface RefreshTokenRequest {
-  refreshToken: string;
-}
-
 export interface ApplicationLogsResponse {
   appName: string;
   paginatedLogs: PaginatedResponse<LogEntry>;

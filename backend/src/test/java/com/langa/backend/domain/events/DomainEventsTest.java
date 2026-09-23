@@ -1,5 +1,6 @@
 package com.langa.backend.domain.events;
 
+import com.langa.backend.domain.users.valueobjects.ExternalIdentity;
 import com.langa.backend.domain.applications.Application;
 import com.langa.backend.domain.applications.events.ApplicationCreatedEvent;
 import com.langa.backend.domain.applications.events.ApplicationSharedEvent;
@@ -10,7 +11,6 @@ import com.langa.backend.domain.teams.events.TeamInvitationAcceptedForHostEvent;
 import com.langa.backend.domain.teams.events.TeamInvitationEmailEvent;
 import com.langa.backend.domain.teams.valueobjects.TeamInvitation;
 import com.langa.backend.domain.users.User;
-import com.langa.backend.domain.users.events.AccountSetupCompleteMailEvent;
 import com.langa.backend.domain.users.events.ActiveUserRegisteredEvent;
 import com.langa.backend.domain.users.events.FirstConnectionMailEvent;
 import org.junit.jupiter.api.Test;
@@ -43,7 +43,7 @@ class DomainEventsTest {
 
     @Test
     void activeUserRegisteredEvent_shouldExposeAggregateInfo() {
-        User user = User.createActive("user@example.com", "encoded");
+        User user = User.createFromExternalIdentity(new ExternalIdentity("entra", "oid-1", "user@example.com"));
         ActiveUserRegisteredEvent event = ActiveUserRegisteredEvent.of(user);
 
         assertEquals(user.getId(), event.getAggregateId());
@@ -52,19 +52,8 @@ class DomainEventsTest {
     }
 
     @Test
-    void accountSetupCompleteMailEvent_shouldExposeAggregateInfo() {
-        User user = User.createActive("user@example.com", "encoded");
-        AccountSetupCompleteMailEvent event = AccountSetupCompleteMailEvent.of(user);
-
-        assertEquals(user.getId(), event.getAggregateId());
-        assertEquals("User", event.getAggregateType());
-        assertNotNull(event.getEventType());
-    }
-
-    @Test
     void firstConnectionMailEvent_shouldExposeAggregateInfo() {
-        User user = User.createNew("user@example.com", "temp");
-        user.buildFirstConnectionToken();
+        User user = User.createInvited("user@example.com");
         FirstConnectionMailEvent event = FirstConnectionMailEvent.of(user);
 
         assertEquals(user.getAccountKey(), event.getAggregateId());

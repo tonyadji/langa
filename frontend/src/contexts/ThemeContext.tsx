@@ -36,16 +36,6 @@ function getSystemTheme(): ResolvedTheme {
 }
 
 /**
- * Resolves the actual theme to apply based on user preference
- */
-function resolveTheme(theme: Theme): ResolvedTheme {
-  if (theme === 'system') {
-    return getSystemTheme();
-  }
-  return theme;
-}
-
-/**
  * Applies the theme to the document element
  */
 function applyTheme(resolvedTheme: ResolvedTheme) {
@@ -67,23 +57,21 @@ export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProvid
   // Get initial theme from localStorage or use default
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window === 'undefined') return defaultTheme;
-    
+
     const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
     return stored || defaultTheme;
   });
 
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => 
-    resolveTheme(theme)
-  );
+  // System preference, kept in sync with the OS setting
+  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(getSystemTheme);
+
+  // Derived: no state to keep in sync
+  const resolvedTheme: ResolvedTheme = theme === 'system' ? systemTheme : theme;
 
   // Update theme when preference changes
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
     localStorage.setItem(STORAGE_KEY, newTheme);
-    
-    const resolved = resolveTheme(newTheme);
-    setResolvedTheme(resolved);
-    applyTheme(resolved);
   };
 
   // Toggle between light and dark (skips system)
@@ -91,36 +79,29 @@ export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProvid
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
   };
 
-  // Apply theme on mount and when it changes
+  // Apply the resolved theme to the document
   useEffect(() => {
-    const resolved = resolveTheme(theme);
-    setResolvedTheme(resolved);
-    applyTheme(resolved);
-  }, [theme]);
+    applyTheme(resolvedTheme);
+  }, [resolvedTheme]);
 
-  // Listen for system theme changes when using system preference
+  // Follow system theme changes
   useEffect(() => {
-    if (theme !== 'system') return;
+    if (typeof window === 'undefined') return;
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
-    const handleChange = () => {
-      const resolved = getSystemTheme();
-      setResolvedTheme(resolved);
-      applyTheme(resolved);
-    };
+    const handleChange = () => setSystemTheme(getSystemTheme());
 
     // Modern browsers
     if (mediaQuery.addEventListener) {
       mediaQuery.addEventListener('change', handleChange);
       return () => mediaQuery.removeEventListener('change', handleChange);
-    } 
+    }
     // Legacy browsers
     else if (mediaQuery.addListener) {
       mediaQuery.addListener(handleChange);
       return () => mediaQuery.removeListener(handleChange);
     }
-  }, [theme]);
+  }, []);
 
   return (
     <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme, toggleTheme }}>
@@ -133,6 +114,7 @@ export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProvid
  * Hook to access theme context
  * @throws Error if used outside ThemeProvider
  */
+// eslint-disable-next-line react-refresh/only-export-components -- the hook belongs with its provider
 export function useTheme(): ThemeContextType {
   const context = useContext(ThemeContext);
   

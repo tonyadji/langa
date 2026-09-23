@@ -22,7 +22,7 @@ class FirstConnectionMailListenerTest {
     @Test
     void handleTeamInvitationEmailEvent_shouldSendNotification() {
         FirstConnectionMailListener listener = new FirstConnectionMailListener(notificationService, mailNotificationBuilder);
-        FirstConnectionMailEvent event = new FirstConnectionMailEvent("acc-1", "user@example.com", "token-1");
+        FirstConnectionMailEvent event = new FirstConnectionMailEvent("acc-1", "user@example.com");
         Notification notification = mock(Notification.class);
         when(mailNotificationBuilder.build(event)).thenReturn(notification);
 
@@ -34,7 +34,7 @@ class FirstConnectionMailListenerTest {
     @Test
     void handleTeamInvitationEmailEvent_shouldSwallowException() {
         FirstConnectionMailListener listener = new FirstConnectionMailListener(notificationService, mailNotificationBuilder);
-        FirstConnectionMailEvent event = new FirstConnectionMailEvent("acc-1", "user@example.com", "token-1");
+        FirstConnectionMailEvent event = new FirstConnectionMailEvent("acc-1", "user@example.com");
         when(mailNotificationBuilder.build(event)).thenThrow(new RuntimeException("boom"));
 
         listener.handleTeamInvitationEmailEvent(event);

@@ -34,11 +34,11 @@ public class IngestionSecurityImpl implements IngestionSecurity {
     @Override
     public boolean isAuthorized(IngestionCredentials credentials, Application app) {
         if(!Objects.equals(agentVersion, credentials.userAgent())) {
-            log.error("Expected {} - received {}", agentVersion, credentials.userAgent());
-            throw new IngestionSecurityException("Invalid agent version", null, Errors.ILLEGAL_INGESTION_REQUEST);
+            throw refuse("Invalid agent version (expected " + agentVersion + ", received " + credentials.userAgent() + ")",
+                    credentials.appKey());
         }
         if(!Objects.equals(credentials.appKey(), app.getKey()) || !Objects.equals(credentials.accountKey(), app.getAccountKey())) {
-            throw new IngestionSecurityException("Illegal app", null, Errors.ILLEGAL_INGESTION_REQUEST);
+            throw refuse("Illegal app", credentials.appKey());
         }
         return evaluateSignature(credentials.appKey(), credentials.accountKey(), credentials.userAgent(), credentials.timestamp(), credentials.signature(), credentials.credentialType(), app);
     }
@@ -48,19 +48,18 @@ public class IngestionSecurityImpl implements IngestionSecurity {
         final String nonce = signatureParts[0];
 
         if (signatureParts.length != 2) {
-            throw new IngestionSecurityException("Invalid signature format", null, Errors.ILLEGAL_INGESTION_REQUEST);
+            throw refuse("Invalid signature format", appKey);
         }
 
         if (applicationNonceRepository.existsByAppKeyAndNonce(appKey, nonce)) {
-            throw new IngestionSecurityException("Existing nonce detected", null, Errors.ILLEGAL_INGESTION_REQUEST);
+            throw refuse("Existing nonce detected", appKey);
         }
 
-        checkTimestampValidity(timestamp);
+        checkTimestampValidity(timestamp, appKey);
 
         final String expectedSignature = buildSignature(nonce, appKey, accountKey, agentVersion, timestamp, credentialType, app.getSecret());
         if (!constantTimeEquals(expectedSignature, signature)) {
-            log.error("Signature mismatch for appKey {}", appKey);
-            throw new IngestionSecurityException("Signature mismatch", null, Errors.ILLEGAL_INGESTION_REQUEST);
+            throw refuse("Signature mismatch", appKey);
         }
         applicationNonceRepository.save(appKey, nonce, LocalDateTime.now());
         return true;
@@ -82,20 +81,26 @@ public class IngestionSecurityImpl implements IngestionSecurity {
         return nonce + ":" + HMACUtils.hash(concatMessage, appSecret.trim());
     }
 
-    private void checkTimestampValidity(String timestampStr) {
+    private void checkTimestampValidity(String timestampStr, String appKey) {
         try {
             long receivedMillis = Long.parseLong(timestampStr);
             long currentMillis = System.currentTimeMillis();
 
             if (receivedMillis > currentMillis + (MAX_FUTURE_SECONDS * 1000L)) {
-                throw new IngestionSecurityException("Timestamp too far in the future", null, Errors.ILLEGAL_INGESTION_REQUEST);
+                throw refuse("Timestamp too far in the future", appKey);
             }
 
             if (receivedMillis < currentMillis - (MAX_AGE_SECONDS * 1000L)) {
-                throw new IngestionSecurityException("Timestamp expired", null, Errors.ILLEGAL_INGESTION_REQUEST);
+                throw refuse("Timestamp expired", appKey);
             }
         } catch (NumberFormatException e) {
+            log.warn("Ingestion refused for appKey {}: invalid timestamp format", appKey);
             throw new IngestionSecurityException("Invalid timestamp format", e, Errors.ILLEGAL_INGESTION_REQUEST);
         }
+    }
+
+    private static IngestionSecurityException refuse(String reason, String appKey) {
+        log.warn("Ingestion refused for appKey {}: {}", appKey, reason);
+        return new IngestionSecurityException(reason, null, Errors.ILLEGAL_INGESTION_REQUEST);
     }
 }

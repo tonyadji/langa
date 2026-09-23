@@ -80,4 +80,20 @@ class LogEntryRepositoryImplTest {
         assertTrue(result.getContent().isEmpty());
         assertEquals(0, result.getTotalPages());
     }
+
+    @Test
+    void findFiltered_shouldMatchTheKeywordLiterally() {
+        LogFilter filter = new LogFilter(null, "a.*(b+)+$", null, null);
+        when(mongoTemplate.find(any(Query.class), eq(LogEntryDocument.class))).thenReturn(List.of());
+        when(mongoTemplate.count(any(Query.class), eq(LogEntryDocument.class))).thenReturn(0L);
+
+        repository.findFiltered("app-1", filter, 0, 10);
+
+        org.mockito.ArgumentCaptor<Query> query = org.mockito.ArgumentCaptor.forClass(Query.class);
+        org.mockito.Mockito.verify(mongoTemplate).find(query.capture(), eq(LogEntryDocument.class));
+        java.util.regex.Pattern regex = (java.util.regex.Pattern) query.getValue().getQueryObject().get("message");
+        assertEquals(java.util.regex.Pattern.quote("a.*(b+)+$"), regex.pattern());
+        assertTrue(regex.matcher("literally a.*(b+)+$ here").find());
+        assertFalse(regex.matcher("aXXXbbb").find());
+    }
 }

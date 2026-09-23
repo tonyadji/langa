@@ -14,7 +14,7 @@ const API_BASE_URL = 'http://localhost:8080/api';
 
 const handlers = [
   // Successful revoke for user
-  http.post(`${API_BASE_URL}/applications/app-1/revoke`, async ({ request }) => {
+  http.post(`${API_BASE_URL}/applications/app-1/revoke-sharing`, async ({ request }) => {
     const body = (await request.json()) as { sharedWith: string; profile: string };
     
     if (body.sharedWith === 'user@example.com' && body.profile === 'USER') {
@@ -28,7 +28,7 @@ const handlers = [
   }),
 
   // Successful revoke for team
-  http.post(`${API_BASE_URL}/applications/app-2/revoke`, async ({ request }) => {
+  http.post(`${API_BASE_URL}/applications/app-2/revoke-sharing`, async ({ request }) => {
     const body = (await request.json()) as { sharedWith: string; profile: string };
     
     if (body.sharedWith === 'team-xyz' && body.profile === 'TEAM') {
@@ -42,7 +42,7 @@ const handlers = [
   }),
 
   // Non-owner attempts to revoke (403 Forbidden)
-  http.post(`${API_BASE_URL}/applications/app-owned-by-other/revoke`, () => {
+  http.post(`${API_BASE_URL}/applications/app-owned-by-other/revoke-sharing`, () => {
     return HttpResponse.json(
       { error: 'Only application owners can revoke access' },
       { status: 403 }
@@ -50,7 +50,7 @@ const handlers = [
   }),
 
   // Application not found (404)
-  http.post(`${API_BASE_URL}/applications/non-existent-app/revoke`, () => {
+  http.post(`${API_BASE_URL}/applications/non-existent-app/revoke-sharing`, () => {
     return HttpResponse.json(
       { error: 'Application not found' },
       { status: 404 }
@@ -58,7 +58,7 @@ const handlers = [
   }),
 
   // User not shared with application (404)
-  http.post(`${API_BASE_URL}/applications/app-not-shared/revoke`, () => {
+  http.post(`${API_BASE_URL}/applications/app-not-shared/revoke-sharing`, () => {
     return HttpResponse.json(
       { error: 'User does not have access to this application' },
       { status: 404 }

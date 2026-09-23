@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import axios from 'axios';
+import axios, { type AxiosError } from 'axios';
 import { TeamMember, TeamRole, AcceptInvitationRequest } from '@/types/team';
 
 const API_BASE_URL = 'http://localhost:8080';
@@ -126,9 +126,10 @@ describe('POST /api/team-invitations/accept - Contract Tests', () => {
     try {
       await axios.post(`${API_BASE_URL}/api/team-invitations/accept`, request);
       expect.fail('Should have thrown error');
-    } catch (error: any) {
-      expect(error.response.status).toBe(400);
-      expect(error.response.data.error).toContain('required');
+    } catch (caught) {
+      const error = caught as AxiosError<{ error: string }>;
+      expect(error.response?.status).toBe(400);
+      expect(error.response?.data.error).toContain('required');
     }
   });
   
@@ -140,9 +141,10 @@ describe('POST /api/team-invitations/accept - Contract Tests', () => {
     try {
       await axios.post(`${API_BASE_URL}/api/team-invitations/accept`, request);
       expect.fail('Should have thrown error');
-    } catch (error: any) {
-      expect(error.response.status).toBe(404);
-      expect(error.response.data.error).toContain('not found');
+    } catch (caught) {
+      const error = caught as AxiosError<{ error: string }>;
+      expect(error.response?.status).toBe(404);
+      expect(error.response?.data.error).toContain('not found');
     }
   });
   
@@ -154,9 +156,10 @@ describe('POST /api/team-invitations/accept - Contract Tests', () => {
     try {
       await axios.post(`${API_BASE_URL}/api/team-invitations/accept`, request);
       expect.fail('Should have thrown error');
-    } catch (error: any) {
-      expect(error.response.status).toBe(409);
-      expect(error.response.data.error).toContain('already accepted');
+    } catch (caught) {
+      const error = caught as AxiosError<{ error: string }>;
+      expect(error.response?.status).toBe(409);
+      expect(error.response?.data.error).toContain('already accepted');
     }
   });
   
@@ -168,9 +171,10 @@ describe('POST /api/team-invitations/accept - Contract Tests', () => {
     try {
       await axios.post(`${API_BASE_URL}/api/team-invitations/accept`, request);
       expect.fail('Should have thrown error');
-    } catch (error: any) {
-      expect(error.response.status).toBe(410);
-      expect(error.response.data.error).toContain('expired');
+    } catch (caught) {
+      const error = caught as AxiosError<{ error: string }>;
+      expect(error.response?.status).toBe(410);
+      expect(error.response?.data.error).toContain('expired');
     }
   });
   
@@ -182,9 +186,10 @@ describe('POST /api/team-invitations/accept - Contract Tests', () => {
     try {
       await axios.post(`${API_BASE_URL}/api/team-invitations/accept`, request);
       expect.fail('Should have thrown error');
-    } catch (error: any) {
-      expect(error.response.status).toBe(403);
-      expect(error.response.data.error).toContain('not for you');
+    } catch (caught) {
+      const error = caught as AxiosError<{ error: string }>;
+      expect(error.response?.status).toBe(403);
+      expect(error.response?.data.error).toContain('not for you');
     }
   });
   

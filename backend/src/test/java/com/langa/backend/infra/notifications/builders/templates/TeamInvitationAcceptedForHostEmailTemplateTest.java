@@ -1,7 +1,7 @@
 package com.langa.backend.infra.notifications.builders.templates;
 
 import com.langa.backend.domain.teams.events.TeamInvitationAcceptedForHostEvent;
-import com.langa.backend.domain.users.events.AccountSetupCompleteMailEvent;
+import com.langa.backend.domain.users.events.ActiveUserRegisteredEvent;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -17,7 +17,7 @@ class TeamInvitationAcceptedForHostEmailTemplateTest {
     void couldProcess_shouldMatchOnlyItsOwnEventType() {
         TeamInvitationAcceptedForHostEvent event = new TeamInvitationAcceptedForHostEvent(
                 "team-1", "guest@example.com", "host@example.com", "team-key", "token-1", LocalDateTime.now());
-        AccountSetupCompleteMailEvent other = new AccountSetupCompleteMailEvent("user-1", "user@example.com");
+        ActiveUserRegisteredEvent other = new ActiveUserRegisteredEvent("user-1", "user@example.com");
 
         assertTrue(template.couldProcess(event));
         assertFalse(template.couldProcess(other));
