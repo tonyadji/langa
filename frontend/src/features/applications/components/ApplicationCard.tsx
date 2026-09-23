@@ -60,7 +60,7 @@ export function ApplicationCard({ application }: ApplicationCardProps) {
           {application.createdAt && (
             <div>
               <p className="text-xs text-gray-400 dark:text-gray-500">
-                Created {new Date(application.createdAt).toLocaleDateString()}
+                Created {new Date(application.createdAt).toLocaleDateString('en-US')}
               </p>
             </div>
           )}

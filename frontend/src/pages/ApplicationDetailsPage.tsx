@@ -113,7 +113,7 @@ export function ApplicationDetailsPage() {
         try {
           const data = await applicationApi.getSecuredDetails(appId);
           setApplication(data);
-        } catch (securedErr) {
+        } catch {
           // If secured details fail (403, 400, etc.), fall back to basic details
           // This happens when the app is shared with the user but they're not the owner
           const basicData = await applicationApi.getApplication(appId);

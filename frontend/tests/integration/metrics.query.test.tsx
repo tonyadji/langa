@@ -42,7 +42,7 @@ const mockMetricsResponse: MetricsResponse = {
 };
 
 const handlers = [
-  http.get(`${API_BASE_URL}/applications/:appId/metrics`, ({ params, request }) => {
+  http.get(`${API_BASE_URL}/applications/:appId/metrics`, ({ request }) => {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '0');
     const size = parseInt(url.searchParams.get('size') || '20');
@@ -77,7 +77,8 @@ describe('GET /api/applications/{id}/metrics - Integration Tests', () => {
   });
 
   it('should handle pagination', async () => {
-    const response = await metricsApi.getApplicationMetrics('test-app-id', { page: 1, size: 10 });
+    // UI page 2 is backend page 1 (0-based)
+    const response = await metricsApi.getApplicationMetrics('test-app-id', { page: 2, limit: 10 });
     expect(response.paginatedMetrics.page).toBe(1);
     expect(response.paginatedMetrics.size).toBe(10);
   });

@@ -168,7 +168,7 @@ describe('Log Filtering - Integration Tests', () => {
       const response = await logsApi.getLogs(TEST_APP_ID, { 
         page: 1, 
         limit: 20, 
-        search: 'failed' 
+        keyword: 'failed' 
       });
       
       expect(response.data.every(log => 
@@ -181,7 +181,7 @@ describe('Log Filtering - Integration Tests', () => {
       const response = await logsApi.getLogs(TEST_APP_ID, { 
         page: 1, 
         limit: 20, 
-        search: 'service' 
+        keyword: 'service' 
       });
       
       expect(response.data.every(log => 
@@ -193,13 +193,13 @@ describe('Log Filtering - Integration Tests', () => {
       const lowercase = await logsApi.getLogs(TEST_APP_ID, { 
         page: 1, 
         limit: 20, 
-        search: 'database' 
+        keyword: 'database' 
       });
       
       const uppercase = await logsApi.getLogs(TEST_APP_ID, { 
         page: 1, 
         limit: 20, 
-        search: 'DATABASE' 
+        keyword: 'DATABASE' 
       });
       
       expect(lowercase.total).toBe(uppercase.total);
@@ -256,7 +256,7 @@ describe('Log Filtering - Integration Tests', () => {
         page: 1, 
         limit: 20, 
         level: ['error'],
-        search: 'failed' 
+        keyword: 'failed' 
       });
       
       expect(response.data.every(log => 
@@ -269,7 +269,7 @@ describe('Log Filtering - Integration Tests', () => {
         page: 1, 
         limit: 20, 
         level: ['error', 'warn'],
-        search: 'failed',
+        keyword: 'failed',
         startDate: '2024-01-01T10:00:00Z',
         endDate: '2024-01-01T14:00:00Z'
       });
@@ -289,7 +289,7 @@ describe('Log Filtering - Integration Tests', () => {
         page: 1, 
         limit: 20, 
         level: ['debug'],
-        search: 'nonexistent',
+        keyword: 'nonexistent',
         startDate: '2025-01-01T00:00:00Z'
       });
       

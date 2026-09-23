@@ -17,6 +17,8 @@ public class OutboxEvent {
     private LocalDateTime processedDate;
     private boolean processed;
     private boolean error;
+    /** Failed processing attempts; the event is abandoned (error) after the maximum. */
+    private int attempts;
 
     public static OutboxEvent createNew(String aggregateType, String aggregateId, String eventType, String payload) {
         return new OutboxEvent()
@@ -27,5 +29,18 @@ public class OutboxEvent {
                 .setProcessed(false)
                 .setError(false)
                 .setCreatedDate(LocalDateTime.now());
+    }
+
+    /**
+     * Records a failed processing attempt.
+     *
+     * @return true when the event is abandoned (no more retries)
+     */
+    public boolean recordFailure(int maxAttempts) {
+        attempts++;
+        if (attempts >= maxAttempts) {
+            error = true;
+        }
+        return error;
     }
 }

@@ -8,6 +8,7 @@ import { Trash2, Crown, Shield, User as UserIcon } from 'lucide-react';
 import type { TeamMember } from '@/types/team';
 import { TeamRole } from '@/types/team';
 import { useState } from 'react';
+import { getApiErrorMessage } from '@/services/apiError';
 
 interface TeamMembersListProps {
   members: TeamMember[];
@@ -47,8 +48,8 @@ export const TeamMembersList: React.FC<TeamMembersListProps> = ({
       setError(null);
       setRemovingEmail(memberEmail);
       await onRemoveMember(memberEmail);
-    } catch (err: any) {
-      const errorMessage = err?.response?.data?.error || err.message || 'Failed to remove member';
+    } catch (err) {
+      const errorMessage = getApiErrorMessage(err, 'Failed to remove member');
       setError(errorMessage);
     } finally {
       setRemovingEmail(null);

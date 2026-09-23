@@ -36,9 +36,24 @@ function formatTimestamp(timestamp: string | number): string {
       second: '2-digit',
       fractionalSecondDigits: 3,
     });
-  } catch (error) {
+  } catch {
     return String(timestamp);
   }
+}
+
+interface SortIconProps {
+  field: keyof MetricEntry;
+  sortField: keyof MetricEntry;
+  sortDirection: 'asc' | 'desc';
+}
+
+function SortIcon({ field, sortField, sortDirection }: SortIconProps) {
+  if (sortField !== field) return null;
+  return sortDirection === 'asc' ? (
+    <ChevronUp className="w-4 h-4 inline" />
+  ) : (
+    <ChevronDown className="w-4 h-4 inline" />
+  );
 }
 
 export function MetricsTable({ metrics }: MetricsTableProps) {
@@ -52,15 +67,6 @@ export function MetricsTable({ metrics }: MetricsTableProps) {
       setSortField(field);
       setSortDirection('desc');
     }
-  };
-
-  const SortIcon = ({ field }: { field: keyof MetricEntry }) => {
-    if (sortField !== field) return null;
-    return sortDirection === 'asc' ? (
-      <ChevronUp className="w-4 h-4 inline" />
-    ) : (
-      <ChevronDown className="w-4 h-4 inline" />
-    );
   };
 
   const sortedMetrics = [...metrics].sort((a, b) => {
@@ -115,43 +121,43 @@ export function MetricsTable({ metrics }: MetricsTableProps) {
               onClick={() => handleSort('name')}
               className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 bg-gray-50 dark:bg-gray-900"
             >
-              Name <SortIcon field="name" />
+              Name <SortIcon field="name" sortField={sortField} sortDirection={sortDirection} />
             </th>
             <th
               onClick={() => handleSort('httpMethod')}
               className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 bg-gray-50 dark:bg-gray-900"
             >
-              Method <SortIcon field="httpMethod" />
+              Method <SortIcon field="httpMethod" sortField={sortField} sortDirection={sortDirection} />
             </th>
             <th
               onClick={() => handleSort('uri')}
               className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 bg-gray-50 dark:bg-gray-900"
             >
-              URI <SortIcon field="uri" />
+              URI <SortIcon field="uri" sortField={sortField} sortDirection={sortDirection} />
             </th>
             <th
               onClick={() => handleSort('httpStatus')}
               className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 bg-gray-50 dark:bg-gray-900"
             >
-              Status <SortIcon field="httpStatus" />
+              Status <SortIcon field="httpStatus" sortField={sortField} sortDirection={sortDirection} />
             </th>
             <th
               onClick={() => handleSort('durationMillis')}
               className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 bg-gray-50 dark:bg-gray-900"
             >
-              Duration <SortIcon field="durationMillis" />
+              Duration <SortIcon field="durationMillis" sortField={sortField} sortDirection={sortDirection} />
             </th>
             <th
               onClick={() => handleSort('status')}
               className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 bg-gray-50 dark:bg-gray-900"
             >
-              Result <SortIcon field="status" />
+              Result <SortIcon field="status" sortField={sortField} sortDirection={sortDirection} />
             </th>
             <th
               onClick={() => handleSort('timestamp')}
               className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 bg-gray-50 dark:bg-gray-900"
             >
-              Time <SortIcon field="timestamp" />
+              Time <SortIcon field="timestamp" sortField={sortField} sortDirection={sortDirection} />
             </th>
           </tr>
         </thead>

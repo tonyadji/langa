@@ -1,5 +1,6 @@
 package com.langa.backend.infra.adapters.persistence.users;
 
+import com.langa.backend.domain.users.valueobjects.ExternalIdentity;
 import com.langa.backend.domain.users.User;
 import com.langa.backend.infra.adapters.persistence.users.mongo.MongoUserDao;
 import com.langa.backend.infra.adapters.persistence.users.mongo.UserDocument;
@@ -25,7 +26,7 @@ class UserRepositoryImplTest {
     private UserRepositoryImpl repository;
 
     private User user() {
-        return User.createActive("user@example.com", "encoded-password");
+        return User.createFromExternalIdentity(new ExternalIdentity("entra", "oid-1", "user@example.com"));
     }
 
     @Test
@@ -37,6 +38,7 @@ class UserRepositoryImplTest {
 
         assertTrue(saved.isPresent());
         assertEquals("user@example.com", saved.get().getEmail());
+        assertEquals("oid-1", saved.get().getExternalId());
     }
 
     @Test
@@ -54,11 +56,42 @@ class UserRepositoryImplTest {
     }
 
     @Test
-    void findByFistConnectionToken_shouldReturnUser() {
+    void findByExternalIdentity_shouldReturnUser() {
         User user = user();
-        when(mongoUserDao.findByFirstConnectionToken("token-1")).thenReturn(Optional.of(UserDocument.of(user)));
+        when(mongoUserDao.findByIdentityProviderAndExternalId("entra", "oid-1")).thenReturn(Optional.of(UserDocument.of(user)));
 
-        assertTrue(repository.findByFistConnectionToken("token-1").isPresent());
+        assertTrue(repository.findByExternalIdentity("entra", "oid-1").isPresent());
+    }
+
+    @Test
+    void userDocument_shouldRoundTripIdentityProvider() {
+        User user = user();
+
+        User mapped = UserDocument.of(user).toUser();
+
+        assertEquals("entra", mapped.getIdentityProvider());
+        assertEquals("oid-1", mapped.getExternalId());
+    }
+
+    @Test
+    void userDocument_shouldDefaultProviderOfLegacyLinkedUsers() {
+        UserDocument legacy = UserDocument.of(user());
+        legacy.setIdentityProvider(null);
+
+        assertEquals("entra", legacy.toUser().getIdentityProvider());
+    }
+
+    @Test
+    void userDocument_shouldKeepInvitedUsersWithoutProvider() {
+        assertNull(UserDocument.of(User.createInvited("guest@example.com")).toUser().getIdentityProvider());
+    }
+
+    @Test
+    void findByEmailIgnoreCase_shouldReturnUser() {
+        User user = user();
+        when(mongoUserDao.findFirstByEmailIgnoreCase("User@Example.com")).thenReturn(Optional.of(UserDocument.of(user)));
+
+        assertTrue(repository.findByEmailIgnoreCase("User@Example.com").isPresent());
     }
 
     @Test

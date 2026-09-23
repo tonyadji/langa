@@ -43,7 +43,7 @@ const handlers = [
     return HttpResponse.json(mockShareResponse, { status: 200 });
   }),
 
-  http.post(`${API_BASE_URL}/applications/:appId/revoke`, async ({ request }) => {
+  http.post(`${API_BASE_URL}/applications/:appId/revoke-sharing`, async ({ request }) => {
     const body = (await request.json()) as { sharedWith: string; profile: string };
     
     if (body.sharedWith === 'error-trigger') {

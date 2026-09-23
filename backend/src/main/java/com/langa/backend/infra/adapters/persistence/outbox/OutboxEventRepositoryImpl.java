@@ -23,8 +23,8 @@ public class OutboxEventRepositoryImpl implements OutboxEventRepository {
     }
 
     @Override
-    public List<OutboxEvent> findAllByProcessedFalse() {
-        return outboxEventDao.findByProcessed(false)
+    public List<OutboxEvent> findPending() {
+        return outboxEventDao.findByProcessedFalseAndErroredFalse()
                 .stream()
                 .map(OutboxEventDocument::toOutboxEvent)
                 .toList();

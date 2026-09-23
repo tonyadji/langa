@@ -8,5 +8,6 @@ public interface OutboxEventRepository {
 
     void save(OutboxEvent event);
 
-    List<OutboxEvent> findAllByProcessedFalse();
+    /** Events neither processed nor abandoned after too many failures. */
+    List<OutboxEvent> findPending();
 }

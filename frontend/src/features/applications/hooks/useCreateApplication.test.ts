@@ -101,7 +101,7 @@ describe('useCreateApplication', () => {
     await act(async () => {
       try {
         await result.current.createApplication({ name: 'error-trigger' });
-      } catch (error) {
+      } catch {
         // Expected error
       }
     });
@@ -130,7 +130,7 @@ describe('useCreateApplication', () => {
     await act(async () => {
       try {
         await result.current.createApplication({ name: 'error-trigger' });
-      } catch (error) {
+      } catch {
         errorThrown = true;
       }
     });
@@ -194,7 +194,7 @@ describe('useCreateApplication', () => {
     await act(async () => {
       try {
         await result.current.createApplication({ name: 'error-trigger' });
-      } catch (error) {
+      } catch {
         // Expected error
       }
     });

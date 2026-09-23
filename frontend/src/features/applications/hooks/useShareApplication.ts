@@ -6,9 +6,9 @@
  */
 
 import { useState } from 'react';
-import { AxiosError } from 'axios';
 import { applicationApi } from '@/services/applicationApi';
 import type { ShareApplicationRequest, RevokeAccessRequest, ShareWith } from '@/types';
+import { getApiErrorMessage } from '@/services/apiError';
 
 interface UseShareApplicationReturn {
   shareApplication: (
@@ -53,16 +53,8 @@ export const useShareApplication = (): UseShareApplicationReturn => {
       setShareResult(result);
       setIsSuccess(true);
     } catch (err) {
-      let errorMessage = 'Failed to share application';
-      
-      if (err instanceof AxiosError && err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err instanceof Error) {
-        errorMessage = err.message;
-      }
-      
       setIsError(true);
-      setError(errorMessage);
+      setError(getApiErrorMessage(err, 'Failed to share application'));
       throw err;
     } finally {
       setIsLoading(false);
@@ -82,16 +74,8 @@ export const useShareApplication = (): UseShareApplicationReturn => {
       
       setIsSuccess(true);
     } catch (err) {
-      let errorMessage = 'Failed to revoke access';
-      
-      if (err instanceof AxiosError && err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err instanceof Error) {
-        errorMessage = err.message;
-      }
-      
       setIsError(true);
-      setError(errorMessage);
+      setError(getApiErrorMessage(err, 'Failed to revoke access'));
       throw err;
     } finally {
       setIsLoading(false);

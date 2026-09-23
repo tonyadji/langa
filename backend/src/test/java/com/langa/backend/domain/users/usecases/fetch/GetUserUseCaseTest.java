@@ -1,5 +1,6 @@
 package com.langa.backend.domain.users.usecases.fetch;
 
+import com.langa.backend.domain.users.valueobjects.ExternalIdentity;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.users.User;
 import com.langa.backend.domain.users.exceptions.UserException;
@@ -27,7 +28,7 @@ class GetUserUseCaseTest {
 
     @Test
     void queryByUsername_shouldReturnUserInfo_whenFound() {
-        User user = User.createActive("user@example.com", "encoded");
+        User user = User.createFromExternalIdentity(new ExternalIdentity("entra", "oid-1", "user@example.com"));
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
 
         UserInfo info = useCase.queryByUsername("user@example.com");
@@ -42,22 +43,5 @@ class GetUserUseCaseTest {
 
         UserException ex = assertThrows(UserException.class, () -> useCase.queryByUsername("unknown@example.com"));
         assertEquals(Errors.USER_NOT_FOUND, ex.getError());
-    }
-
-    @Test
-    void queryByFirstConnectionToken_shouldReturnUserInfo_whenFound() {
-        User user = User.createNew("user@example.com", "temp");
-        when(userRepository.findByFistConnectionToken("token-1")).thenReturn(Optional.of(user));
-
-        UserInfo info = useCase.queryByFirstConnectionToken("token-1");
-
-        assertEquals("user@example.com", info.email());
-    }
-
-    @Test
-    void queryByFirstConnectionToken_shouldThrow_whenNotFound() {
-        when(userRepository.findByFistConnectionToken("unknown")).thenReturn(Optional.empty());
-
-        assertThrows(UserException.class, () -> useCase.queryByFirstConnectionToken("unknown"));
     }
 }

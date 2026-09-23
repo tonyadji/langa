@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import axios from 'axios';
+import axios, { type AxiosError } from 'axios';
 import { TeamInvitation, TeamRole, InvitationStatus, InviteMemberRequest } from '@/types/team';
 
 const API_BASE_URL = 'http://localhost:8080';
@@ -24,7 +24,7 @@ const createMockInvitation = (teamKey: string, guestEmail: string, role: TeamRol
   guestEmail,
   hostEmail: mockUser.email,
   role,
-  status: InvitationStatus.PENDING,
+  status: InvitationStatus.SENT,
   expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   sentDate: new Date().toISOString()
 });
@@ -124,7 +124,7 @@ describe('POST /api/teams/invite - Contract Tests', () => {
       guestEmail: 'newmember@example.com',
       hostEmail: mockUser.email,
       role: TeamRole.MEMBER,
-      status: InvitationStatus.PENDING
+      status: InvitationStatus.SENT
     });
     expect(response.data.expirationDate).toBeDefined();
     expect(response.data.sentDate).toBeDefined();
@@ -155,9 +155,10 @@ describe('POST /api/teams/invite - Contract Tests', () => {
     try {
       await axios.post(`${API_BASE_URL}/api/teams/invite`, request);
       expect.fail('Should have thrown error');
-    } catch (error: any) {
-      expect(error.response.status).toBe(400);
-      expect(error.response.data.error).toContain('required');
+    } catch (caught) {
+      const error = caught as AxiosError<{ error: string }>;
+      expect(error.response?.status).toBe(400);
+      expect(error.response?.data.error).toContain('required');
     }
   });
   
@@ -171,9 +172,10 @@ describe('POST /api/teams/invite - Contract Tests', () => {
     try {
       await axios.post(`${API_BASE_URL}/api/teams/invite`, request);
       expect.fail('Should have thrown error');
-    } catch (error: any) {
-      expect(error.response.status).toBe(400);
-      expect(error.response.data.error).toContain('Invalid email');
+    } catch (caught) {
+      const error = caught as AxiosError<{ error: string }>;
+      expect(error.response?.status).toBe(400);
+      expect(error.response?.data.error).toContain('Invalid email');
     }
   });
   
@@ -187,9 +189,10 @@ describe('POST /api/teams/invite - Contract Tests', () => {
     try {
       await axios.post(`${API_BASE_URL}/api/teams/invite`, request);
       expect.fail('Should have thrown error');
-    } catch (error: any) {
-      expect(error.response.status).toBe(400);
-      expect(error.response.data.error).toContain('Cannot invite as OWNER');
+    } catch (caught) {
+      const error = caught as AxiosError<{ error: string }>;
+      expect(error.response?.status).toBe(400);
+      expect(error.response?.data.error).toContain('Cannot invite as OWNER');
     }
   });
   
@@ -203,9 +206,10 @@ describe('POST /api/teams/invite - Contract Tests', () => {
     try {
       await axios.post(`${API_BASE_URL}/api/teams/invite`, request);
       expect.fail('Should have thrown error');
-    } catch (error: any) {
-      expect(error.response.status).toBe(404);
-      expect(error.response.data.error).toContain('not found');
+    } catch (caught) {
+      const error = caught as AxiosError<{ error: string }>;
+      expect(error.response?.status).toBe(404);
+      expect(error.response?.data.error).toContain('not found');
     }
   });
   
@@ -219,9 +223,10 @@ describe('POST /api/teams/invite - Contract Tests', () => {
     try {
       await axios.post(`${API_BASE_URL}/api/teams/invite`, request);
       expect.fail('Should have thrown error');
-    } catch (error: any) {
-      expect(error.response.status).toBe(403);
-      expect(error.response.data.error).toContain('owners and admins');
+    } catch (caught) {
+      const error = caught as AxiosError<{ error: string }>;
+      expect(error.response?.status).toBe(403);
+      expect(error.response?.data.error).toContain('owners and admins');
     }
   });
   
@@ -235,9 +240,10 @@ describe('POST /api/teams/invite - Contract Tests', () => {
     try {
       await axios.post(`${API_BASE_URL}/api/teams/invite`, request);
       expect.fail('Should have thrown error');
-    } catch (error: any) {
-      expect(error.response.status).toBe(400);
-      expect(error.response.data.error).toContain('Cannot invite yourself');
+    } catch (caught) {
+      const error = caught as AxiosError<{ error: string }>;
+      expect(error.response?.status).toBe(400);
+      expect(error.response?.data.error).toContain('Cannot invite yourself');
     }
   });
   
@@ -251,9 +257,10 @@ describe('POST /api/teams/invite - Contract Tests', () => {
     try {
       await axios.post(`${API_BASE_URL}/api/teams/invite`, request);
       expect.fail('Should have thrown error');
-    } catch (error: any) {
-      expect(error.response.status).toBe(409);
-      expect(error.response.data.error).toContain('already a team member');
+    } catch (caught) {
+      const error = caught as AxiosError<{ error: string }>;
+      expect(error.response?.status).toBe(409);
+      expect(error.response?.data.error).toContain('already a team member');
     }
   });
 });

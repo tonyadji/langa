@@ -13,7 +13,6 @@ import java.util.List;
 public class FirstConnectionMailTemplate extends EmailTemplate {
 
     private static final String NAME_KEY = "username";
-    private static final String TOKEN_KEY = "firstConnectionToken";
     private static final String RECIPIENTS_KEY = "recipients";
     private final String baseUrl;
 
@@ -31,7 +30,7 @@ public class FirstConnectionMailTemplate extends EmailTemplate {
     public String getMessage() {
         return "Hello " +variables.get(NAME_KEY).toString() + " ! Your account has been successfully created." +
                 "\nPlease follow the link "+baseUrl+
-                "/api/first-connection?token="+variables.get(TOKEN_KEY).toString()+" to complete setup and collaborating";
+                "/login and sign up with this email address to complete setup and start collaborating";
     }
 
     @Override
@@ -49,7 +48,6 @@ public class FirstConnectionMailTemplate extends EmailTemplate {
         if(event instanceof FirstConnectionMailEvent firstConnectionMailEvent) {
             variables.put(RECIPIENTS_KEY, List.of(firstConnectionMailEvent.email()));
             variables.put(NAME_KEY, firstConnectionMailEvent.email());
-            variables.put(TOKEN_KEY, firstConnectionMailEvent.firstConnectionToken());
         }
     }
 }

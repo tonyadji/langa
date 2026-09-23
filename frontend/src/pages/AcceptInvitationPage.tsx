@@ -5,10 +5,12 @@
  * URL format: /accept-invitation/:teamId/:token
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { useTeamInvitations } from '@/features/teams/hooks/useTeamInvitations';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { getApiErrorMessage } from '@/services/apiError';
 
 export const AcceptInvitationPage: React.FC = () => {
   const { teamId, token } = useParams<{ teamId: string; token: string }>();
@@ -18,21 +20,33 @@ export const AcceptInvitationPage: React.FC = () => {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [teamName, setTeamName] = useState<string>('');
-  const [currentUserEmail] = useState(() => {
-    const user = localStorage.getItem('langa_user');
-    return user ? JSON.parse(user).username : '';
-  });
+  const { user, isAuthenticated, isLoading: isAuthLoading, login } = useAuth();
+  const currentUserEmail = user?.email ?? '';
+  const handledRef = useRef(false);
 
   useEffect(() => {
     const handleAcceptInvitation = async () => {
-      if (!teamId || !token || !currentUserEmail) {
+      // Wait for the session and the Langa profile to be resolved
+      if (isAuthLoading || (isAuthenticated && !currentUserEmail)) {
+        return;
+      }
+      if (handledRef.current) {
+        return;
+      }
+      handledRef.current = true;
+      if (!isAuthenticated) {
+        // Sign in (or sign up) with the invited email, then come back to this page
+        await login(window.location.href);
+        return;
+      }
+      if (!teamId || !token) {
         setStatus('error');
-        setErrorMessage('Invalid invitation link or not logged in');
+        setErrorMessage('Invalid invitation link');
         return;
       }
 
       try {
-        const response = await acceptInvitation(teamId, token, currentUserEmail);
+        const response = await acceptInvitation(teamId, token);
         setTeamName(response.team);
         setStatus('success');
         
@@ -40,15 +54,14 @@ export const AcceptInvitationPage: React.FC = () => {
         setTimeout(() => {
           navigate('/teams');
         }, 3000);
-      } catch (err: any) {
+      } catch (err) {
         setStatus('error');
-        const message = err?.response?.data?.error || err.message || 'Failed to accept invitation';
-        setErrorMessage(message);
+        setErrorMessage(getApiErrorMessage(err, 'Failed to accept invitation'));
       }
     };
 
     handleAcceptInvitation();
-  }, [teamId, token, currentUserEmail, acceptInvitation, navigate]);
+  }, [teamId, token, currentUserEmail, isAuthenticated, isAuthLoading, login, acceptInvitation, navigate]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">

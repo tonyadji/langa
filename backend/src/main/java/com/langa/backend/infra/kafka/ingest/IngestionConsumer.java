@@ -35,9 +35,8 @@ public class IngestionConsumer {
     @KafkaListener(topics = "langa", groupId = "langa-ingestion-group")
     public void consumeIngestionMessage(ConsumerRecord<String, String> messageRecord) {
         try {
-            log.info("Received message from topic 'langa': partition={}, offset={}, key={}", 
+            log.trace("Received message from topic 'langa': partition={}, offset={}, key={}",
                     messageRecord.partition(), messageRecord.offset(), messageRecord.key());
-            log.debug("Message payload: {}", messageRecord.value());
 
             IngestionCredentials credentials = kafkaCredentialsMapper.mapFromKafkaHeaders(messageRecord);
             log.debug("Extracted credentials from headers: appKey={}, accountKey={}, timestamp={}", 
@@ -59,10 +58,11 @@ public class IngestionConsumer {
                     ingestionRequest.getClass().getSimpleName(), getAppKey(ingestionRequest));
 
         } catch (Exception e) {
-            log.error("Error processing Kafka ingestion message: topic={}, partition={}, offset={}, error={}", 
-                    messageRecord.topic(), messageRecord.partition(), messageRecord.offset(), e.getMessage(), e);
-            // handle retry or dead letter queue logic
-            throw new KafkaIngestionException("Failed to process Kafka ingestion message", e, Errors.INTERNAL_SERVER_ERROR);
+            // Logged by the Kafka error handler: handle retry or dead letter queue logic there
+            throw new KafkaIngestionException(String.format(
+                    "Failed to process Kafka ingestion message: topic=%s, partition=%d, offset=%d",
+                    messageRecord.topic(), messageRecord.partition(), messageRecord.offset()),
+                    e, Errors.INTERNAL_SERVER_ERROR);
         }
     }
 

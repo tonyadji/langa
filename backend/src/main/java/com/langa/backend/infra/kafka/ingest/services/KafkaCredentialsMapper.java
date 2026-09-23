@@ -26,12 +26,6 @@ public class KafkaCredentialsMapper {
         String timestamp = getHeaderValue(messageRecord, "xTimestamp");
         String signature = getHeaderValue(messageRecord, X_AGENT_SIGNATURE);
         
-        // Debug: display all received headers
-        log.debug("Kafka headers received:");
-        messageRecord.headers().forEach(header -> {
-            String value = new String(header.value(), StandardCharsets.UTF_8);
-            log.debug("  {}: '{}'", header.key(), value);
-        });
 
         // Check if we have a separate nonce in the headers
         String nonce = getHeaderValue(messageRecord, "xNonce");
@@ -40,7 +34,6 @@ public class KafkaCredentialsMapper {
         // try to reconstruct the expected format
         if (signature != null && !signature.contains(":") && nonce != null) {
             signature = nonce + ":" + signature;
-            log.debug("Reconstructed signature with nonce: '{}'", signature);
         }
 
         return new IngestionCredentials(
@@ -68,13 +61,9 @@ public class KafkaCredentialsMapper {
         if (header != null && header.value() != null) {
             String value = new String(header.value(), StandardCharsets.UTF_8);
             
-            // Debug logging to see header values
-            if (X_AGENT_SIGNATURE.equals(headerKey)) {
-                log.debug("Raw signature header value for {}: '{}'", headerKey, value);
-                // Check if the signature already contains the nonce:signature format
-                if (!value.contains(":") && value.length() > 10) {
-                    log.warn("Signature header '{}' appears to be missing nonce part. Value: '{}'", headerKey, value);
-                }
+            // Check if the signature already contains the nonce:signature format (never log its value)
+            if (X_AGENT_SIGNATURE.equals(headerKey) && !value.contains(":") && value.length() > 10) {
+                log.warn("Signature header '{}' appears to be missing its nonce part", headerKey);
             }
             
             return value;

@@ -65,7 +65,7 @@ const handlers = [
       guestEmail: body.guestEmail,
       hostEmail: teamOwner.email,
       role: body.role,
-      status: InvitationStatus.PENDING,
+      status: InvitationStatus.SENT,
       expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       sentDate: new Date().toISOString()
     };
@@ -79,8 +79,7 @@ const handlers = [
   }),
   
   // Step 4: Accept invitation
-  http.post(`${API_BASE_URL}/api/team-invitations/accept`, async ({ request }) => {
-    const body = await request.json() as AcceptInvitationRequest;
+  http.post(`${API_BASE_URL}/api/team-invitations/accept`, async () => {
     
     // Update team members
     const newMember: TeamMember = {
@@ -96,7 +95,7 @@ const handlers = [
   }),
   
   // Get team with updated members
-  http.get(`${API_BASE_URL}/api/teams/:teamKey`, ({ params }) => {
+  http.get(`${API_BASE_URL}/api/teams/:teamKey`, () => {
     return HttpResponse.json(createdTeam, { status: 200 });
   }),
   
@@ -151,7 +150,7 @@ describe('Team Creation and Invitation Flow - Integration Test', () => {
       teamKey,
       guestEmail: invitedUser.email,
       role: TeamRole.MEMBER,
-      status: InvitationStatus.PENDING
+      status: InvitationStatus.SENT
     });
     
     const invitationId = inviteResponse.data.id;
@@ -166,7 +165,7 @@ describe('Team Creation and Invitation Flow - Integration Test', () => {
     expect(pendingResponse.data[0]).toMatchObject({
       id: invitationId,
       guestEmail: invitedUser.email,
-      status: InvitationStatus.PENDING
+      status: InvitationStatus.SENT
     });
     
     // Step 4: Invited user accepts the invitation

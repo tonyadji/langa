@@ -9,7 +9,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080
 const handlers = [
   http.put(`${API_BASE_URL}/applications/:id/update-retention-policy`, async ({ params, request }) => {
     const { id } = params;
-    const body = await request.json() as any;
+    const body = (await request.json()) as { duration: number; unit: string };
     
     if (id === 'app-123') {
         return HttpResponse.json({

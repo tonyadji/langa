@@ -24,11 +24,11 @@ public class TeamInvitationAcceptedForHostListener {
     @Async
     @EventListener
     void handleTeamInvitationAcceptedForHostEvent(TeamInvitationAcceptedForHostEvent teamInvitationAcceptedForHostEvent) {
-        log.debug("Event received: {}", teamInvitationAcceptedForHostEvent);
+        log.debug("Event received: {} for aggregate {}", teamInvitationAcceptedForHostEvent.getEventType(), teamInvitationAcceptedForHostEvent.getAggregateId());
         try {
             notificationService.send(mailNotificationBuilder.build(teamInvitationAcceptedForHostEvent));
         } catch (Exception e) {
-            log.error("Error handling event: {}", teamInvitationAcceptedForHostEvent, e);
+            log.error("Error handling event {} for aggregate {}", teamInvitationAcceptedForHostEvent.getEventType(), teamInvitationAcceptedForHostEvent.getAggregateId(), e);
         }
     }
 }

@@ -11,16 +11,14 @@ import { useTeam } from '@/features/teams/hooks/useTeam';
 import { TeamMembersList } from '@/features/teams/components/TeamMembersList';
 import { InviteMemberModal } from '@/features/teams/components/InviteMemberModal';
 import { TeamRole, InvitationStatus } from '@/types/team';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 export const TeamDetailsPage: React.FC = () => {
   const { teamId } = useParams<{ teamId: string }>();
   const navigate = useNavigate();
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const [currentUserEmail] = useState(() => {
-    // Get from localStorage or auth context
-    const user = localStorage.getItem('langa_user');
-    return user ? JSON.parse(user).username : 'unknown@example.com';
-  });
+  const { user } = useAuth();
+  const currentUserEmail = user?.email ?? '';
 
   const { team, isLoading, removeMember, refetch } = useTeam(teamId);
 

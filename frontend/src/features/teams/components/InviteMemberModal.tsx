@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { useTeamInvitations } from '../hooks/useTeamInvitations';
 import type { InviteMemberRequest } from '@/types/team';
+import { getApiErrorMessage } from '@/services/apiError';
 
 interface InviteMemberModalProps {
   isOpen: boolean;
@@ -58,23 +59,8 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
       setEmail('');
       onSuccess?.();
       onClose();
-    } catch (err: any) {
-      const errorData = err?.response?.data;
-      let errorMessage = 'Failed to send invitation';
-      
-      if (errorData) {
-        if (errorData.message && errorData.details) {
-          errorMessage = `${errorData.message}: ${errorData.details}`;
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
-      setError(errorMessage);
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Failed to send invitation'));
     } finally {
       setIsSubmitting(false);
     }

@@ -10,7 +10,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { ApplicationCard } from '@/features/applications/components/ApplicationCard';
-import { AuthContext } from '@/features/auth/context/AuthContext';
+import { AuthContext, type AuthContextType } from '@/features/auth/context/AuthContext';
 import type { Application } from '@/types';
 
 const mockApplication: Application = {
@@ -75,10 +75,10 @@ const mockAuthContextShared = {
   isLoading: false,
 };
 
-const renderWithAuth = (component: React.ReactElement, authValue: any) => {
+const renderWithAuth = (component: React.ReactElement, authValue: Partial<AuthContextType>) => {
   return render(
     <BrowserRouter>
-      <AuthContext.Provider value={authValue}>
+      <AuthContext.Provider value={authValue as AuthContextType}>
         {component}
       </AuthContext.Provider>
     </BrowserRouter>

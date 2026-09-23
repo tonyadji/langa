@@ -1,5 +1,6 @@
 package com.langa.backend.infra.adapters.persistence.metricentries;
 
+import java.util.regex.Pattern;
 import com.langa.backend.domain.applications.repositories.MetricQueryRepository;
 import com.langa.backend.domain.applications.valueobjects.MetricEntry;
 import com.langa.backend.domain.applications.valueobjects.MetricFilter;
@@ -103,7 +104,8 @@ public class MetricQueryRepositoryImpl implements MetricQueryRepository {
 
     private static void setNameCriteria(MetricFilter filter, Query query) {
         if(filter.getName() != null && !filter.getName().isEmpty()) {
-            query.addCriteria(Criteria.where("name").regex(".*" + filter.getName() + ".*", "i"));
+            // The name is matched literally: user input must never be interpreted as a regular expression
+            query.addCriteria(Criteria.where("name").regex(Pattern.quote(filter.getName()), "i"));
         }
     }
 

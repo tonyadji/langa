@@ -19,9 +19,18 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
-// Mock the useTokenRefresh hook to prevent automatic token refresh during tests
-vi.mock('@/features/auth/hooks/useTokenRefresh', () => ({
-  useTokenRefresh: () => {},
+// Mock the identity provider: tests run signed out (no Authorization header is sent)
+vi.mock('@/features/auth/providers', () => ({
+  authClient: {
+    name: 'test',
+    initialize: async () => {},
+    isAuthenticated: () => false,
+    login: async () => {},
+    register: async () => {},
+    logout: async () => {},
+    getAccessToken: async () => null,
+    subscribe: () => () => {},
+  },
 }));
 
 afterEach(() => {
@@ -44,5 +53,5 @@ if (typeof global.ProgressEvent === 'undefined') {
       this.total = eventInitDict?.total || 0;
     }
   }
-  global.ProgressEvent = ProgressEvent as any;
+  global.ProgressEvent = ProgressEvent as unknown as typeof global.ProgressEvent;
 }

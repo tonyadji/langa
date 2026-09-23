@@ -30,18 +30,18 @@ application:
   persistence:
     provider: mongo
   security:
-    jwt.secret: ${JWT_KEY:rJ2-FzobD5EcF435O0KwR1wzlf6W8jznk_sYKSvs2hY=}
-    jwt.kid: ${JWT_KID:d6543593-012e-4032-998d-9e7e59493885}
-    jwt.expiration: ${JWT_EXPIRATION:1}
-    jwt.refresh-token.expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:1}
+    auth:
+      provider: entra
+      issuer-uri: https://00000000-0000-0000-0000-000000000000.ciamlogin.com/00000000-0000-0000-0000-000000000000/v2.0
+      jwk-set-uri: https://your-tenant.ciamlogin.com/00000000-0000-0000-0000-000000000000/discovery/v2.0/keys
+      audiences: 11111111-1111-1111-1111-111111111111
+      scope-claim: scp
+      required-scope: access_as_user
+      subject-claim: oid
     endpoints:
       unsecured:
-        - /api/auth/**
         - /api/ingestion/**
         - /api/team-invitations/*/public
-        - /api/team-invitations/*/accept
-        - /api/first-connection**
-        - /api/first-connection/**
     cors:
       allowed-origins:
         - http://localhost:3000

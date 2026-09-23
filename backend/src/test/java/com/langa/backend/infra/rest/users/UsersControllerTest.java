@@ -1,6 +1,5 @@
 package com.langa.backend.infra.rest.users;
 
-import com.langa.backend.common.commands.CommandBusDispatcher;
 import com.langa.backend.domain.users.usecases.fetch.IGetUserUseCase;
 import com.langa.backend.domain.users.valueobjects.UserInfo;
 import com.langa.backend.infra.rest.users.dto.UserDto;
@@ -15,8 +14,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -24,13 +21,11 @@ class UsersControllerTest {
 
     @Mock
     private IGetUserUseCase getUserUseCase;
-    @Mock
-    private CommandBusDispatcher commandBusDispatcher;
 
     private final UserDetails userDetails = new User("user@example.com", "pw", List.of());
 
     private UsersController controller() {
-        return new UsersController(getUserUseCase, commandBusDispatcher);
+        return new UsersController(getUserUseCase);
     }
 
     @Test
@@ -40,13 +35,5 @@ class UsersControllerTest {
         ResponseEntity<UserDto> response = controller().me(userDetails);
 
         assertEquals("user@example.com", response.getBody().email());
-    }
-
-    @Test
-    void logout_shouldDispatchLogoutCommand() {
-        ResponseEntity<String> response = controller().logout(userDetails);
-
-        verify(commandBusDispatcher).dispatch(any());
-        assertEquals("User Logged out", response.getBody());
     }
 }

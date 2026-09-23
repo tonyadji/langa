@@ -7,7 +7,8 @@ import java.util.Optional;
 public interface UserRepository {
     Optional<User> save(User user);
     Optional<User> findByEmail(String email);
-    Optional<User> findByFistConnectionToken(String token);
+    Optional<User> findByEmailIgnoreCase(String email);
+    Optional<User> findByExternalIdentity(String provider, String subject);
 
     Optional<User> findByEmailOrAccountKey(String userEmailOrAccountKey);
 }

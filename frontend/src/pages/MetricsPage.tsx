@@ -29,15 +29,12 @@ export const MetricsPage: React.FC = () => {
     limit,
   });
 
-  // Backend uses 0-based indexing (pages 0, 1, 2...) and returns total page count
-  // Frontend converts page numbers: UI page 1 → backend page 0
-  // Subtract 1 to match available pages
-  const totalPages = backendTotalPages > 0 ? backendTotalPages - 1 : 1;
+  // Backend pages are 0-based (converted by the API client); its page count is exact
+  const totalPages = Math.max(1, backendTotalPages);
   
   // Ensure current page doesn't exceed total pages
   React.useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
-      console.log(`[MetricsPage] Current page ${currentPage} exceeds totalPages ${totalPages}, resetting to ${totalPages}`);
       setCurrentPage(totalPages);
     }
   }, [currentPage, totalPages]);
@@ -49,7 +46,6 @@ export const MetricsPage: React.FC = () => {
 
   const handlePageChange = (page: number) => {
     const validPage = Math.min(page, totalPages);
-    console.log(`[MetricsPage] Page change requested: ${page}, valid page: ${validPage}, totalPages: ${totalPages}`);
     setCurrentPage(validPage);
   };
 

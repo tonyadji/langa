@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { useTeams } from '../hooks/useTeams';
 import type { CreateTeamRequest } from '@/types/team';
+import { getApiErrorMessage } from '@/services/apiError';
 
 interface CreateTeamModalProps {
   isOpen: boolean;
@@ -44,8 +45,8 @@ export const CreateTeamModal: React.FC<CreateTeamModalProps> = ({ isOpen, onClos
       setTeamName('');
       onSuccess?.();
       onClose();
-    } catch (err: any) {
-      const errorMessage = err?.response?.data?.error || err.message || 'Failed to create team';
+    } catch (err) {
+      const errorMessage = getApiErrorMessage(err, 'Failed to create team');
       setError(errorMessage);
     } finally {
       setIsSubmitting(false);

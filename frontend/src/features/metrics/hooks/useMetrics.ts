@@ -15,6 +15,8 @@ export const useMetrics = ({ enabled = true, applicationId, ...filters }: UseMet
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
+  const filtersKey = JSON.stringify(filters);
+
   const fetchMetrics = useCallback(async () => {
     if (!enabled || !applicationId) return;
 
@@ -22,7 +24,10 @@ export const useMetrics = ({ enabled = true, applicationId, ...filters }: UseMet
     setError(null);
 
     try {
-      const response = await metricsApi.getApplicationMetrics(applicationId, filters);
+      const response = await metricsApi.getApplicationMetrics(
+        applicationId,
+        JSON.parse(filtersKey) as MetricFilterParams
+      );
       setMetrics(response.paginatedMetrics.content);
       setTotal(response.paginatedMetrics.totalElements);
       setTotalPages(response.paginatedMetrics.totalPages);
@@ -35,7 +40,7 @@ export const useMetrics = ({ enabled = true, applicationId, ...filters }: UseMet
     } finally {
       setIsLoading(false);
     }
-  }, [enabled, applicationId, JSON.stringify(filters)]);
+  }, [enabled, applicationId, filtersKey]);
 
   useEffect(() => {
     fetchMetrics();

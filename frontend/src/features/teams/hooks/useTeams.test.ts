@@ -4,7 +4,7 @@
  * Tests team management operations: fetch teams, create team, remove member
  */
 
-import { describe, it, expect, beforeAll, afterEach, afterAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
@@ -76,7 +76,7 @@ const handlers = [
     return HttpResponse.json(newTeam, { status: 201 });
   }),
   
-  http.delete(`${API_BASE_URL}/api/teams/:teamKey/members/:email`, ({ params }) => {
+  http.delete(`${API_BASE_URL}/api/teams/:teamKey/members/:email`, () => {
     return HttpResponse.json({ success: true }, { status: 200 });
   })
 ];
@@ -194,8 +194,6 @@ describe('useTeams Hook', () => {
     await waitFor(() => {
       expect(result.current.teams).toHaveLength(2);
     });
-    
-    const refetchSpy = vi.spyOn(result.current, 'refetch');
     
     await result.current.createTeam({ name: 'Another Team' });
     

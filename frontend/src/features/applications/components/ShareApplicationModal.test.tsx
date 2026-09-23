@@ -20,12 +20,13 @@ const API_BASE_URL = 'http://localhost:8080/api';
 
 const handlers = [
   http.post(`${API_BASE_URL}/applications/:appId/share`, async ({ request }) => {
-    const body = (await request.json()) as { sharedWith: string; profile: string };
-    
-    if (body.sharedWith === 'existing@example.com') {
+    const body = (await request.json()) as { shareWith: string; profile: string };
+
+    if (body.shareWith === 'existing@example.com') {
+      // Backend ApiError format
       return HttpResponse.json(
-        { error: 'Application already shared with this user' },
-        { status: 409 }
+        { code: '400-002', message: 'Application already shared', details: 'Application already shared' },
+        { status: 400 }
       );
     }
     

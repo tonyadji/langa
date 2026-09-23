@@ -8,8 +8,7 @@ import com.langa.backend.domain.users.User;
 @DomainEventType("FirstConnectionMailEvent")
 public record FirstConnectionMailEvent(
         String aggregateId,
-        String email,
-        String firstConnectionToken
+        String email
 ) implements DomainEvent {
     @Override
     public EventTypeRegistry getEventType() {
@@ -27,6 +26,6 @@ public record FirstConnectionMailEvent(
     }
 
     public static FirstConnectionMailEvent of(User user) {
-        return new FirstConnectionMailEvent(user.getAccountKey(), user.getEmail(), user.getFirstConnectionToken());
+        return new FirstConnectionMailEvent(user.getAccountKey(), user.getEmail());
     }
 }

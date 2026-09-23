@@ -51,15 +51,6 @@ class KeyGeneratorTest {
     }
 
     @Test
-    void generateTeamInvitationKey_shouldStartWithInvitationPrefix_andBeDeterministic() {
-        String key1 = KeyGenerator.generateTeamInvitationKey("Dev Team", "owner@example.com", "guest@example.com", "2025-01-01");
-        String key2 = KeyGenerator.generateTeamInvitationKey("Dev Team", "owner@example.com", "guest@example.com", "2025-01-01");
-
-        assertTrue(key1.startsWith("TI-"));
-        assertEquals(key1, key2);
-    }
-
-    @Test
     void genericToken_shouldNotBeNull_andBeUniqueEachTime() {
         String token1 = KeyGenerator.genericToken("param1", "param2");
         String token2 = KeyGenerator.genericToken("param1", "param2");

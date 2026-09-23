@@ -24,11 +24,11 @@ public class ApplicationSharedEventListener {
     @Async
     @EventListener
     void handleTeamInvitationEmailEvent(ApplicationSharedEvent applicationSharedEvent) {
-        log.debug("Event received: {}", applicationSharedEvent);
+        log.debug("Event received: {} for aggregate {}", applicationSharedEvent.getEventType(), applicationSharedEvent.getAggregateId());
         try {
             notificationService.send(mailNotificationBuilder.build(applicationSharedEvent));
         } catch (Exception e) {
-            log.error("Error handling event: {}", applicationSharedEvent, e);
+            log.error("Error handling event {} for aggregate {}", applicationSharedEvent.getEventType(), applicationSharedEvent.getAggregateId(), e);
         }
     }
 }

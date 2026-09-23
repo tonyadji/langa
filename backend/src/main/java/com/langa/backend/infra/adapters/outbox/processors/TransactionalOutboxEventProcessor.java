@@ -26,7 +26,7 @@ public class TransactionalOutboxEventProcessor {
 
     @Transactional
     public void processSingleEvent(OutboxEvent outboxEvent) {
-        log.debug("Processing Outbox Event : {}", outboxEvent);
+        log.debug("Processing outbox event {} ({})", outboxEvent.getId(), outboxEvent.getEventType());
         try {
             Class<?> eventClass = EventTypeRegistry.valueOf(outboxEvent.getEventType()).getEventClass();
             Object eventObject = objectMapper.readValue(outboxEvent.getPayload(), eventClass);
@@ -39,7 +39,7 @@ public class TransactionalOutboxEventProcessor {
             outboxEvent.setProcessed(true);
             outboxEvent.setProcessedDate(LocalDateTime.now());
             outboxEventRepository.save(outboxEvent);
-            log.debug("Outbox Event processed successfully");
+            log.debug("Outbox event {} processed", outboxEvent.getId());
         } catch (JsonProcessingException ex) {
             outboxEvent.setError(true);
             outboxEventRepository.save(outboxEvent);

@@ -7,6 +7,7 @@
 import { Mail, Check } from 'lucide-react';
 import type { TeamInvitation } from '@/types/team';
 import { useState } from 'react';
+import { getApiErrorMessage } from '@/services/apiError';
 
 interface PendingInvitationsProps {
   invitations: TeamInvitation[];
@@ -27,8 +28,8 @@ export const PendingInvitations: React.FC<PendingInvitationsProps> = ({
       setError(null);
       setAcceptingId(invitationId);
       await onAccept(invitationId);
-    } catch (err: any) {
-      const errorMessage = err?.response?.data?.error || err.message || 'Failed to accept invitation';
+    } catch (err) {
+      const errorMessage = getApiErrorMessage(err, 'Failed to accept invitation');
       setError(errorMessage);
     } finally {
       setAcceptingId(null);

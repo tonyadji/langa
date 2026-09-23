@@ -14,7 +14,6 @@ const TeamsPage = lazy(() => import('@/pages/TeamsPage').then(m => ({ default: m
 const TeamDetailsPage = lazy(() => import('@/pages/TeamDetailsPage').then(m => ({ default: m.TeamDetailsPage })));
 const AcceptInvitationPage = lazy(() => import('@/pages/AcceptInvitationPage').then(m => ({ default: m.AcceptInvitationPage })));
 const LoginPage = lazy(() => import('@/pages/LoginPage').then(m => ({ default: m.LoginPage })));
-const RegisterPage = lazy(() => import('@/pages/RegisterPage').then(m => ({ default: m.RegisterPage })));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
 
 export function AppRouter() {
@@ -23,7 +22,7 @@ export function AppRouter() {
       <Routes>
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/register" element={<LoginPage signUp />} />
         <Route path="/accept-invitation/:teamId/:token" element={<AcceptInvitationPage />} />
         
         {/* Protected routes with layout */}

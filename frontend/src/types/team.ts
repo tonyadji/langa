@@ -75,11 +75,6 @@ export interface InviteTeamMemberRequest {
   role: TeamRole;
 }
 
-export interface AcceptInvitationRequest {
-  guest: string;
-  invitationToken: string;
-}
-
 export interface AcceptInvitationResponse {
   id: string;
   token: string;
@@ -95,8 +90,7 @@ export interface TeamResponseDto {
     team: Team; // Simplification unless specified otherwise
 }
 
-export interface GetInvitationResponse extends TeamInvitation {
-}
+export type GetInvitationResponse = TeamInvitation;
 
 // Additional types for API
 export interface TeamWithMembers extends Team {

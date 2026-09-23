@@ -1,13 +1,13 @@
 /**
  * T233: Web Vitals Monitoring
- * 
+ *
  * Monitors Core Web Vitals metrics:
  * - FCP (First Contentful Paint): < 1.5s
  * - LCP (Largest Contentful Paint): < 2.5s
  * - TTI (Time to Interactive): < 3s
  * - INP (Interaction to Next Paint): < 200ms
  * - CLS (Cumulative Layout Shift): < 0.1
- * 
+ *
  * Per constitution Section IV performance requirements.
  */
 
@@ -29,7 +29,7 @@ type MetricHandler = (metric: Metric) => void;
 function logMetric(metric: Metric): void {
   const { name, value, rating } = metric;
   const emoji = rating === 'good' ? '✅' : rating === 'needs-improvement' ? '⚠️' : '❌';
-  
+
   console.log(`[Web Vitals] ${emoji} ${name}: ${Math.round(value)}ms (${rating})`);
 }
 
@@ -40,8 +40,12 @@ function sendToAnalytics(metric: Metric): void {
   // Send to analytics service (Google Analytics, Custom API, etc.)
   if (import.meta.env.VITE_ENABLE_ANALYTICS === 'true') {
     // Example: Google Analytics 4
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', metric.name, {
+    const gtag =
+      typeof window !== 'undefined'
+        ? (window as Window & { gtag?: (...args: unknown[]) => void }).gtag
+        : undefined;
+    if (gtag) {
+      gtag('event', metric.name, {
         value: Math.round(metric.name === 'CLS' ? metric.value * 1000 : metric.value),
         metric_id: metric.id,
         metric_value: metric.value,
@@ -52,7 +56,7 @@ function sendToAnalytics(metric: Metric): void {
     // Example: Custom API endpoint
     if (import.meta.env.VITE_API_BASE_URL) {
       const endpoint = `${import.meta.env.VITE_API_BASE_URL}/analytics/vitals`;
-      
+
       fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -80,12 +84,12 @@ function sendToAnalytics(metric: Metric): void {
  * Get thresholds for each metric per constitution
  */
 export const VITALS_THRESHOLDS = {
-  FCP: 1500,  // First Contentful Paint < 1.5s
-  LCP: 2500,  // Largest Contentful Paint < 2.5s
-  TTI: 3000,  // Time to Interactive < 3s (approximated by TBT)
-  INP: 200,   // Interaction to Next Paint < 200ms
-  CLS: 0.1,   // Cumulative Layout Shift < 0.1
-  TTFB: 600,  // Time to First Byte < 600ms (not in constitution but good practice)
+  FCP: 1500, // First Contentful Paint < 1.5s
+  LCP: 2500, // Largest Contentful Paint < 2.5s
+  TTI: 3000, // Time to Interactive < 3s (approximated by TBT)
+  INP: 200, // Interaction to Next Paint < 200ms
+  CLS: 0.1, // Cumulative Layout Shift < 0.1
+  TTFB: 600, // Time to First Byte < 600ms (not in constitution but good practice)
 } as const;
 
 /**
@@ -102,15 +106,17 @@ export function meetsThreshold(name: string, value: number): boolean {
  */
 export function initWebVitals(onMetric?: MetricHandler): void {
   const isDev = import.meta.env.DEV;
-  
+
   // Default handler: log in dev, send to analytics in prod
-  const handler: MetricHandler = onMetric || ((metric) => {
-    if (isDev) {
-      logMetric(metric);
-    } else {
-      sendToAnalytics(metric);
-    }
-  });
+  const handler: MetricHandler =
+    onMetric ||
+    ((metric) => {
+      if (isDev) {
+        logMetric(metric);
+      } else {
+        sendToAnalytics(metric);
+      }
+    });
 
   // Register all vital metrics
   onFCP(handler);
