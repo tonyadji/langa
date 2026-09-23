@@ -1,16 +1,24 @@
-# Deploy the Langa dashboard (frontend) to a VPS with Docker.
+# Deploy the Langa dashboard (frontend) to Railway.
+#
+# Railway builds frontend/Dockerfile itself from the uploaded sources (`railway up`).
 #
 # Secrets:
-#   DOCKER_USERNAME, DOCKER_PASSWORD   Docker registry credentials (access token)
-#   VPS_HOST, VPS_USER, VPS_SSH_KEY    SSH access to the VPS (VPS_PORT optional, default 22)
-#   APP_PORT                           Port exposed on the VPS (optional, default 3000)
+#   RAILWAY_TOKEN                      Railway project token (Project settings > Tokens),
+#                                      created for the target environment
 #
-# Variables (Settings > Secrets and variables > Actions > Variables), baked into the build:
+# Variables (Settings > Secrets and variables > Actions > Variables):
+#   RAILWAY_SERVICE                    Name or ID of the frontend service (default langa-dashboard)
+#   RAILWAY_FRONTEND_URL               Public URL of the service, used for the health check (optional),
+#                                      e.g. https://langa-dashboard.up.railway.app
+#
+# Railway service variables (Railway dashboard > service > Variables). Railway passes them to the
+# Dockerfile as build args, and Vite bakes them into the static files at build time:
 #   VITE_API_BASE_URL                  Backend API URL, e.g. https://api.example.com/api
 #   VITE_AUTH_PROVIDER                 Identity provider (default entra)
 #   VITE_ENTRA_CLIENT_ID               "langa-spa" application (client) ID
 #   VITE_ENTRA_AUTHORITY               https://<tenant-subdomain>.ciamlogin.com/<tenant-id>/
 #   VITE_ENTRA_API_SCOPE               api://<langa-api client id>/access_as_user
+#   PORT=80                            nginx listens on port 80
 #
 # The production URL of the frontend must be declared as a redirect URI of the SPA app registration.
 
@@ -34,10 +42,9 @@ on:
           - production
           - staging
 
-env:
-  DOCKER_REGISTRY: docker.io
-  DOCKER_IMAGE_NAME: langa-dashboard
-  CONTAINER_NAME: langa-dashboard
+concurrency:
+  group: frontend-deploy-${{ github.event.inputs.environment || 'production' }}
+  cancel-in-progress: false
 
 jobs:
   build-and-test:
@@ -58,118 +65,51 @@ jobs:
       - run: npx tsc -b
       - run: npm test -- --run
 
-  build-docker-image:
-    name: Build and push Docker image
+  deploy-to-railway:
+    name: Deploy to Railway
     runs-on: ubuntu-latest
     needs: build-and-test
+    environment:
+      name: ${{ github.event.inputs.environment || 'production' }}
+      url: ${{ vars.RAILWAY_FRONTEND_URL }}
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE || 'langa-dashboard' }}
+      RAILWAY_ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check build variables
-        env:
-          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
-          VITE_ENTRA_CLIENT_ID: ${{ vars.VITE_ENTRA_CLIENT_ID }}
-          VITE_ENTRA_AUTHORITY: ${{ vars.VITE_ENTRA_AUTHORITY }}
-          VITE_ENTRA_API_SCOPE: ${{ vars.VITE_ENTRA_API_SCOPE }}
+      - name: Check Railway token
         run: |
-          missing=0
-          for name in VITE_API_BASE_URL VITE_ENTRA_CLIENT_ID VITE_ENTRA_AUTHORITY VITE_ENTRA_API_SCOPE; do
-            if [ -z "${!name}" ]; then echo "::error::Repository variable $name is not set"; missing=1; fi
-          done
-          exit $missing
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "::error::Secret RAILWAY_TOKEN is not set"
+            exit 1
+          fi
 
-      - uses: docker/setup-buildx-action@v3
-
-      - uses: docker/login-action@v3
+      - uses: actions/setup-node@v4
         with:
-          registry: ${{ env.DOCKER_REGISTRY }}
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          node-version: '22'
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.DOCKER_REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}
-          tags: |
-            type=sha
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          file: ./frontend/Dockerfile
-          push: true
-          platforms: linux/amd64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          # Vite settings are baked into the static files at build time
-          build-args: |
-            VITE_API_BASE_URL=${{ vars.VITE_API_BASE_URL }}
-            VITE_AUTH_PROVIDER=${{ vars.VITE_AUTH_PROVIDER || 'entra' }}
-            VITE_ENTRA_CLIENT_ID=${{ vars.VITE_ENTRA_CLIENT_ID }}
-            VITE_ENTRA_AUTHORITY=${{ vars.VITE_ENTRA_AUTHORITY }}
-            VITE_ENTRA_API_SCOPE=${{ vars.VITE_ENTRA_API_SCOPE }}
-
-  deploy-to-vps:
-    name: Deploy to VPS
-    runs-on: ubuntu-latest
-    needs: build-docker-image
-    environment:
-      name: ${{ github.event.inputs.environment || 'production' }}
-    steps:
-      - name: Configure SSH
-        env:
-          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
-        run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_KEY" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p "$VPS_PORT" -H "$VPS_HOST" >> ~/.ssh/known_hosts
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
 
       - name: Deploy
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-          APP_PORT: ${{ secrets.APP_PORT || '3000' }}
-        run: |
-          # The remote script receives its settings on stdin (not in the process list of the VPS)
-          {
-            printf 'export %s=%q\n' \
-              DOCKER_REGISTRY "$DOCKER_REGISTRY" \
-              DOCKER_USERNAME "$DOCKER_USERNAME" \
-              DOCKER_PASSWORD "$DOCKER_PASSWORD" \
-              IMAGE "$DOCKER_REGISTRY/$DOCKER_USERNAME/$DOCKER_IMAGE_NAME:latest" \
-              CONTAINER_NAME "$CONTAINER_NAME" \
-              APP_PORT "$APP_PORT"
-            cat << 'REMOTE'
-          set -e
-          echo "$DOCKER_PASSWORD" | docker login "$DOCKER_REGISTRY" -u "$DOCKER_USERNAME" --password-stdin
-          docker pull "$IMAGE"
-          docker stop "$CONTAINER_NAME" 2>/dev/null || true
-          docker rm "$CONTAINER_NAME" 2>/dev/null || true
-          docker run -d --name "$CONTAINER_NAME" --restart unless-stopped -p "$APP_PORT:80" "$IMAGE"
-          docker image prune -af --filter "until=168h"
-          docker ps --filter "name=$CONTAINER_NAME"
-          REMOTE
-          } | ssh -i ~/.ssh/deploy_key -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" 'bash -s'
+        # --path-as-root uploads only frontend/ (by default the CLI uploads the whole git repository,
+        # and Railway would then build the root Dockerfile, i.e. the backend).
+        # --ci streams the build logs and fails the job if the Railway build fails.
+        run: railway up . --path-as-root --ci --service "$RAILWAY_SERVICE" --environment "$RAILWAY_ENVIRONMENT"
 
       - name: Health check
+        if: vars.RAILWAY_FRONTEND_URL != ''
         env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          APP_PORT: ${{ secrets.APP_PORT || '3000' }}
+          FRONTEND_URL: ${{ vars.RAILWAY_FRONTEND_URL }}
         run: |
-          for attempt in $(seq 1 12); do
-            code=$(curl -s -o /dev/null -w "%{http_code}" "http://$VPS_HOST:$APP_PORT/" || true)
-            if [ "$code" = "200" ] || [ "$code" = "304" ]; then
+          for attempt in $(seq 1 24); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "${FRONTEND_URL%/}/health" || true)
+            if [ "$code" = "200" ]; then
               echo "Application is up (HTTP $code)"
               exit 0
             fi
@@ -178,7 +118,3 @@ jobs:
           done
           echo "::error::Health check failed"
           exit 1
-
-      - name: Cleanup SSH
-        if: always()
-        run: rm -f ~/.ssh/deploy_key
