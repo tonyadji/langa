@@ -19,7 +19,6 @@ import com.langa.backend.infra.adapters.persistence.logentries.mongo.MongoLogEnt
 import com.langa.backend.infra.adapters.persistence.metricentries.mongo.MetricEntryDocument;
 import com.langa.backend.infra.adapters.persistence.metricentries.mongo.MongoMetricEntryDao;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -30,7 +29,6 @@ import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
-@Slf4j
 public class ApplicationRepositoryImpl implements ApplicationRepository {
 
     private final MongoApplicationDao mongoApplicationDao;
@@ -62,8 +60,6 @@ public class ApplicationRepositoryImpl implements ApplicationRepository {
         applicationDocument.setUsage(new ApplicationUsage(usageLog, usageMetric, Instant.now()));
 
         mongoApplicationDao.save(applicationDocument);
-        log.debug("AFTER : application usage logs : {}",applicationDocument.getUsage().totalLogBytes());
-        log.debug("AFTER : application usage metrics : {}",applicationDocument.getUsage().totalMetricBytes());
 
         return applicationDocument.toApplication();
     }

@@ -24,12 +24,19 @@ public class IngestionUseCase {
     private final IngestionSecurity ingestionSecurity;
 
     public void process(IngestionRequestDto ingestionRequestDto, IngestionCredentials ingestionCredentials) {
-        log.info("Processing ingestion request: {}", ingestionRequestDto);
         if (ingestionRequestDto instanceof LogIngestionRequestDto logIngestionRequestDto) {
+            log.debug("Processing log ingestion for appKey {}: {} entries",
+                    logIngestionRequestDto.appKey(), sizeOf(logIngestionRequestDto.entries()));
             processLogIngestion(logIngestionRequestDto, ingestionCredentials);
         } else if (ingestionRequestDto instanceof MetricIngestionRequestDto metricIngestionRequestDto) {
+            log.debug("Processing metric ingestion for appKey {}: {} entries",
+                    metricIngestionRequestDto.appKey(), sizeOf(metricIngestionRequestDto.entries()));
             processMetricIngestion(metricIngestionRequestDto, ingestionCredentials);
         }
+    }
+
+    private static int sizeOf(java.util.List<?> entries) {
+        return entries == null ? 0 : entries.size();
     }
 
     private void processLogIngestion(LogIngestionRequestDto logRequestDto, IngestionCredentials credentials) {

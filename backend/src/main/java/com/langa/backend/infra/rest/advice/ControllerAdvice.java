@@ -16,7 +16,11 @@ public class ControllerAdvice {
 
     @ExceptionHandler(GenericException.class)
     public ResponseEntity<ApiError> apiError(GenericException gex) {
-        log.error("Business exception: {}", gex.getMessage(), gex);
+        if (gex.getError().getHttpCode() >= 500) {
+            log.error("Server error {}: {}", gex.getError().getCode(), gex.getMessage(), gex);
+        } else {
+            log.warn("Request rejected {}: {}", gex.getError().getCode(), gex.getMessage());
+        }
         return ResponseEntity.status(gex.getError().getHttpCode())
                 .body(ApiError.of(gex));
     }

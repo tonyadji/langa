@@ -58,14 +58,15 @@ public class UserServiceImpl implements UserService {
     private User linkOrCreate(ExternalIdentity identity) {
         final User user = userRepository.findByEmailIgnoreCase(identity.email())
                 .map(existing -> {
-                    log.info("Linking existing user {} to its {} identity", existing.getEmail(), identity.provider());
+                    log.info("Linking existing user {} to its {} identity", existing.getId(), identity.provider());
                     // Refused by the domain if the user is already linked to another identity
                     existing.linkExternalIdentity(identity);
                     return existing;
                 })
                 .orElseGet(() -> {
-                    log.info("Provisioning new user {} from {} identity", identity.email(), identity.provider());
-                    return User.createFromExternalIdentity(identity);
+                    final User created = User.createFromExternalIdentity(identity);
+                    log.info("Provisioning new user {} from {} identity", created.getId(), identity.provider());
+                    return created;
                 });
 
         final User saved = userRepository.save(user)

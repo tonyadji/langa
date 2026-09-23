@@ -1,6 +1,5 @@
 package com.langa.backend.common.utils;
 
-import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -9,7 +8,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.regex.Pattern;
 
-@Slf4j
 public class DateUtils {
 
   private DateUtils() {}
@@ -39,11 +37,9 @@ public class DateUtils {
     try {
       return LocalDateTime.parse(timestamp, FORMATTER);
     } catch (DateTimeParseException e1) {
-        log.error("Invalid Unix timestamp format: " + timestamp, e1);
         try {
             return LocalDateTime.parse(timestamp);
         } catch (DateTimeParseException e2) {
-            log.error("Invalid Unix timestamp format: " + timestamp, e2);
             throw new IllegalArgumentException("Unable to parse timestamp. Expected Unix timestamp (milliseconds/seconds) or format 'yyyy-MM-dd'T'HH:mm:ss[.SSS]'. Got: " + timestamp, e2);
         }
 

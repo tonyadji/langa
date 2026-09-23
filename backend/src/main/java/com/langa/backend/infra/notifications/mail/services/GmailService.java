@@ -5,7 +5,6 @@ import com.langa.backend.infra.notifications.exceptions.NotificationException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-@Slf4j
 @RequiredArgsConstructor
 @ConditionalOnProperty(havingValue = "gmail", name = "application.mail.provider")
 public class GmailService implements MailSendService {
@@ -43,7 +41,6 @@ public class GmailService implements MailSendService {
                 helper.setText(body, true);
                 mailSender.send(mimeMessage);
             } catch (MessagingException e) {
-                log.error(e.getMessage(), e);
                 throw new NotificationException("Error occured sending mail : "+subject,
                         e, Errors.NOTIFICATION_MAIL_ERROR);
             }

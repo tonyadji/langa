@@ -29,7 +29,8 @@ public class ApplicationCommandBus implements CommandBusDispatcher {
     @Override
     public <C extends Command<R>, R> R dispatch(C command) {
         final CommandHandler<C, R> handler = resolveHandler(command);
-        log.debug(String.format("Dispatching command %s to handler %s", command, handler.getClass()));
+        log.debug("Dispatching command {} to handler {}",
+                command.getClass().getSimpleName(), handler.getClass().getSimpleName());
         return handler.handle(command);
     }
 

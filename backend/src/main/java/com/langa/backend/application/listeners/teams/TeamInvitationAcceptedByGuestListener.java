@@ -34,7 +34,7 @@ public class TeamInvitationAcceptedByGuestListener {
     @Async
     @EventListener
     void handleTeamInvitationAcceptedByGuestEvent(TeamInvitationAcceptedByGuestEvent teamInvitationAcceptedByGuestEvent) {
-        log.debug("Event received: {}", teamInvitationAcceptedByGuestEvent);
+        log.debug("Event received: {} for aggregate {}", teamInvitationAcceptedByGuestEvent.getEventType(), teamInvitationAcceptedByGuestEvent.getAggregateId());
         try {
             User user = userService.findOrCreateUserByEmail(teamInvitationAcceptedByGuestEvent.guest());
             //TODO: replace this by a use case
@@ -46,7 +46,7 @@ public class TeamInvitationAcceptedByGuestListener {
                 outboxEventService.storeOutboxEvent(FirstConnectionMailEvent.of(user));
             }
         } catch (Exception e) {
-            log.error("Error handling event: {}", teamInvitationAcceptedByGuestEvent, e);
+            log.error("Error handling event {} for aggregate {}", teamInvitationAcceptedByGuestEvent.getEventType(), teamInvitationAcceptedByGuestEvent.getAggregateId(), e);
         }
 
     }

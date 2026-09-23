@@ -18,15 +18,12 @@ public class LocalEventPublisher implements DomainEventPublisher {
 
     @Override
     public void publish(DomainEvent event) {
-        log.info("Publishing event: {}", event);
+        log.debug("Publishing event {} for aggregate {}", event.getEventType(), event.getAggregateId());
         publisher.publishEvent(event);
     }
 
     @Override
     public void publish(List<DomainEvent> events) {
-        events.forEach(event -> {
-            log.info("Publishing event: {}", event);
-            publisher.publishEvent(event);
-        });
+        events.forEach(this::publish);
     }
 }

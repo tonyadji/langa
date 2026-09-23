@@ -24,11 +24,11 @@ public class FirstConnectionMailListener {
     @Async
     @EventListener
     void handleTeamInvitationEmailEvent(FirstConnectionMailEvent firstConnectionMailEvent) {
-        log.debug("Event received: {}", firstConnectionMailEvent);
+        log.debug("Event received: {} for aggregate {}", firstConnectionMailEvent.getEventType(), firstConnectionMailEvent.getAggregateId());
         try {
             notificationService.send(mailNotificationBuilder.build(firstConnectionMailEvent));
         } catch (Exception e) {
-            log.error("Error handling event: {}", firstConnectionMailEvent, e);
+            log.error("Error handling event {} for aggregate {}", firstConnectionMailEvent.getEventType(), firstConnectionMailEvent.getAggregateId(), e);
         }
     }
 }
