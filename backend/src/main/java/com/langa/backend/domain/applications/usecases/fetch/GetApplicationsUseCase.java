@@ -52,10 +52,9 @@ public class GetApplicationsUseCase {
     public Application getApplication(String appId, String username) {
         Application application = applicationRepository.findById(appId)
                 .orElseThrow(() -> new ApplicationException("Application not found", null, Errors.APPLICATION_NOT_FOUND));
-        if (application.isOwnedOrSharedWith(username, userAccountService.getAccountKey(username))) {
-            return application;
-        }
-        throw new ApplicationException("Application not found", null, Errors.ACCESS_DENIED);
+        // Owner, or active share with the user or one of their teams
+        application.authorizedToAccess(username, userAccountService.getAllAccountKeys(username));
+        return application;
     }
 
     public Application getSecuredApplication(String appId, String username) {

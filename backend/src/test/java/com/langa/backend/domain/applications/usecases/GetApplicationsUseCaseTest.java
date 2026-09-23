@@ -91,11 +91,34 @@ class GetApplicationsUseCaseTest {
     void getApplication_shouldReturnApplication_whenOwnedOrShared() {
         Application app = Application.createNew("Langa1", "key1", OWNER);
         when(applicationRepository.findById("app-1")).thenReturn(Optional.of(app));
-        when(userAccountService.getAccountKey(OWNER)).thenReturn("key1");
+        when(userAccountService.getAllAccountKeys(OWNER)).thenReturn(Set.of("key1"));
 
         Application result = useCase.getApplication("app-1", OWNER);
 
         assertEquals(app, result);
+    }
+
+    @Test
+    void getApplication_shouldReturnApplication_toMembersOfATeamItIsSharedWith() {
+        Application app = Application.createNew("Langa1", "key1", OWNER);
+        app.shareWith("TEAM-1", com.langa.backend.domain.applications.valueobjects.SharedWithProfile.TEAM);
+        when(applicationRepository.findById("app-1")).thenReturn(Optional.of(app));
+        when(userAccountService.getAllAccountKeys("member@example.com")).thenReturn(Set.of("ACC-MEMBER", "TEAM-1"));
+
+        assertEquals(app, useCase.getApplication("app-1", "member@example.com"));
+    }
+
+    @Test
+    void getApplication_shouldDenyAccess_whenTheShareWasRevoked() {
+        Application app = Application.createNew("Langa1", "key1", OWNER);
+        app.shareWith("ACC-GUEST", com.langa.backend.domain.applications.valueobjects.SharedWithProfile.USER);
+        app.revokeSharing("ACC-GUEST");
+        when(applicationRepository.findById("app-1")).thenReturn(Optional.of(app));
+        when(userAccountService.getAllAccountKeys("guest@example.com")).thenReturn(Set.of("ACC-GUEST"));
+
+        ApplicationException ex = assertThrows(ApplicationException.class,
+                () -> useCase.getApplication("app-1", "guest@example.com"));
+        assertEquals(Errors.ACCESS_DENIED, ex.getError());
     }
 
     @Test
@@ -109,7 +132,7 @@ class GetApplicationsUseCaseTest {
     void getApplication_shouldThrow_whenNoAccess() {
         Application app = Application.createNew("Langa1", "key1", OWNER);
         when(applicationRepository.findById("app-1")).thenReturn(Optional.of(app));
-        when(userAccountService.getAccountKey("intruder")).thenReturn("some-other-key");
+        when(userAccountService.getAllAccountKeys("intruder")).thenReturn(Set.of("some-other-key"));
 
         ApplicationException ex = assertThrows(ApplicationException.class,
                 () -> useCase.getApplication("app-1", "intruder"));

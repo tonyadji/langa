@@ -96,22 +96,41 @@ class ApplicationTest {
     }
 
     @Test
-    void isOwnedOrSharedWith_shouldReturnTrue_forOwner() {
+    void authorizedToAccess_shouldAllowTheOwner() {
         Application app = Application.createNew("My App", "ACC-1", "owner@example.com");
-        assertTrue(app.isOwnedOrSharedWith("owner@example.com", "whatever"));
+        assertDoesNotThrow(() -> app.authorizedToAccess("owner@example.com", Set.of()));
     }
 
     @Test
-    void isOwnedOrSharedWith_shouldReturnTrue_forSharedAccount() {
+    void authorizedToAccess_shouldAllowAUserTheAppIsSharedWith() {
         Application app = Application.createNew("My App", "ACC-1", "owner@example.com");
         app.shareWith("ACC-GUEST", SharedWithProfile.USER);
-        assertTrue(app.isOwnedOrSharedWith("guest@example.com", "ACC-GUEST"));
+        assertDoesNotThrow(() -> app.authorizedToAccess("guest@example.com", Set.of("ACC-GUEST")));
     }
 
     @Test
-    void isOwnedOrSharedWith_shouldReturnFalse_whenNeitherOwnerNorShared() {
+    void authorizedToAccess_shouldAllowMembersOfATeamTheAppIsSharedWith() {
         Application app = Application.createNew("My App", "ACC-1", "owner@example.com");
-        assertFalse(app.isOwnedOrSharedWith("intruder@example.com", "ACC-OTHER"));
+        app.shareWith("TEAM-1", SharedWithProfile.TEAM);
+        assertDoesNotThrow(() -> app.authorizedToAccess("member@example.com", Set.of("ACC-MEMBER", "TEAM-1")));
+    }
+
+    @Test
+    void authorizedToAccess_shouldDenyARevokedShare() {
+        Application app = Application.createNew("My App", "ACC-1", "owner@example.com");
+        app.shareWith("ACC-GUEST", SharedWithProfile.USER);
+        app.revokeSharing("ACC-GUEST");
+
+        ApplicationException ex = assertThrows(ApplicationException.class,
+                () -> app.authorizedToAccess("guest@example.com", Set.of("ACC-GUEST")));
+        assertEquals(Errors.ACCESS_DENIED, ex.getError());
+    }
+
+    @Test
+    void authorizedToAccess_shouldDenyWhenNeitherOwnerNorShared() {
+        Application app = Application.createNew("My App", "ACC-1", "owner@example.com");
+        assertThrows(ApplicationException.class,
+                () -> app.authorizedToAccess("intruder@example.com", Set.of("ACC-OTHER")));
     }
 
     @Test
