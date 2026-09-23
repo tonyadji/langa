@@ -92,13 +92,43 @@ GET /api/applications/{id}/logs?page=0&size=20 → get paginated logs for an app
 
 GET /api/users/me → current user (requires an Entra ID access token)
 
-## 🔐 Authentication (Microsoft Entra External ID)
+## 🔐 Authentication (OpenID Connect provider)
 
-Users and tokens are managed by a Microsoft Entra External ID tenant: the frontend signs users in with MSAL
-(authorization code + PKCE) and the backend only validates the access tokens. On the first request of a user,
-the backend creates the Langa user, or links an existing one having the same email (account key and data are kept).
+Users and tokens are managed by an external identity provider: Microsoft Entra External ID today, any OpenID
+Connect provider (Amazon Cognito, Keycloak, Auth0...) tomorrow. The frontend signs users in (authorization
+code + PKCE) and the backend only validates the access tokens. On the first request of a user, the backend
+creates the Langa user, or links an existing one having the same email (account key and data are kept).
 
-Tenant setup:
+The provider is isolated from the business code:
+
+- **Backend**: generic `application.security.auth` settings (`AUTH_*` variables below) and the
+  `ExternalIdentityResolver` port (`infra/security/identity`), which reads the user identity either from the
+  access token claims or from the OIDC UserInfo endpoint.
+- **Frontend**: the `AuthClient` interface (`src/features/auth/providers`), selected with `VITE_AUTH_PROVIDER`.
+  Pages and components only use `useAuth()`.
+
+### Backend settings
+
+| Variable | Default | Entra External ID | Amazon Cognito |
+|---|---|---|---|
+| `AUTH_PROVIDER` | `entra` | `entra` | `cognito` |
+| `AUTH_ISSUER_URI` | | `https://<tenant-id>.ciamlogin.com/<tenant-id>/v2.0` | `https://cognito-idp.<region>.amazonaws.com/<user-pool-id>` |
+| `AUTH_JWK_SET_URI` | | `https://<tenant-subdomain>.ciamlogin.com/<tenant-id>/discovery/v2.0/keys` | `https://cognito-idp.<region>.amazonaws.com/<user-pool-id>/.well-known/jwks.json` |
+| `AUTH_AUDIENCE_CLAIM` | `aud` | `aud` | `client_id` |
+| `AUTH_AUDIENCES` | | `<langa-api client id>,api://<langa-api client id>` | `<app client id>` |
+| `AUTH_SCOPE_CLAIM` | `scp` | `scp` | `scope` |
+| `AUTH_REQUIRED_SCOPE` | `access_as_user` | `access_as_user` | `<resource server id>/<scope>` (e.g. `langa-api/access`) |
+| `AUTH_REQUIRED_CLAIMS` | | | `token_use=access` |
+| `AUTH_SUBJECT_CLAIM` | `oid` | `oid` | `sub` |
+| `AUTH_EMAIL_SOURCE` | `claim` | `claim` | `userinfo` (Cognito access tokens have no email) |
+| `AUTH_EMAIL_CLAIM` | `email` | `email` | `email` |
+| `AUTH_USERINFO_URI` | | | `https://<cognito-domain>/oauth2/userInfo` |
+
+The UserInfo endpoint is only called on the first sign-in of a user; afterwards users are found by
+provider + subject. Users are stored with their provider, so switching providers means users sign up again
+with the same email and are linked to their existing Langa account.
+
+### Microsoft Entra External ID setup
 
 1. App registration **langa-api**: expose the scope `access_as_user`, set `accessTokenAcceptedVersion` to `2`
    in the manifest and add the optional claim `email` to the access token.
@@ -106,19 +136,23 @@ Tenant setup:
    delegated permission `access_as_user` on langa-api (admin consent granted).
 3. User flow *Sign up and sign in* (email + password or one-time code) linked to langa-spa.
 
-Backend settings:
-
-| Variable | Example |
-|---|---|
-| `ENTRA_ISSUER_URI` | `https://<tenant-id>.ciamlogin.com/<tenant-id>/v2.0` |
-| `ENTRA_JWK_SET_URI` | `https://<tenant-subdomain>.ciamlogin.com/<tenant-id>/discovery/v2.0/keys` |
-| `ENTRA_API_AUDIENCES` | `<langa-api client id>,api://<langa-api client id>` |
-| `ENTRA_API_REQUIRED_SCOPE` | `access_as_user` (default) |
-
 Frontend settings (build time):
 
 | Variable | Example |
 |---|---|
+| `VITE_AUTH_PROVIDER` | `entra` |
 | `VITE_ENTRA_CLIENT_ID` | `<langa-spa client id>` |
 | `VITE_ENTRA_AUTHORITY` | `https://<tenant-subdomain>.ciamlogin.com/` |
 | `VITE_ENTRA_API_SCOPE` | `api://<langa-api client id>/access_as_user` |
+
+### Amazon Cognito (example, not implemented in the frontend yet)
+
+1. User pool with email as sign-in attribute and self sign-up enabled, a domain (Hosted UI / managed login).
+2. Resource server `langa-api` with a custom scope `access`.
+3. Public app client (no secret), authorization code grant, scopes `openid email langa-api/access`,
+   callback and sign-out URLs of the frontend.
+4. Backend: the Cognito column above.
+5. Frontend: implement `AuthClient` (e.g. `oidcAuthClient.ts` with `oidc-client-ts`, authority
+   `https://cognito-idp.<region>.amazonaws.com/<user-pool-id>`, scope `openid email langa-api/access`;
+   `register` redirects to `https://<cognito-domain>/signup`, `logout` to `https://<cognito-domain>/logout`),
+   register it in `src/features/auth/providers/index.ts` under `cognito` and set `VITE_AUTH_PROVIDER=cognito`.

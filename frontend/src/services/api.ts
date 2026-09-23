@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { config } from '@/config';
-import { getAccessToken } from '@/features/auth/msal';
+import { authClient } from '@/features/auth/providers';
 
 // Unsecured endpoints that don't require authentication
 const UNSECURED_ENDPOINTS = [
@@ -32,10 +32,10 @@ const api = axios.create({
   },
 });
 
-// Request interceptor - add the Entra access token (silently renewed by MSAL) when signed in
+// Request interceptor - add the identity provider access token (silently renewed) when signed in
 api.interceptors.request.use(
   async (requestConfig) => {
-    const token = await getAccessToken();
+    const token = await authClient.getAccessToken();
 
     if (token && requestConfig.headers) {
       requestConfig.headers.Authorization = `Bearer ${token}`;

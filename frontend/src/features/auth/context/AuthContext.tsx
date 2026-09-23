@@ -1,8 +1,6 @@
-import { createContext, useCallback, useEffect, useState, type ReactNode } from 'react';
-import { InteractionStatus } from '@azure/msal-browser';
-import { useIsAuthenticated, useMsal } from '@azure/msal-react';
+import { createContext, useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
 import type { User } from '@/types/api';
-import { loginRequest } from '@/features/auth/msal';
+import { authClient } from '@/features/auth/providers';
 
 // ============================================================================
 // Types
@@ -15,9 +13,9 @@ export interface AuthState {
 }
 
 export interface AuthContextType extends AuthState {
-  /** Redirects to the Entra sign-in page, then back to `redirectTo` (current page by default). */
+  /** Redirects to the identity provider sign-in page, then back to `redirectTo` (current page by default). */
   login: (redirectTo?: string) => Promise<void>;
-  /** Redirects to the Entra sign-up page, then back to `redirectTo` (current page by default). */
+  /** Redirects to the identity provider sign-up page, then back to `redirectTo` (current page by default). */
   register: (redirectTo?: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (user: User) => void;
@@ -39,14 +37,12 @@ interface AuthProviderProps {
 }
 
 /**
- * Exposes the Entra ID session (handled by MSAL) and the Langa user profile.
- * Must be rendered inside an MsalProvider.
+ * Exposes the identity provider session (see AuthClient) and the Langa user profile.
  */
 export function AuthProvider({ children }: AuthProviderProps) {
-  const { instance, inProgress } = useMsal();
-  const isAuthenticated = useIsAuthenticated();
+  const isAuthenticated = useSyncExternalStore(authClient.subscribe, authClient.isAuthenticated);
   const [user, setUser] = useState<User | null>(null);
-  const [isProfileLoading, setIsProfileLoading] = useState(false);
+  const [profileFailed, setProfileFailed] = useState(false);
 
   const fetchUserProfile = useCallback(async (): Promise<void> => {
     // Import here to avoid circular dependencies
@@ -68,38 +64,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     if (!isAuthenticated) {
       setUser(null);
+      setProfileFailed(false);
       return;
     }
-    if (user || inProgress !== InteractionStatus.None) {
+    if (user || profileFailed) {
       return;
     }
 
-    setIsProfileLoading(true);
-    fetchUserProfile()
-      .catch(error => console.error('Failed to fetch user profile:', error))
-      .finally(() => setIsProfileLoading(false));
-  }, [isAuthenticated, inProgress, user, fetchUserProfile]);
-
-  const login = useCallback(async (redirectTo?: string): Promise<void> => {
-    await instance.loginRedirect({
-      ...loginRequest,
-      redirectStartPage: redirectTo ?? window.location.href,
+    fetchUserProfile().catch(error => {
+      console.error('Failed to fetch user profile:', error);
+      setProfileFailed(true);
     });
-  }, [instance]);
+  }, [isAuthenticated, user, profileFailed, fetchUserProfile]);
 
-  const register = useCallback(async (redirectTo?: string): Promise<void> => {
-    await instance.loginRedirect({
-      ...loginRequest,
-      // Opens the sign-up page of the External ID user flow
-      prompt: 'create',
-      redirectStartPage: redirectTo ?? window.location.href,
-    });
-  }, [instance]);
+  const login = useCallback((redirectTo?: string) => authClient.login(redirectTo), []);
+
+  const register = useCallback((redirectTo?: string) => authClient.register(redirectTo), []);
 
   const logout = useCallback(async (): Promise<void> => {
     setUser(null);
-    await instance.logoutRedirect({ account: instance.getActiveAccount() ?? undefined });
-  }, [instance]);
+    await authClient.logout();
+  }, []);
 
   const updateUser = useCallback((updatedUser: User): void => {
     setUser(updatedUser);
@@ -108,7 +93,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const value: AuthContextType = {
     user,
     isAuthenticated,
-    isLoading: inProgress !== InteractionStatus.None || isProfileLoading,
+    // Signed in but the Langa profile is not loaded yet
+    isLoading: isAuthenticated && !user && !profileFailed,
     login,
     register,
     logout,

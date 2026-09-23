@@ -19,12 +19,18 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
-// Mock MSAL: tests run without an Entra session (no Authorization header is sent)
-vi.mock('@/features/auth/msal', () => ({
-  msalInstance: {},
-  loginRequest: { scopes: [] },
-  initializeMsal: async () => {},
-  getAccessToken: async () => null,
+// Mock the identity provider: tests run signed out (no Authorization header is sent)
+vi.mock('@/features/auth/providers', () => ({
+  authClient: {
+    name: 'test',
+    initialize: async () => {},
+    isAuthenticated: () => false,
+    login: async () => {},
+    register: async () => {},
+    logout: async () => {},
+    getAccessToken: async () => null,
+    subscribe: () => () => {},
+  },
 }));
 
 afterEach(() => {
