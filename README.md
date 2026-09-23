@@ -173,7 +173,7 @@ Backend settings (`application-local.yml`):
 |---|---|
 | `application.security.dev-token.enabled` | `true` (default `false`: the endpoint does not exist) |
 | `application.security.dev-token.client-id` | `<langa-test-client client id>` |
-| `application.security.dev-token.native-auth-uri` | `https://<tenant-subdomain>.ciamlogin.com/<tenant-id>/oauth2/v2.0` |
+| `application.security.dev-token.native-auth-uri` | `https://<tenant-subdomain>.ciamlogin.com/<tenant-id>` |
 | `application.security.dev-token.scope` | `api://<langa-api client id>/access_as_user` |
 
 Usage:
@@ -182,7 +182,13 @@ Usage:
 # 1. A one-time code is sent to the user's email
 curl -X POST http://localhost:8080/api/dev/token/start -H "Content-Type: application/json" \
      -d '{"username":"user@example.com"}'
-# → {"continuationToken":"…","codeSentTo":"u***@example.com","codeLength":8}
+# → {"continuationToken":"…","codeSentTo":"u***@example.com","codeLength":8,"signUp":false}
+
+# To create the user in the identity provider if it does not exist (an existing user just signs in);
+# displayName is optional (default: the part of the email before '@')
+curl -X POST http://localhost:8080/api/dev/token/start -H "Content-Type: application/json" \
+     -d '{"username":"new@example.com","signUp":true,"displayName":"New User"}'
+# → {"continuationToken":"…","codeSentTo":"n***@example.com","codeLength":8,"signUp":true}
 
 # 2. Exchange the code for an access token (within a few minutes)
 curl -X POST http://localhost:8080/api/dev/token/complete -H "Content-Type: application/json" \
@@ -190,5 +196,9 @@ curl -X POST http://localhost:8080/api/dev/token/complete -H "Content-Type: appl
 # → {"accessToken":"eyJ…","tokenType":"Bearer","expiresIn":3599}
 ```
 
-Errors: unknown user (400-101), account that cannot sign in with an email code (400-300), expired sign-in
-session (400-301), wrong code (401-001), identity provider error (502-000).
+The continuation token is opaque: send it back unchanged. The Langa user is created on the first API call
+with the new token, as for a sign-up through the frontend.
+
+Errors: unknown user without `signUp` (400-101), account that cannot sign in with an email code (400-300),
+expired sign-in session (400-301), sign-up requiring attributes other than the display name (400-302),
+invalid continuation token (400-303), wrong code (401-001), identity provider error (502-000).
