@@ -42,7 +42,6 @@ application:
       unsecured:
         - /api/ingestion/**
         - /api/team-invitations/*/public
-        - /api/team-invitations/*/accept
     cors:
       allowed-origins:
         - http://localhost:3000

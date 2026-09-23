@@ -4,6 +4,7 @@ import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.common.model.errors.GenericException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -43,6 +44,22 @@ public class ControllerAdvice {
                 ));
     }
 
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiError> handleUnreadableBody(HttpMessageNotReadableException ex) {
+        // e.g. a payload rejected while being read (too large): answer with its business error
+        for (Throwable cause = ex.getCause(); cause != null; cause = cause.getCause()) {
+            if (cause instanceof GenericException gex && gex.getError() != null) {
+                return apiError(gex);
+            }
+        }
+        log.warn("Unreadable request body: {}", ex.getMostSpecificCause().getMessage());
+        return ResponseEntity.badRequest()
+                .body(ApiError.of(
+                        Errors.VALIDATION_ERROR.getMessage(),
+                        Errors.VALIDATION_ERROR.getCode(),
+                        "Malformed request body"));
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleAll(Exception ex) {

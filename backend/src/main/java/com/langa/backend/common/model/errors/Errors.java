@@ -38,6 +38,9 @@ public enum Errors {
     ACCESS_DENIED(403,"403-000", "Access denied"),
     ILLEGAL_INGESTION_REQUEST(403,"403-001" ,"Illegal ingestion request"),
 
+    INGESTION_PAYLOAD_TOO_LARGE(413, "413-000", "Ingestion payload too large"),
+    INGESTION_RATE_LIMITED(429, "429-001", "Too many ingestion requests, please retry later"),
+
     VALIDATION_ERROR(400,"400", "Validation error"),
 
     INTERNAL_SERVER_ERROR(500,"500", "Internal server error"),

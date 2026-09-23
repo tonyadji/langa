@@ -92,6 +92,32 @@ GET /api/applications/{id}/logs?page=0&size=20 → get paginated logs for an app
 
 GET /api/users/me → current user (requires an Entra ID access token)
 
+## 🚢 Backend deployment
+
+The root `Dockerfile` builds the backend image: unit tests run during the build
+(`--build-arg SKIP_TESTS=true` to skip them), the application runs as a non-root user and the image
+declares a `HEALTHCHECK` on the liveness probe.
+
+```bash
+docker build -t langa-backend .
+docker run --env-file backend/.env -p 8080:8080 langa-backend
+```
+
+Checklist:
+
+1. Fill the environment from [`backend/.env.example`](backend/.env.example) (variables without value are required).
+2. Identity provider: production redirect URIs on the SPA app registration, `AUTH_*` variables on the backend,
+   `VITE_*` variables when building the frontend (see *Authentication* below).
+3. `CORS_ALLOWED_ORIGINS` and `FRONT_URL` set to the production frontend URL.
+4. `SECURITY_UNSECURED_ENDPOINTS` limited to `/api/ingestion/**,/api/team-invitations/*/public`.
+5. Swagger disabled (`SPRINGDOC_ENABLED` unset or `false`) and `application.security.dev-token` not enabled.
+6. Probes: liveness `/actuator/health/liveness`, readiness `/actuator/health/readiness` (public, without
+   details unless `MANAGEMENT_HEALTH_SHOW_DETAILS` is set).
+7. Ingestion limits reviewed for the expected traffic: `INGESTION_MAX_PAYLOAD_BYTES` (default 5 MB) and
+   `INGESTION_REQUESTS_PER_MINUTE` (default 1200 per application key and per backend instance, `0` to disable).
+   Over the limits the endpoint answers `413` / `429` (with `Retry-After`).
+8. E-mails: an SMTP server able to send the expected volume (a transactional provider rather than Gmail).
+
 ## 🔐 Authentication (OpenID Connect provider)
 
 Users and tokens are managed by an external identity provider: Microsoft Entra External ID today, any OpenID

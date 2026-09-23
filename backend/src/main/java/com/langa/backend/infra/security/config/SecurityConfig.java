@@ -1,6 +1,7 @@
 package com.langa.backend.infra.security.config;
 
 import com.langa.backend.infra.security.auth.ExternalJwtAuthenticationConverter;
+import com.langa.backend.infra.rest.teams.AcceptInvitationController;
 import com.langa.backend.infra.security.devtoken.DevTokenController;
 import com.langa.backend.infra.security.devtoken.DevTokenProperties;
 import com.langa.backend.infra.security.identity.ClaimsExternalIdentityResolver;
@@ -8,6 +9,7 @@ import com.langa.backend.infra.security.identity.ExternalIdentityResolver;
 import com.langa.backend.infra.security.identity.UserInfoExternalIdentityResolver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -38,6 +40,8 @@ import java.util.function.Predicate;
 @Configuration
 public class SecurityConfig {
 
+    static final String[] HEALTH_PATHS = {"/actuator/health", "/actuator/health/**", "/actuator/info"};
+
     private final SecurityEndpoints securityEndpoints;
     private final SecurityCors securityCors;
     private final AuthProviderProperties authProperties;
@@ -61,6 +65,10 @@ public class SecurityConfig {
             .cors(Customizer.withDefaults())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorizer -> {
+                    // Always authenticated, even if listed in the unsecured endpoints: the guest is the signed-in user
+                    authorizer.requestMatchers(HttpMethod.POST, AcceptInvitationController.ACCEPT_PATH).authenticated();
+                    // Health probes for orchestrators and load balancers (details are hidden unless configured)
+                    authorizer.requestMatchers(HEALTH_PATHS).permitAll();
                     authorizer.requestMatchers(securityEndpoints.getUnsecured()).permitAll();
                     if (devTokenProperties.isEnabled()) {
                         // Development endpoint issuing tokens: public only when explicitly enabled
