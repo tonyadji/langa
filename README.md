@@ -41,7 +41,7 @@ This repository contains a full-stack monitoring platform composed of three main
 - Collect application logs via the **agent**  
 - Store and expose logs through the **backend** REST API  
 - Visualize logs in a clean **React dashboard**  
-- Authentication with JWT (frontend ↔ backend)  
+- Authentication with Microsoft Entra External ID (OAuth2 / OpenID Connect)  
 - Pagination and filtering of logs  
 
 ---
@@ -58,7 +58,7 @@ cd <langa>---
 - Collect application logs via the **agent**  
 - Store and expose logs through the **backend** REST API  
 - Visualize logs in a clean **React dashboard**  
-- Authentication with JWT (frontend ↔ backend)  
+- Authentication with Microsoft Entra External ID (OAuth2 / OpenID Connect)  
 - Pagination and filtering of logs  
 
 ---
@@ -81,7 +81,7 @@ cd frontend
 npm install
 npm start
 
-register an account and create an application, so that you can configure the agent to send logs
+sign up (Microsoft Entra External ID) and create an application, so that you can configure the agent to send logs
 
 📡 API Overview
 Some useful endpoints from the backend:
@@ -90,4 +90,35 @@ GET /api/applications → list applications
 
 GET /api/applications/{id}/logs?page=0&size=20 → get paginated logs for an application
 
-POST /api/auth/login → authenticate and get a JWT
+GET /api/users/me → current user (requires an Entra ID access token)
+
+## 🔐 Authentication (Microsoft Entra External ID)
+
+Users and tokens are managed by a Microsoft Entra External ID tenant: the frontend signs users in with MSAL
+(authorization code + PKCE) and the backend only validates the access tokens. On the first request of a user,
+the backend creates the Langa user, or links an existing one having the same email (account key and data are kept).
+
+Tenant setup:
+
+1. App registration **langa-api**: expose the scope `access_as_user`, set `accessTokenAcceptedVersion` to `2`
+   in the manifest and add the optional claim `email` to the access token.
+2. App registration **langa-spa**: platform *Single-page application* with the frontend URLs as redirect URIs,
+   delegated permission `access_as_user` on langa-api (admin consent granted).
+3. User flow *Sign up and sign in* (email + password or one-time code) linked to langa-spa.
+
+Backend settings:
+
+| Variable | Example |
+|---|---|
+| `ENTRA_ISSUER_URI` | `https://<tenant-id>.ciamlogin.com/<tenant-id>/v2.0` |
+| `ENTRA_JWK_SET_URI` | `https://<tenant-subdomain>.ciamlogin.com/<tenant-id>/discovery/v2.0/keys` |
+| `ENTRA_API_AUDIENCES` | `<langa-api client id>,api://<langa-api client id>` |
+| `ENTRA_API_REQUIRED_SCOPE` | `access_as_user` (default) |
+
+Frontend settings (build time):
+
+| Variable | Example |
+|---|---|
+| `VITE_ENTRA_CLIENT_ID` | `<langa-spa client id>` |
+| `VITE_ENTRA_AUTHORITY` | `https://<tenant-subdomain>.ciamlogin.com/` |
+| `VITE_ENTRA_API_SCOPE` | `api://<langa-api client id>/access_as_user` |

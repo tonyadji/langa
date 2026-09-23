@@ -6,20 +6,31 @@
  * ⚠️ These tests MUST FAIL until implementation is complete
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from '@/features/auth/context/AuthContext';
+import { AuthContext, type AuthContextType } from '@/features/auth/context/AuthContext';
 import { ApplicationList } from '@/features/applications/components/ApplicationList';
 import type { Application } from '@/types';
+
+const mockAuthContext: AuthContextType = {
+  user: null,
+  isAuthenticated: true,
+  isLoading: false,
+  login: vi.fn(),
+  register: vi.fn(),
+  logout: vi.fn(),
+  updateUser: vi.fn(),
+  fetchUserProfile: vi.fn(),
+};
 
 // Test wrapper component
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
   <BrowserRouter>
-    <AuthProvider>
+    <AuthContext.Provider value={mockAuthContext}>
       {children}
-    </AuthProvider>
+    </AuthContext.Provider>
   </BrowserRouter>
 );
 

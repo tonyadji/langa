@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
 export interface ProtectedRouteProps {
@@ -12,7 +12,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   redirectTo = '/login',
 }) => {
   const { isAuthenticated, isLoading } = useAuth();
-  
+  const location = useLocation();
+
   // Show loading state while checking authentication
   if (isLoading) {
     return (
@@ -21,9 +22,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       </div>
     );
   }
-  
+
   if (!isAuthenticated) {
-    return <Navigate to={redirectTo} replace />;
+    // Remember the requested page to come back to it after signing in
+    return <Navigate to={redirectTo} replace state={{ from: location.pathname + location.search }} />;
   }
 
   return <>{children}</>;

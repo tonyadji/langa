@@ -19,9 +19,12 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
-// Mock the useTokenRefresh hook to prevent automatic token refresh during tests
-vi.mock('@/features/auth/hooks/useTokenRefresh', () => ({
-  useTokenRefresh: () => {},
+// Mock MSAL: tests run without an Entra session (no Authorization header is sent)
+vi.mock('@/features/auth/msal', () => ({
+  msalInstance: {},
+  loginRequest: { scopes: [] },
+  initializeMsal: async () => {},
+  getAccessToken: async () => null,
 }));
 
 afterEach(() => {

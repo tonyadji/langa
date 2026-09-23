@@ -12,9 +12,8 @@ import type { AuthContextType } from '../context/AuthContext';
  * ```tsx
  * const { user, isAuthenticated, login, logout } = useAuth();
  * 
- * const handleLogin = async () => {
- *   await login('user@example.com', 'password');
- * };
+ * // Redirects to the Microsoft Entra sign-in page
+ * const handleLogin = () => login();
  * ```
  */
 export function useAuth(): AuthContextType {
