@@ -24,8 +24,8 @@
     "check:all": "npm run check:types && npm run lint && npm test -- --run"
   },
   "dependencies": {
-    "@azure/msal-browser": "^4.13.0",
-    "@azure/msal-react": "^3.0.12",
+    "@azure/msal-browser": "^5.22.0",
+    "@azure/msal-react": "^5.7.1",
     "@tanstack/react-virtual": "^3.13.14",
     "axios": "1.6",
     "lucide-react": "^0.562.0",
