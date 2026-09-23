@@ -1,5 +1,6 @@
 package com.langa.backend.application.listeners.teams;
 
+import com.langa.backend.domain.users.valueobjects.ExternalIdentity;
 import com.langa.backend.common.eda.services.OutboxEventService;
 import com.langa.backend.domain.teams.Team;
 import com.langa.backend.domain.teams.events.InvitationAcceptedMailEvent;
@@ -52,7 +53,7 @@ class TeamInvitationAcceptedByGuestListenerTest {
                 new TeamInvitationAcceptedByGuestListener(userService, teamMemberShipService, outboxEventService);
         TeamInvitationAcceptedByGuestEvent event = new TeamInvitationAcceptedByGuestEvent(
                 "team-1", "guest@example.com", "host@example.com", "team-key", "token-1", LocalDateTime.now());
-        User user = User.createFromExternalIdentity("oid-1", "guest@example.com");
+        User user = User.createFromExternalIdentity(new ExternalIdentity("entra", "oid-1", "guest@example.com"));
         Team team = Team.createNew("Dev Team", "host@example.com", LocalDateTime.now());
 
         when(userService.findOrCreateUserByEmail("guest@example.com")).thenReturn(user);

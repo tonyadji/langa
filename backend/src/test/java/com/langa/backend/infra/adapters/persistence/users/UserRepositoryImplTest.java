@@ -1,5 +1,6 @@
 package com.langa.backend.infra.adapters.persistence.users;
 
+import com.langa.backend.domain.users.valueobjects.ExternalIdentity;
 import com.langa.backend.domain.users.User;
 import com.langa.backend.infra.adapters.persistence.users.mongo.MongoUserDao;
 import com.langa.backend.infra.adapters.persistence.users.mongo.UserDocument;
@@ -25,7 +26,7 @@ class UserRepositoryImplTest {
     private UserRepositoryImpl repository;
 
     private User user() {
-        return User.createFromExternalIdentity("oid-1", "user@example.com");
+        return User.createFromExternalIdentity(new ExternalIdentity("entra", "oid-1", "user@example.com"));
     }
 
     @Test
@@ -55,11 +56,34 @@ class UserRepositoryImplTest {
     }
 
     @Test
-    void findByExternalId_shouldReturnUser() {
+    void findByExternalIdentity_shouldReturnUser() {
         User user = user();
-        when(mongoUserDao.findByExternalId("oid-1")).thenReturn(Optional.of(UserDocument.of(user)));
+        when(mongoUserDao.findByIdentityProviderAndExternalId("entra", "oid-1")).thenReturn(Optional.of(UserDocument.of(user)));
 
-        assertTrue(repository.findByExternalId("oid-1").isPresent());
+        assertTrue(repository.findByExternalIdentity("entra", "oid-1").isPresent());
+    }
+
+    @Test
+    void userDocument_shouldRoundTripIdentityProvider() {
+        User user = user();
+
+        User mapped = UserDocument.of(user).toUser();
+
+        assertEquals("entra", mapped.getIdentityProvider());
+        assertEquals("oid-1", mapped.getExternalId());
+    }
+
+    @Test
+    void userDocument_shouldDefaultProviderOfLegacyLinkedUsers() {
+        UserDocument legacy = UserDocument.of(user());
+        legacy.setIdentityProvider(null);
+
+        assertEquals("entra", legacy.toUser().getIdentityProvider());
+    }
+
+    @Test
+    void userDocument_shouldKeepInvitedUsersWithoutProvider() {
+        assertNull(UserDocument.of(User.createInvited("guest@example.com")).toUser().getIdentityProvider());
     }
 
     @Test

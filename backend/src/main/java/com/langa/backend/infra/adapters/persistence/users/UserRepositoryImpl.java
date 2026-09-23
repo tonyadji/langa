@@ -36,8 +36,8 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public Optional<User> findByExternalId(String externalId) {
-        return mongoUserDao.findByExternalId(externalId)
+    public Optional<User> findByExternalIdentity(String provider, String subject) {
+        return mongoUserDao.findByIdentityProviderAndExternalId(provider, subject)
                 .map(UserDocument::toUser);
     }
 

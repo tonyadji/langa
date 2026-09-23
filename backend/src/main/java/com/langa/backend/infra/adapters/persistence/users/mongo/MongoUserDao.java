@@ -9,7 +9,7 @@ public interface MongoUserDao extends MongoRepository<UserDocument, String> {
 
     Optional<UserDocument> findFirstByEmailIgnoreCase(String email);
 
-    Optional<UserDocument> findByExternalId(String externalId);
+    Optional<UserDocument> findByIdentityProviderAndExternalId(String identityProvider, String externalId);
 
     Optional<UserDocument> findByEmailOrAccountKey(String email, String accountKey);
 }

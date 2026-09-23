@@ -1,5 +1,6 @@
 package com.langa.backend.domain.events;
 
+import com.langa.backend.domain.users.valueobjects.ExternalIdentity;
 import com.langa.backend.domain.applications.Application;
 import com.langa.backend.domain.applications.events.ApplicationCreatedEvent;
 import com.langa.backend.domain.applications.events.ApplicationSharedEvent;
@@ -42,7 +43,7 @@ class DomainEventsTest {
 
     @Test
     void activeUserRegisteredEvent_shouldExposeAggregateInfo() {
-        User user = User.createFromExternalIdentity("oid-1", "user@example.com");
+        User user = User.createFromExternalIdentity(new ExternalIdentity("entra", "oid-1", "user@example.com"));
         ActiveUserRegisteredEvent event = ActiveUserRegisteredEvent.of(user);
 
         assertEquals(user.getId(), event.getAggregateId());

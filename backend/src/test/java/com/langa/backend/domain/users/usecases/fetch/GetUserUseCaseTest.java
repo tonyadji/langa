@@ -1,5 +1,6 @@
 package com.langa.backend.domain.users.usecases.fetch;
 
+import com.langa.backend.domain.users.valueobjects.ExternalIdentity;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.users.User;
 import com.langa.backend.domain.users.exceptions.UserException;
@@ -27,7 +28,7 @@ class GetUserUseCaseTest {
 
     @Test
     void queryByUsername_shouldReturnUserInfo_whenFound() {
-        User user = User.createFromExternalIdentity("oid-1", "user@example.com");
+        User user = User.createFromExternalIdentity(new ExternalIdentity("entra", "oid-1", "user@example.com"));
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
 
         UserInfo info = useCase.queryByUsername("user@example.com");

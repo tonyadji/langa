@@ -8,7 +8,7 @@ public interface UserRepository {
     Optional<User> save(User user);
     Optional<User> findByEmail(String email);
     Optional<User> findByEmailIgnoreCase(String email);
-    Optional<User> findByExternalId(String externalId);
+    Optional<User> findByExternalIdentity(String provider, String subject);
 
     Optional<User> findByEmailOrAccountKey(String userEmailOrAccountKey);
 }

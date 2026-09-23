@@ -1,5 +1,6 @@
 package com.langa.backend.infra.adapters.persistence.users;
 
+import com.langa.backend.domain.users.valueobjects.ExternalIdentity;
 import com.langa.backend.common.model.ShareWithInfo;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.domain.teams.repositories.TeamMemberRepository;
@@ -31,7 +32,7 @@ class UserAccountServiceImplTest {
     private UserAccountServiceImpl service;
 
     private User user() {
-        return User.createFromExternalIdentity("oid-1", "user@example.com");
+        return User.createFromExternalIdentity(new ExternalIdentity("entra", "oid-1", "user@example.com"));
     }
 
     private UserAccountServiceImpl newService() {

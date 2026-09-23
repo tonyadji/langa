@@ -50,11 +50,20 @@ application:
   persistence:
     provider: ${PERSISTENCE_PROVIDER}
   security:
-    entra:
-      issuer-uri: ${ENTRA_ISSUER_URI}
-      jwk-set-uri: ${ENTRA_JWK_SET_URI}
-      audiences: ${ENTRA_API_AUDIENCES}
-      required-scope: ${ENTRA_API_REQUIRED_SCOPE:access_as_user}
+    # OIDC identity provider; defaults are those of Microsoft Entra External ID (see README for Cognito)
+    auth:
+      provider: ${AUTH_PROVIDER:entra}
+      issuer-uri: ${AUTH_ISSUER_URI}
+      jwk-set-uri: ${AUTH_JWK_SET_URI}
+      audience-claim: ${AUTH_AUDIENCE_CLAIM:aud}
+      audiences: ${AUTH_AUDIENCES}
+      scope-claim: ${AUTH_SCOPE_CLAIM:scp}
+      required-scope: ${AUTH_REQUIRED_SCOPE:access_as_user}
+      required-claims: ${AUTH_REQUIRED_CLAIMS:}
+      subject-claim: ${AUTH_SUBJECT_CLAIM:oid}
+      email-source: ${AUTH_EMAIL_SOURCE:claim}
+      email-claim: ${AUTH_EMAIL_CLAIM:email}
+      userinfo-uri: ${AUTH_USERINFO_URI:}
     endpoints:
       unsecured: ${SECURITY_UNSECURED_ENDPOINTS}
     cors:
