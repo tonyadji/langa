@@ -1,6 +1,8 @@
 package com.langa.backend.infra.security.config;
 
 import com.langa.backend.infra.security.auth.ExternalJwtAuthenticationConverter;
+import com.langa.backend.infra.security.devtoken.DevTokenController;
+import com.langa.backend.infra.security.devtoken.DevTokenProperties;
 import com.langa.backend.infra.security.identity.ClaimsExternalIdentityResolver;
 import com.langa.backend.infra.security.identity.ExternalIdentityResolver;
 import com.langa.backend.infra.security.identity.UserInfoExternalIdentityResolver;
@@ -39,13 +41,16 @@ public class SecurityConfig {
     private final SecurityEndpoints securityEndpoints;
     private final SecurityCors securityCors;
     private final AuthProviderProperties authProperties;
+    private final DevTokenProperties devTokenProperties;
 
     public SecurityConfig(SecurityEndpoints securityEndpoints,
                           SecurityCors securityCors,
-                          AuthProviderProperties authProperties) {
+                          AuthProviderProperties authProperties,
+                          DevTokenProperties devTokenProperties) {
         this.securityEndpoints = securityEndpoints;
         this.securityCors = securityCors;
         this.authProperties = authProperties;
+        this.devTokenProperties = devTokenProperties;
     }
 
     @Bean
@@ -55,9 +60,14 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(Customizer.withDefaults())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(authorizer -> authorizer
-                .requestMatchers(securityEndpoints.getUnsecured()).permitAll()
-                .anyRequest().authenticated())
+                .authorizeHttpRequests(authorizer -> {
+                    authorizer.requestMatchers(securityEndpoints.getUnsecured()).permitAll();
+                    if (devTokenProperties.isEnabled()) {
+                        // Development endpoint issuing tokens: public only when explicitly enabled
+                        authorizer.requestMatchers(DevTokenController.PATH + "/**").permitAll();
+                    }
+                    authorizer.anyRequest().authenticated();
+                })
             .oauth2ResourceServer(oauth2 -> oauth2
                 .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)));
 

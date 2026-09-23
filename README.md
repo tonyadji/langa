@@ -156,3 +156,39 @@ Frontend settings (build time):
    `https://cognito-idp.<region>.amazonaws.com/<user-pool-id>`, scope `openid email langa-api/access`;
    `register` redirects to `https://<cognito-domain>/signup`, `logout` to `https://<cognito-domain>/logout`),
    register it in `src/features/auth/providers/index.ts` under `cognito` and set `VITE_AUTH_PROVIDER=cognito`.
+
+### Getting an access token without the frontend (development only)
+
+For API tests (Postman, curl...), the backend can return a real access token for a user, using the
+**native authentication API** of Entra External ID with an email one-time code. It is **disabled by default**
+and must never be enabled in production.
+
+Entra setup: an app registration **langa-test-client** with *Allow public client flows* and
+*Enable native authentication* set to **Yes**, the delegated permission `access_as_user` on langa-api
+(admin consent granted), linked to the user flow.
+
+Backend settings (`application-local.yml`):
+
+| Property | Example |
+|---|---|
+| `application.security.dev-token.enabled` | `true` (default `false`: the endpoint does not exist) |
+| `application.security.dev-token.client-id` | `<langa-test-client client id>` |
+| `application.security.dev-token.native-auth-uri` | `https://<tenant-subdomain>.ciamlogin.com/<tenant-id>/oauth2/v2.0` |
+| `application.security.dev-token.scope` | `api://<langa-api client id>/access_as_user` |
+
+Usage:
+
+```bash
+# 1. A one-time code is sent to the user's email
+curl -X POST http://localhost:8080/api/dev/token/start -H "Content-Type: application/json" \
+     -d '{"username":"user@example.com"}'
+# → {"continuationToken":"…","codeSentTo":"u***@example.com","codeLength":8}
+
+# 2. Exchange the code for an access token (within a few minutes)
+curl -X POST http://localhost:8080/api/dev/token/complete -H "Content-Type: application/json" \
+     -d '{"continuationToken":"…","code":"12345678"}'
+# → {"accessToken":"eyJ…","tokenType":"Bearer","expiresIn":3599}
+```
+
+Errors: unknown user (400-101), account that cannot sign in with an email code (400-300), expired sign-in
+session (400-301), wrong code (401-001), identity provider error (502-000).
