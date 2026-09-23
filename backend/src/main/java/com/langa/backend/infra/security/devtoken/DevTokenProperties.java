@@ -19,7 +19,7 @@ public class DevTokenProperties {
     private boolean enabled = false;
     /** Public client allowed to use the provider's native authentication API (e.g. "langa-test-client"). */
     private String clientId;
-    /** Base URL of the native authentication API, e.g. https://{subdomain}.ciamlogin.com/{tenant-id}/oauth2/v2.0 */
+    /** Tenant URL of the native authentication API, e.g. https://{subdomain}.ciamlogin.com/{tenant-id} */
     private String nativeAuthUri;
     /** Scopes requested for the access token, space separated (the API scope). */
     private String scope;

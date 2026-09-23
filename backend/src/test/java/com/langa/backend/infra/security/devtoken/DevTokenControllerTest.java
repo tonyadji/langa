@@ -29,18 +29,29 @@ class DevTokenControllerTest {
 
     @Test
     void start_shouldSendTheCodeAndReturnTheContinuationToken() {
-        when(devTokenProvider.startSignIn("user@example.com"))
-                .thenReturn(new DevTokenProvider.DevTokenChallenge("ct-2", "u***@example.com", 8));
+        when(devTokenProvider.start("user@example.com", false, null))
+                .thenReturn(new DevTokenProvider.DevTokenChallenge("ct-2", "u***@example.com", 8, false));
 
         ResponseEntity<DevTokenController.StartResponse> response =
-                controller.start(new DevTokenController.StartRequest(" user@example.com "));
+                controller.start(new DevTokenController.StartRequest(" user@example.com ", null, null));
 
-        assertEquals(new DevTokenController.StartResponse("ct-2", "u***@example.com", 8), response.getBody());
+        assertEquals(new DevTokenController.StartResponse("ct-2", "u***@example.com", 8, false), response.getBody());
+    }
+
+    @Test
+    void start_shouldForwardTheSignUpRequest() {
+        when(devTokenProvider.start("new@example.com", true, "New User"))
+                .thenReturn(new DevTokenProvider.DevTokenChallenge("su-2", "n***@example.com", 8, true));
+
+        ResponseEntity<DevTokenController.StartResponse> response =
+                controller.start(new DevTokenController.StartRequest("new@example.com", true, "New User"));
+
+        assertEquals(new DevTokenController.StartResponse("su-2", "n***@example.com", 8, true), response.getBody());
     }
 
     @Test
     void complete_shouldReturnTheAccessToken() {
-        when(devTokenProvider.completeSignIn("ct-2", "12345678"))
+        when(devTokenProvider.complete("ct-2", "12345678"))
                 .thenReturn(new DevTokenProvider.DevToken("eyJ.access", "Bearer", 3599L));
 
         ResponseEntity<DevTokenController.TokenResponse> response =
@@ -63,7 +74,7 @@ class DevTokenControllerTest {
                 .withPropertyValues(
                         "application.security.dev-token.enabled=true",
                         "application.security.dev-token.client-id=test-client-id",
-                        "application.security.dev-token.native-auth-uri=https://langa-test.ciamlogin.com/t/oauth2/v2.0",
+                        "application.security.dev-token.native-auth-uri=https://langa-test.ciamlogin.com/t",
                         "application.security.dev-token.scope=api://api-client-id/access_as_user")
                 .run(context -> {
                     assertThat(context).hasSingleBean(DevTokenController.class);

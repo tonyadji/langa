@@ -28,6 +28,8 @@ public enum Errors {
 
     DEV_TOKEN_SIGN_IN_UNSUPPORTED(400, "400-300", "This account cannot sign in with an email code"),
     DEV_TOKEN_SESSION_EXPIRED(400, "400-301", "Sign-in session expired, start again"),
+    DEV_TOKEN_ATTRIBUTES_REQUIRED(400, "400-302", "The sign-up requires attributes that cannot be provided"),
+    DEV_TOKEN_INVALID_CONTINUATION(400, "400-303", "Invalid continuation token, start again"),
 
     INVALID_CREDENTIALS(401,"401-000" ,"Invalid credentials"),
     DEV_TOKEN_INVALID_CODE(401, "401-001", "Invalid verification code"),
