@@ -7,8 +7,8 @@ export const config = {
     entra: {
       // "langa-spa" app registration (Application (client) ID)
       clientId: import.meta.env.VITE_ENTRA_CLIENT_ID || '22222222-2222-2222-2222-222222222222',
-      // External ID tenant authority: https://<tenant-subdomain>.ciamlogin.com/
-      authority: import.meta.env.VITE_ENTRA_AUTHORITY || 'https://langa.ciamlogin.com/',
+      // External ID tenant authority: https://<tenant-subdomain>.ciamlogin.com/<tenant-id>/ (tenant id required by MSAL 5)
+      authority: import.meta.env.VITE_ENTRA_AUTHORITY || 'https://your-tenant.ciamlogin.com/00000000-0000-0000-0000-000000000000/',
       // Delegated scope exposed by the "langa-api" app registration
       apiScope:
         import.meta.env.VITE_ENTRA_API_SCOPE || 'api://11111111-1111-1111-1111-111111111111/access_as_user',

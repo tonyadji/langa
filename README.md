@@ -142,7 +142,7 @@ Frontend settings (build time):
 |---|---|
 | `VITE_AUTH_PROVIDER` | `entra` |
 | `VITE_ENTRA_CLIENT_ID` | `<langa-spa client id>` |
-| `VITE_ENTRA_AUTHORITY` | `https://<tenant-subdomain>.ciamlogin.com/` |
+| `VITE_ENTRA_AUTHORITY` | `https://<tenant-subdomain>.ciamlogin.com/<tenant-id>/` (the tenant id is required: MSAL checks the issuer) |
 | `VITE_ENTRA_API_SCOPE` | `api://<langa-api client id>/access_as_user` |
 
 ### Amazon Cognito (example, not implemented in the frontend yet)

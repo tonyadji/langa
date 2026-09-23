@@ -21,7 +21,7 @@ class SecurityConfigTest {
         AuthProviderProperties properties = new AuthProviderProperties();
         properties.setProvider("entra");
         properties.setIssuerUri(ENTRA_ISSUER);
-        properties.setJwkSetUri("https://langa.ciamlogin.com/tenant-id/discovery/v2.0/keys");
+        properties.setJwkSetUri("https://your-tenant.ciamlogin.com/tenant-id/discovery/v2.0/keys");
         properties.setAudiences(API_CLIENT_ID + ", api://" + API_CLIENT_ID);
         properties.setScopeClaim("scp");
         properties.setRequiredScope("access_as_user");

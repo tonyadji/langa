@@ -9,7 +9,7 @@ ARG VITE_API_BASE_URL=https://langa-production.up.railway.app/api
 # Identity provider and Microsoft Entra External ID settings (example values: override with --build-arg)
 ARG VITE_AUTH_PROVIDER=entra
 ARG VITE_ENTRA_CLIENT_ID=22222222-2222-2222-2222-222222222222
-ARG VITE_ENTRA_AUTHORITY=https://langa.ciamlogin.com/
+ARG VITE_ENTRA_AUTHORITY=https://your-tenant.ciamlogin.com/00000000-0000-0000-0000-000000000000/
 ARG VITE_ENTRA_API_SCOPE=api://11111111-1111-1111-1111-111111111111/access_as_user
 
 WORKDIR /app

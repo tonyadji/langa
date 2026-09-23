@@ -33,7 +33,7 @@ application:
     auth:
       provider: entra
       issuer-uri: https://00000000-0000-0000-0000-000000000000.ciamlogin.com/00000000-0000-0000-0000-000000000000/v2.0
-      jwk-set-uri: https://langa.ciamlogin.com/00000000-0000-0000-0000-000000000000/discovery/v2.0/keys
+      jwk-set-uri: https://your-tenant.ciamlogin.com/00000000-0000-0000-0000-000000000000/discovery/v2.0/keys
       audiences: 11111111-1111-1111-1111-111111111111
       scope-claim: scp
       required-scope: access_as_user
