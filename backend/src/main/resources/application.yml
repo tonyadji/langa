@@ -50,10 +50,11 @@ application:
   persistence:
     provider: ${PERSISTENCE_PROVIDER}
   security:
-    jwt.secret: ${JWT_KEY}
-    jwt.kid: ${JWT_KID}
-    jwt.expiration: ${JWT_EXPIRATION}
-    jwt.refresh-token.expiration: ${JWT_REFRESH_TOKEN_EXPIRATION}
+    entra:
+      issuer-uri: ${ENTRA_ISSUER_URI}
+      jwk-set-uri: ${ENTRA_JWK_SET_URI}
+      audiences: ${ENTRA_API_AUDIENCES}
+      required-scope: ${ENTRA_API_REQUIRED_SCOPE:access_as_user}
     endpoints:
       unsecured: ${SECURITY_UNSECURED_ENDPOINTS}
     cors:

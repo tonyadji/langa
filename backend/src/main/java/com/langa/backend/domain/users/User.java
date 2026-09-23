@@ -3,7 +3,6 @@ package com.langa.backend.domain.users;
 import com.langa.backend.common.model.AbstractModel;
 import com.langa.backend.common.model.errors.Errors;
 import com.langa.backend.common.utils.KeyGenerator;
-import com.langa.backend.domain.users.events.AccountSetupCompleteMailEvent;
 import com.langa.backend.domain.users.events.ActiveUserRegisteredEvent;
 import com.langa.backend.domain.users.exceptions.UserException;
 import com.langa.backend.domain.users.valueobjects.UserId;
@@ -17,50 +16,59 @@ import java.util.Objects;
 public class User extends AbstractModel {
     private final UserId userId;
 
-    private String password;
+    /** Identifier of the user in the external identity provider (Entra ID {@code oid} claim). */
+    private String externalId;
     private UserStatus status;
-    private String firstConnectionToken;
 
 
-    private User(UserId userId, String password, UserStatus status, String firstConnectionToken) {
+    private User(UserId userId, String externalId, UserStatus status) {
         this.userId = userId;
-        this.password = password;
+        this.externalId = externalId;
         this.status = status;
-        this.firstConnectionToken = firstConnectionToken;
     }
 
-    public static User populate(UserId id, String password, UserStatus status, String firstConnectionToken) {
-        return new User(id, password, status, firstConnectionToken);
+    public static User populate(UserId id, String externalId, UserStatus status) {
+        return new User(id, externalId, status);
     }
 
-    public static User createActive(String email, String encodedPassword) {
-        String accountKey = KeyGenerator.generateAccountKey(email);
-        final UserId id = UserId.newId().withEmail(email).withAccountKey(accountKey);
-        final User activeUser = new User(id, encodedPassword, UserStatus.ACTIVE, null);
+    /**
+     * Creates a user on its first sign-in through the identity provider.
+     */
+    public static User createFromExternalIdentity(String externalId, String email) {
+        final User activeUser = new User(newUserId(email), externalId, UserStatus.ACTIVE);
         activeUser.registerDomainEvent(ActiveUserRegisteredEvent.of(activeUser));
         return activeUser;
     }
 
-    public static User createNew(String email, String encodedPassword) {
+    /**
+     * Creates a user that has been invited (e.g. in a team) but has not signed in yet.
+     */
+    public static User createInvited(String email) {
+        return new User(newUserId(email), null, UserStatus.CREATED);
+    }
+
+    private static UserId newUserId(String email) {
         String accountKey = KeyGenerator.generateAccountKey(email);
-        final UserId id = UserId.newId().withEmail(email).withAccountKey(accountKey);
-        return new User(id, encodedPassword, UserStatus.CREATED, null);
+        return UserId.newId().withEmail(email).withAccountKey(accountKey);
     }
 
-    public void buildFirstConnectionToken() {
-        firstConnectionToken = KeyGenerator.genericToken(userId.accountKey(), userId.email());
-    }
-
-
-    public void completeFirstConnection(String encodedPassword) {
-        if(UserStatus.ACTIVE.equals(status)) {
-            throw new UserException("User is already active", null, Errors.USER_ILLEGAL_STATUS);
+    /**
+     * Links an existing local user (created before the identity provider migration, or invited)
+     * to its identity provider account.
+     */
+    public void linkExternalIdentity(String externalId) {
+        if (Objects.isNull(externalId) || externalId.isBlank()) {
+            throw new UserException("External identity is required", null, Errors.USER_ILLEGAL_STATUS);
         }
-        if(!Objects.isNull(encodedPassword)) {
-            this.password = encodedPassword;
+        if (isLinked() && !this.externalId.equals(externalId)) {
+            throw new UserException("User is already linked to another identity", null, Errors.USER_ILLEGAL_STATUS);
         }
+        this.externalId = externalId;
         this.status = UserStatus.ACTIVE;
-        this.registerDomainEvent(AccountSetupCompleteMailEvent.of(this));
+    }
+
+    public boolean isLinked() {
+        return externalId != null;
     }
 
     public String getEmail() {

@@ -5,6 +5,7 @@ import com.langa.backend.domain.users.valueobjects.UserId;
 import com.langa.backend.domain.users.valueobjects.UserStatus;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
@@ -13,23 +14,22 @@ public class UserDocument {
     @Id
     private String id;
     private String email;
-    private String password;
+    @Indexed(unique = true, sparse = true)
+    private String externalId;
     private String accountKey;
     private UserStatus userStatus;
-    private String firstConnectionToken;
 
     public User toUser() {
-        return User.populate(UserId.of(id, email, accountKey), password, userStatus, firstConnectionToken);
+        return User.populate(UserId.of(id, email, accountKey), externalId, userStatus);
     }
 
     public static UserDocument of(User user) {
         UserDocument userDocument = new UserDocument();
         userDocument.setId(user.getId());
         userDocument.setEmail(user.getEmail());
-        userDocument.setPassword(user.getPassword());
+        userDocument.setExternalId(user.getExternalId());
         userDocument.setAccountKey(user.getAccountKey());
         userDocument.setUserStatus(user.getStatus());
-        userDocument.setFirstConnectionToken(user.getFirstConnectionToken());
         return userDocument;
     }
 }

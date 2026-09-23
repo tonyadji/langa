@@ -25,7 +25,7 @@ class UserRepositoryImplTest {
     private UserRepositoryImpl repository;
 
     private User user() {
-        return User.createActive("user@example.com", "encoded-password");
+        return User.createFromExternalIdentity("oid-1", "user@example.com");
     }
 
     @Test
@@ -37,6 +37,7 @@ class UserRepositoryImplTest {
 
         assertTrue(saved.isPresent());
         assertEquals("user@example.com", saved.get().getEmail());
+        assertEquals("oid-1", saved.get().getExternalId());
     }
 
     @Test
@@ -54,11 +55,19 @@ class UserRepositoryImplTest {
     }
 
     @Test
-    void findByFistConnectionToken_shouldReturnUser() {
+    void findByExternalId_shouldReturnUser() {
         User user = user();
-        when(mongoUserDao.findByFirstConnectionToken("token-1")).thenReturn(Optional.of(UserDocument.of(user)));
+        when(mongoUserDao.findByExternalId("oid-1")).thenReturn(Optional.of(UserDocument.of(user)));
 
-        assertTrue(repository.findByFistConnectionToken("token-1").isPresent());
+        assertTrue(repository.findByExternalId("oid-1").isPresent());
+    }
+
+    @Test
+    void findByEmailIgnoreCase_shouldReturnUser() {
+        User user = user();
+        when(mongoUserDao.findFirstByEmailIgnoreCase("User@Example.com")).thenReturn(Optional.of(UserDocument.of(user)));
+
+        assertTrue(repository.findByEmailIgnoreCase("User@Example.com").isPresent());
     }
 
     @Test

@@ -7,7 +7,6 @@ import com.langa.backend.domain.applications.repositories.ApplicationRepository;
 import com.langa.backend.domain.applications.usecases.fetch.GetApplicationsUseCase;
 import com.langa.backend.domain.applications.valueobjects.ApplicationInfo;
 import com.langa.backend.domain.applications.valueobjects.SharedWithProfile;
-import com.langa.backend.domain.users.services.TokenService;
 import com.langa.backend.domainexchange.user.UserAccountService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,9 +31,6 @@ class GetApplicationsUseCaseTest {
 
     @Mock
     UserAccountService userAccountService;
-
-    @Mock
-    TokenService tokenService;
 
     @InjectMocks
     private GetApplicationsUseCase useCase;
@@ -95,7 +91,7 @@ class GetApplicationsUseCaseTest {
     void getApplication_shouldReturnApplication_whenOwnedOrShared() {
         Application app = Application.createNew("Langa1", "key1", OWNER);
         when(applicationRepository.findById("app-1")).thenReturn(Optional.of(app));
-        when(tokenService.getAccountKey()).thenReturn("key1");
+        when(userAccountService.getAccountKey(OWNER)).thenReturn("key1");
 
         Application result = useCase.getApplication("app-1", OWNER);
 
@@ -113,7 +109,7 @@ class GetApplicationsUseCaseTest {
     void getApplication_shouldThrow_whenNoAccess() {
         Application app = Application.createNew("Langa1", "key1", OWNER);
         when(applicationRepository.findById("app-1")).thenReturn(Optional.of(app));
-        when(tokenService.getAccountKey()).thenReturn("some-other-key");
+        when(userAccountService.getAccountKey("intruder")).thenReturn("some-other-key");
 
         ApplicationException ex = assertThrows(ApplicationException.class,
                 () -> useCase.getApplication("app-1", "intruder"));

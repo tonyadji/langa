@@ -6,7 +6,6 @@ import com.langa.backend.domain.applications.Application;
 import com.langa.backend.domain.applications.exceptions.ApplicationException;
 import com.langa.backend.domain.applications.repositories.ApplicationRepository;
 import com.langa.backend.domain.applications.valueobjects.ApplicationInfo;
-import com.langa.backend.domain.users.services.TokenService;
 import com.langa.backend.domainexchange.user.UserAccountService;
 import lombok.RequiredArgsConstructor;
 
@@ -20,7 +19,6 @@ public class GetApplicationsUseCase {
 
     private final ApplicationRepository applicationRepository;
     private final UserAccountService userAccountService;
-    private final TokenService tokenService;
 
     public List<ApplicationInfo> getApplications() {
         return applicationRepository.findAll()
@@ -54,7 +52,7 @@ public class GetApplicationsUseCase {
     public Application getApplication(String appId, String username) {
         Application application = applicationRepository.findById(appId)
                 .orElseThrow(() -> new ApplicationException("Application not found", null, Errors.APPLICATION_NOT_FOUND));
-        if (application.isOwnedOrSharedWith(username, tokenService.getAccountKey())) {
+        if (application.isOwnedOrSharedWith(username, userAccountService.getAccountKey(username))) {
             return application;
         }
         throw new ApplicationException("Application not found", null, Errors.ACCESS_DENIED);

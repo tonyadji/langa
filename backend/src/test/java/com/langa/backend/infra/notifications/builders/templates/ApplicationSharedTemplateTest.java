@@ -1,7 +1,7 @@
 package com.langa.backend.infra.notifications.builders.templates;
 
 import com.langa.backend.domain.applications.events.ApplicationSharedEvent;
-import com.langa.backend.domain.users.events.AccountSetupCompleteMailEvent;
+import com.langa.backend.domain.users.events.ActiveUserRegisteredEvent;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,7 +15,7 @@ class ApplicationSharedTemplateTest {
     @Test
     void couldProcess_shouldMatchOnlyItsOwnEventType() {
         ApplicationSharedEvent event = new ApplicationSharedEvent("app-1", "owner@example.com", "guest@example.com", "My App");
-        AccountSetupCompleteMailEvent other = new AccountSetupCompleteMailEvent("user-1", "user@example.com");
+        ActiveUserRegisteredEvent other = new ActiveUserRegisteredEvent("user-1", "user@example.com");
 
         assertTrue(template.couldProcess(event));
         assertFalse(template.couldProcess(other));

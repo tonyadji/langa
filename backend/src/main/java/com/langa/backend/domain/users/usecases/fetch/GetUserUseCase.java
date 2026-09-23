@@ -23,12 +23,6 @@ public class GetUserUseCase implements IGetUserUseCase {
                 .orElseThrow(() -> new UserException("User not found", null, Errors.USER_NOT_FOUND));
     }
 
-    @Override
-    public UserInfo queryByFirstConnectionToken(String token) {
-        return userRepository.findByFistConnectionToken(token)
-                .map(this::toUserInfo)
-                .orElseThrow(() -> new UserException("User not found", null, Errors.USER_NOT_FOUND));
-    }
     private UserInfo toUserInfo(User user) {
         return new UserInfo(user.getEmail(), user.getAccountKey());
     }

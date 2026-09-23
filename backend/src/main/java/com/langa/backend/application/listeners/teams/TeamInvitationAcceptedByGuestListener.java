@@ -41,7 +41,10 @@ public class TeamInvitationAcceptedByGuestListener {
             Team team = teamMemberShipService.addMemberToTeam(teamInvitationAcceptedByGuestEvent.team(), user.getEmail());
 
             outboxEventService.storeOutboxEvent(InvitationAcceptedMailEvent.of(team, user.getEmail()));
-            outboxEventService.storeOutboxEvent(FirstConnectionMailEvent.of(user));
+            if (!user.isLinked()) {
+                // The guest has never signed in: ask them to sign up with the invited email address.
+                outboxEventService.storeOutboxEvent(FirstConnectionMailEvent.of(user));
+            }
         } catch (Exception e) {
             log.error("Error handling event: {}", teamInvitationAcceptedByGuestEvent, e);
         }

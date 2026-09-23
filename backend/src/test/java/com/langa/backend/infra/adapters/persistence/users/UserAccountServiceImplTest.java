@@ -31,7 +31,7 @@ class UserAccountServiceImplTest {
     private UserAccountServiceImpl service;
 
     private User user() {
-        return User.createActive("user@example.com", "encoded");
+        return User.createFromExternalIdentity("oid-1", "user@example.com");
     }
 
     private UserAccountServiceImpl newService() {
