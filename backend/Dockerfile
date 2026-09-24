@@ -1,9 +1,9 @@
 FROM maven:3.9.4-eclipse-temurin-21-alpine AS build
 WORKDIR /app
 # Dependencies first, in their own layer (cached while the pom does not change)
-COPY backend/pom.xml .
+COPY pom.xml .
 RUN mvn -B -q dependency:go-offline
-COPY backend/src ./src
+COPY src ./src
 # Unit tests run during the image build; pass --build-arg SKIP_TESTS=true to skip them
 ARG SKIP_TESTS=false
 RUN mvn -B clean package -DskipTests=${SKIP_TESTS}

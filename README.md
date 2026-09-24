@@ -94,12 +94,12 @@ GET /api/users/me → current user (requires an Entra ID access token)
 
 ## 🚢 Backend deployment
 
-The root `Dockerfile` builds the backend image: unit tests run during the build
+[`backend/Dockerfile`](backend/Dockerfile) builds the backend image: unit tests run during the build
 (`--build-arg SKIP_TESTS=true` to skip them), the application runs as a non-root user and the image
 declares a `HEALTHCHECK` on the liveness probe.
 
 ```bash
-docker build -t langa-backend .
+docker build -t langa-backend backend
 docker run --env-file backend/.env -p 8080:8080 langa-backend
 ```
 
