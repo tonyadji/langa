@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<aspectj>
+    <aspects>
+        <aspect name="com.capricedumardi.agent.core.aspects.AspectJMonitoringAspect"/>
+    </aspects>
+
+    <weaver options="-verbose -showWeaveInfo">
+        <!--<include within="com.capricedumardi..*"/>-->
+
+        <exclude within="java..*"/>
+        <exclude within="javax..*"/>
+        <exclude within="sun..*"/>
+        <exclude within="org.springframework..*"/>
+        <exclude within="org.aspectj..*"/>
+    </weaver>
+</aspectj>

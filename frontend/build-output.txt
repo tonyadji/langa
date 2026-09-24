@@ -1,0 +1,6 @@
+
+> langa-dashboard@0.0.0 build
+> tsc -b && vite build
+
+src/features/auth/hooks/useAuth.test.ts(47,28): error TS1161: Unterminated regular expression literal.
+src/features/logs/components/LogsTable.test.tsx(199,17): error TS1005: ',' expected.

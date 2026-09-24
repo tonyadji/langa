@@ -55,8 +55,8 @@ class ControllerAdviceTest {
     }
 
     @Test
-    void handleAll_shouldReturnInternalServerError() {
-        Exception ex = new RuntimeException("Something went wrong");
+    void handleAll_shouldReturnInternalServerError_withoutLeakingExceptionMessage() {
+        Exception ex = new RuntimeException("Something went wrong - internal details");
 
         ResponseEntity<ApiError> response = controllerAdvice.handleAll(ex);
 
@@ -64,6 +64,39 @@ class ControllerAdviceTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getCode()).isEqualTo(Errors.INTERNAL_SERVER_ERROR.getCode());
         assertThat(response.getBody().getMessage()).isEqualTo(Errors.INTERNAL_SERVER_ERROR.getMessage());
-        assertThat(response.getBody().getDetails()).isEqualTo("Something went wrong");
+        assertThat(response.getBody().getDetails()).isNull();
+    }
+
+    @Test
+    void unreadableBody_shouldAnswerWithTheNestedBusinessError() {
+        GenericException tooLarge = new GenericException("too large", null, Errors.INGESTION_PAYLOAD_TOO_LARGE);
+        org.springframework.http.converter.HttpMessageNotReadableException ex =
+                new org.springframework.http.converter.HttpMessageNotReadableException("I/O error", tooLarge,
+                        mock(org.springframework.http.HttpInputMessage.class));
+
+        ResponseEntity<ApiError> response = controllerAdvice.handleUnreadableBody(ex);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(413);
+        assertThat(response.getBody().getCode()).isEqualTo("413-000");
+    }
+
+    @Test
+    void unreadableBody_shouldAnswer400ForMalformedJson() {
+        org.springframework.http.converter.HttpMessageNotReadableException ex =
+                new org.springframework.http.converter.HttpMessageNotReadableException("JSON parse error",
+                        new IllegalArgumentException("Unexpected character"),
+                        mock(org.springframework.http.HttpInputMessage.class));
+
+        ResponseEntity<ApiError> response = controllerAdvice.handleUnreadableBody(ex);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(400);
+        assertThat(response.getBody().getDetails()).isEqualTo("Malformed request body");
+    }
+
+    @Test
+    void apiError_shouldAnswerServerErrorsWithTheirStatus() {
+        GenericException gex = new GenericException("boom", null, Errors.INTERNAL_SERVER_ERROR);
+
+        assertThat(controllerAdvice.apiError(gex).getStatusCode().value()).isEqualTo(500);
     }
 }

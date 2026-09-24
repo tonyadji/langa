@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+coverage/
+storybook-static/
+*.log
+.env*
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+public/

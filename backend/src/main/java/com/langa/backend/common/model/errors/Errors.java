@@ -7,22 +7,51 @@ public enum Errors {
 
     APPLICATION_NOT_FOUND(400,"400-000", "Application not found"),
     APPLICATION_NAME_ALREADY_EXISTS(400,"400-001", "Application name already exists"),
+    APPLICATION_ALREADY_SHARED(400, "400-002","Application already shared"),
+    APPLICATION_AUTO_SHARE_FORBIDDEN(400, "400-003","Application auto share forbidden"),
+    APPLICATION_SHARING_NOT_FOUND_TO_REVOKE(400, "400-004","Application sharing not found to revoke"),
 
     USER_NOT_FOUND(400,"400-101", "User not found"),
     USERNAME_ALREADY_EXISTS(400,"400-102", "Username already exists"),
-    PASSWORDS_MISMATCH(400,"400-103", "Passwords do not match"),
+    PASSWORDS_MISMATCH(400,"400-103", "Passwords and confirmation do not match"),
+    USER_ILLEGAL_STATUS(400,"400-104" , "User status is illegal to perform this action" ),
+
+    TEAM_NAME_ALREADY_EXISTS(400, "400-200", "Team name already exists"),
+    TEAM_NOT_FOUND(400, "400-201", "Team not found"),
+    TEAM_INVITATION_EXISTING(400, "400-202", "Team invitation existing"),
+    TEAM_MEMBER_ALREADY(400, "400-203" , "The user you tried to invite is already a team member"),
+    TEAM_INVITATION_NOTFOUND_OR_EXPIRED(400, "400-204" , "Team invitation not found or expired"),
+    TEAM_INVITATION_INVALID_STATUS(400, "400-205" , "Team invitation invalid status"),
+    TEAM_MEMBER_NOT_FOUND(400, "400-206" , "The user is not part of team members"),
+
+
+
+    DEV_TOKEN_SIGN_IN_UNSUPPORTED(400, "400-300", "This account cannot sign in with an email code"),
+    DEV_TOKEN_SESSION_EXPIRED(400, "400-301", "Sign-in session expired, start again"),
+    DEV_TOKEN_ATTRIBUTES_REQUIRED(400, "400-302", "The sign-up requires attributes that cannot be provided"),
+    DEV_TOKEN_INVALID_CONTINUATION(400, "400-303", "Invalid continuation token, start again"),
 
     INVALID_CREDENTIALS(401,"401-000" ,"Invalid credentials"),
+    DEV_TOKEN_INVALID_CODE(401, "401-001", "Invalid verification code"),
+    TOO_MANY_LOGIN_ATTEMPTS(429,"429-000" ,"Too many login attempts, please try again later"),
 
     ACCESS_DENIED(403,"403-000", "Access denied"),
+    ILLEGAL_INGESTION_REQUEST(403,"403-001" ,"Illegal ingestion request"),
+
+    INGESTION_PAYLOAD_TOO_LARGE(413, "413-000", "Ingestion payload too large"),
+    INGESTION_RATE_LIMITED(429, "429-001", "Too many ingestion requests, please retry later"),
 
     VALIDATION_ERROR(400,"400", "Validation error"),
 
-    INTERNAL_SERVER_ERROR(500,"500", "Internal server error");
+    INTERNAL_SERVER_ERROR(500,"500", "Internal server error"),
 
-    private int httpCode;
-    private String code;
-    private String message;
+    NOTIFICATION_MAIL_ERROR(500,"500-001" , "Error sending notification email" ),
+
+    IDENTITY_PROVIDER_ERROR(502, "502-000", "Identity provider error");
+
+    private final int httpCode;
+    private final String code;
+    private final String message;
 
     Errors(int httpCode, String code, String message) {
         this.httpCode = httpCode;
