@@ -1,5 +1,9 @@
 # Langa Dashboard - Deployment Guide
 
+> [!NOTE]
+> The current pipeline deploys the dashboard to **Railway** ([frontend-deploy.yml](../../.github/workflows/frontend-deploy.yml)).
+> This guide covers self-hosting alternatives (Docker, VPS with nginx); its CI/CD section is an example.
+
 **Document Type:** Deployment Guide  
 **Audience:** DevOps Engineers, System Administrators  
 **Purpose:** Complete deployment instructions for production environments
@@ -667,8 +671,8 @@ location /assets/ {
 
 ## Support and Resources
 
-- **Documentation:** [docs/](./documents/)
-- **Issues:** [GitHub Issues](https://github.com/your-org/langa/issues)
+- **Documentation:** [Dashboard README](../README.md)
+- **Issues:** [GitHub Issues](https://github.com/tonyadji/langa/issues)
 - **Docker Hub:** [ktac95/langa-dashboard](https://hub.docker.com/r/ktac95/langa-dashboard)
 - **Production Backend:** https://langa-production.up.railway.app
 
