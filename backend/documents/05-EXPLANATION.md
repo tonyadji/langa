@@ -266,7 +266,7 @@ public class CreateApplicationUseCase {
    - Transform domain objects to DTOs
 
 3. **Security**
-   - JWT authentication
+   - OAuth2 resource server (OIDC access tokens)
    - Authorization filters
    - CORS configuration
 
@@ -309,7 +309,7 @@ public class MongoApplicationRepository implements ApplicationRepository {
 2. **Flexibility**
    - Swap MongoDB for PostgreSQL: Only change infrastructure layer
    - Add GraphQL API: Only add new controllers
-   - Change JWT to OAuth2: Only change security configuration
+   - Change identity provider (Entra → Cognito): only configuration and one adapter
 
 3. **Maintainability**
    - Business logic in one place (domain)
@@ -329,65 +329,43 @@ public class MongoApplicationRepository implements ApplicationRepository {
 
 Langa Backend uses a **multi-layered security approach**:
 
-1. **Authentication** - JWT tokens for API access
+1. **Authentication** - OIDC access tokens issued by an external identity provider
 2. **Authorization** - Resource-level access control
 3. **Ingestion Security** - HMAC signatures for data ingestion
 4. **Transport Security** - HTTPS (TLS) for production
 
-### JWT Authentication
+### Authentication with an External OpenID Connect Provider
 
-**Why JWT?**
-- **Stateless** - No server-side session storage required
-- **Scalable** - Works across multiple backend instances
-- **Decentralized** - Token contains all necessary information
-- **Standard** - Widely supported by clients and libraries
-
-**Token Structure:**
-
-```
-Header: { "alg": "HS256", "typ": "JWT" }
-Payload: { 
-  "sub": "user@example.com",
-  "accountKey": "acc_abc123",
-  "iat": 1704067200,
-  "exp": 1704070800
-}
-Signature: HMACSHA256(header + payload, secret)
-```
+**Why delegate identity?**
+- **No credentials to protect** - Langa stores no password, reset token or refresh token
+- **Security features for free** - MFA, e-mail verification, brute-force protection, one-time codes
+- **Stateless** - The backend only validates signed access tokens, so any instance can serve any request
+- **Replaceable** - Entra External ID today, Cognito or Keycloak by configuration
 
 **Flow:**
 
 ```
-1. User Login
-   Client ─────[username, password]────> Backend
-   Backend ────[validate credentials]───> Database
-   Backend ────[generate tokens]────────> Client
-   
-   Response: {
-     accessToken: "eyJhbGc...",  // 1 hour lifetime
-     refreshToken: "8f7e6d..."   // 7 day lifetime
-   }
+1. Sign-in (dashboard, authorization code + PKCE via MSAL)
+   Browser ────[redirect]─────────────> Identity provider (Entra External ID)
+   Browser <───[access token]────────── Identity provider
 
 2. API Request
-   Client ─────[GET /applications]────> Backend
-           [Authorization: Bearer eyJ...]
-   Backend ────[verify signature]────> ✓ Valid
-   Backend ────[extract user info]───> "user@example.com"
-   Backend ────[execute request]─────> Response
+   Dashboard ──[GET /api/applications]──> Backend
+               [Authorization: Bearer eyJ...]
+   Backend ────[verify signature with JWKS, issuer, audience, scope]──> ✓ Valid
+   Backend ────[ExternalIdentityResolver: provider + subject → Langa user]
+   Backend ────[execute request]────────> Response
 
-3. Token Refresh
-   Client ─────[POST /auth/refresh]──> Backend
-           [refreshToken: "8f7e6d..."]
-   Backend ────[validate token]──────> Database
-   Backend ────[generate new tokens]─> Client
-   Backend ────[invalidate old token]> Database
+3. First request of a new user
+   Backend ────[no user for provider + subject]
+           ────[user with same e-mail? link it : create it]
+           ────[ActiveUserRegisteredEvent → welcome e-mail]
 ```
 
-**Security Features:**
-- **Expiration** - Access tokens expire after 1 hour
-- **Refresh Rotation** - Refresh tokens are single-use
-- **Signature Verification** - Prevents token tampering
-- **HTTPS Only** - Tokens transmitted securely
+Token lifetime and renewal are handled by the provider and MSAL in the dashboard.
+
+**Isolation:** provider specifics are confined to configuration (`AUTH_*`) and to the
+`ExternalIdentityResolver` port; the domain only knows an `ExternalIdentity` (provider, subject, e-mail).
 
 ### Authorization Model
 
@@ -457,7 +435,7 @@ Team Roles:
 
 ### Ingestion Security (HMAC)
 
-**Why HMAC Instead of JWT?**
+**Why HMAC Instead of OIDC Tokens for Ingestion?**
 - **Performance** - Faster than asymmetric crypto
 - **Simplicity** - No token management needed
 - **Replay Protection** - Timestamps and nonces prevent reuse
@@ -565,7 +543,7 @@ public CorsConfigurationSource corsConfigurationSource() {
 
 **Security Considerations:**
 - **Restrict Origins** - Don't use `*` in production
-- **Allow Credentials** - Needed for JWT tokens in cookies
+- **Allow Credentials** - Allows the Authorization header from the dashboard origin
 - **Limit Methods** - Only allow necessary HTTP methods
 
 ---
@@ -741,8 +719,8 @@ Langa uses **Shared Database, Discriminator Column** approach.
   "_id": "user_id_123",
   "email": "user@companyA.com",
   "accountKey": "acc_companyA_xyz",  // Tenant discriminator
-  "password": "...",
-  "role": "USER"
+  "identityProvider": "entra",
+  "status": "ACTIVE"
 }
 ```
 
@@ -1289,7 +1267,7 @@ resources:
 **Requirements for Horizontal Scaling:**
 
 1. **Stateless Application**
-   - ✓ JWT tokens (no server-side sessions)
+   - ✓ Bearer access tokens (no server-side sessions)
    - ✓ No in-memory caching
    - ✓ All state in MongoDB
 
@@ -1474,21 +1452,24 @@ appKey   appKey   appKey   appKey
 ❌ **Eventual Consistency** - Replica set reads may be stale
 ❌ **No Transactions** - Limited multi-document transactions (though supported in newer versions)
 
-### Why JWT Instead of Sessions?
+### Why an External Identity Provider Instead of Own Accounts?
+
+The first versions issued their own JWTs (register / login / refresh endpoints, passwords stored as hashes).
+They were replaced by an external OpenID Connect provider.
 
 **Reasons:**
 
-1. **Stateless** - No server-side storage
-2. **Scalable** - Works across multiple instances
-3. **Mobile-Friendly** - Easy to store on mobile devices
-4. **Standard** - Widely supported
+1. **Less attack surface** - No password storage, reset flow or refresh-token rotation to get right
+2. **Features for free** - MFA, e-mail verification, one-time codes, account lockout
+3. **Still stateless** - Bearer access tokens, validated with the provider's public keys
+4. **Portable** - Provider details isolated behind configuration and one port
 
 **Trade-offs:**
 
-❌ **Cannot Revoke** - Tokens valid until expiration
-   - Mitigation: Short expiration (1 hour)
-❌ **Size** - Larger than session ID
-   - Mitigation: Keep payload small
+❌ **External dependency** - Sign-in depends on the provider's availability
+❌ **Setup cost** - App registrations and user flows to configure per environment
+❌ **Revocation** - Access tokens stay valid until expiration (about an hour)
+   - Mitigation: short-lived tokens, account status checked on the Langa side
 
 ### Why Event-Driven Architecture?
 
@@ -1578,24 +1559,21 @@ appKey   appKey   appKey   appKey
 - Simple domain (CRUD only)
 - Short-term project
 
-#### JWT vs. Session Cookies
+#### Own JWTs vs. External OIDC Provider
 
-**Chose:** JWT
+**Chose:** External OIDC provider (Microsoft Entra External ID)
 
 **Benefits:**
-- Stateless (scales horizontally)
-- Works across domains
-- Mobile-friendly
+- No credentials stored by Langa
+- Stateless, scales horizontally
+- Provider-grade security features (MFA, verification)
 
 **Cost:**
-- Cannot revoke before expiration
-- Larger payload
-- Requires careful secret management
+- Provider configuration per environment
+- Local development needs a tenant (or the dev-token endpoint)
 
 **When to Reconsider:**
-- Need instant revocation (e.g., logout)
-- Highly sensitive data
-- Single-domain application
+- Fully offline / air-gapped deployments (use a self-hosted provider such as Keycloak)
 
 #### MongoDB vs. PostgreSQL
 
@@ -1642,7 +1620,7 @@ Langa Backend is designed with the following principles:
 
 1. **Pragmatic Architecture** - Clean Architecture where it adds value
 2. **Scalability** - Horizontally scalable, stateless design
-3. **Security-First** - Multi-layered security (JWT, HMAC, authorization)
+3. **Security-First** - Multi-layered security (OIDC, HMAC, authorization)
 4. **Developer Experience** - Easy to integrate, clear API
 5. **Extensibility** - Event-driven, plugin-friendly
 

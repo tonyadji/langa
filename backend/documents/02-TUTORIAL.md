@@ -11,7 +11,7 @@
 
 By the end of this tutorial, you will:
 1. Set up and run the Langa Backend locally
-2. Register a user account and authenticate
+2. Get an access token from the identity provider
 3. Create your first monitored application
 4. Send logs from your application to Langa
 5. Query and retrieve logs via the API
@@ -34,22 +34,30 @@ Before starting, ensure you have:
 
 ### Step 1.1: Clone and Configure
 
+Langa delegates sign-in to an OpenID Connect provider. Before starting, set up the Microsoft Entra External ID
+app registrations and the `langa-test-client` used to get tokens from the command line
+([authentication guide](../../docs/authentication.md)).
+
 ```bash
 # Clone the repository
-git clone https://github.com/your-repo/langa-backend.git
-cd langa-backend
+git clone https://github.com/tonyadji/langa.git
+cd langa/backend
 
-# Create environment configuration
-cat > .env << EOF
-MONGODB_URI=mongodb://localhost:27017/langa
-JWT_KEY=your-super-secret-jwt-key-change-this-in-production
-JWT_KID=langa-key-id
-JWT_EXPIRATION=3600000
-JWT_REFRESH_TOKEN_EXPIRATION=604800000
-BASE_URL=http://localhost:8080
-CORS_ALLOWED_ORIGINS=http://localhost:3000
-CORS_ALLOW_CREDENTIALS=true
-EOF
+# Create the environment configuration from the template, then fill the values
+# (MONGODB_URI, AUTH_*, CORS_ALLOWED_ORIGINS, MAIL_*, ...)
+cp .env.example .env
+```
+
+Enable the development token endpoint in `src/main/resources/application-local.yml` (git-ignored):
+
+```yaml
+application:
+  security:
+    dev-token:
+      enabled: true
+      client-id: <langa-test-client client id>
+      native-auth-uri: https://<tenant-subdomain>.ciamlogin.com/<tenant-id>
+      scope: api://<langa-api client id>/access_as_user
 ```
 
 ### Step 1.2: Build and Run
@@ -58,8 +66,9 @@ EOF
 # Build the application
 ./mvnw clean package -DskipTests
 
-# Run the application
-./mvnw spring-boot:run
+# Load the environment and run with the local profile
+set -a && . ./.env && set +a
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
 **Expected Output:**
@@ -67,61 +76,51 @@ EOF
 Started LangaBackendApplication in 5.123 seconds
 ```
 
-**Verify:** Open http://localhost:8080/actuator/health - you should see:
+**Verify:** Open http://localhost:8080/actuator/health/liveness - you should see:
 ```json
 {"status":"UP"}
 ```
 
 ---
 
-## Part 2: Creating Your First Account
+## Part 2: Getting an Access Token
 
-### Step 2.1: Register a User
+Langa has no password of its own: users sign up and sign in with the identity provider. The dashboard does this
+in the browser; from the command line, use the development token endpoint.
 
-**Request:**
+### Step 2.1: Request a One-Time Code
+
 ```bash
-curl -X POST http://localhost:8080/api/auth/register \
+curl -X POST http://localhost:8080/api/dev/token/start \
   -H "Content-Type: application/json" \
-  -d '{
-    "username": "developer@example.com",
-    "password": "SecurePass123!",
-    "confirmationPassword": "SecurePass123!"
-  }'
+  -d '{"username": "developer@example.com", "signUp": true}'
 ```
 
-**Expected Response:**
-```
-User registered
+**Expected Response:** a code is e-mailed to the address.
+```json
+{"continuationToken": "…", "codeSentTo": "d***@example.com", "codeLength": 8, "signUp": true}
 ```
 
-### Step 2.2: Login and Get Tokens
+### Step 2.2: Exchange the Code for a Token
 
-**Request:**
 ```bash
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:8080/api/dev/token/complete \
   -H "Content-Type: application/json" \
-  -d '{
-    "username": "developer@example.com",
-    "password": "SecurePass123!"
-  }'
+  -d '{"continuationToken": "…", "code": "12345678"}'
 ```
 
 **Expected Response:**
 ```json
-{
-  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "refreshToken": "8f7e6d5c4b3a2d1e...",
-  "email": "developer@example.com"
-}
+{"accessToken": "eyJ…", "tokenType": "Bearer", "expiresIn": 3599}
 ```
 
-**Save your access token** - you'll need it for all subsequent requests.
+The Langa user is created on the first API call made with this token.
 
 ### Step 2.3: Store Token for Convenience
 
 ```bash
 # Export as environment variable
-export LANGA_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+export LANGA_TOKEN="eyJ…"
 ```
 
 ---
@@ -186,14 +185,18 @@ curl -X GET http://localhost:8080/api/applications/67712345abcdef123456/secured-
 
 ### Step 4.1: Understanding Ingestion
 
-Langa uses **HMAC signature authentication** for ingestion to prevent unauthorized access. The signature is calculated as:
+In real applications the [Langa agent](../../agent/README.md) does all of this for you. Doing it by hand once
+shows how ingestion is secured: every request carries an **HMAC signature** computed with the application
+secret, a timestamp (max 5 minutes old) and a single-use nonce.
 
 ```
-Signature = HMAC-SHA256(
+X-AGENT-SIGNATURE = nonce + ":" + Base64(HMAC-SHA256(
   secret,
-  X-USER-AGENT + X-APP-KEY + X-ACCOUNT-KEY + X-TIMESTAMP + request_body
-)
+  X-APP-KEY + X-ACCOUNT-KEY + X-USER-AGENT + X-TIMESTAMP + nonce + "HTTP"
+))
 ```
+
+`X-USER-AGENT` must equal the backend `AGENT_VERSION` setting.
 
 ### Step 4.2: Create a Simple Ingestion Script
 
@@ -205,13 +208,17 @@ Save this as `send-logs.sh`:
 APP_KEY="app_1a2b3c4d"
 ACCOUNT_KEY="acc_9z8y7x6w"
 SECRET="sec_a1b2c3d4e5f6"
-USER_AGENT="tutorial-script/1.0"
-TIMESTAMP=$(date +%s%3N)
+USER_AGENT="langa-agent-v1.0.0"          # must match AGENT_VERSION on the backend
+TIMESTAMP=$(date +%s%3N)                 # epoch milliseconds
+NONCE=$(openssl rand -hex 16)            # never reuse a nonce
 
-# Request body
+# Request body: one batch of LOG (or METRIC) entries
 BODY=$(cat <<EOF
 {
-  "logs": [
+  "type": "LOG",
+  "appKey": "$APP_KEY",
+  "accountKey": "$ACCOUNT_KEY",
+  "entries": [
     {
       "message": "Application started successfully",
       "level": "INFO",
@@ -221,18 +228,18 @@ BODY=$(cat <<EOF
       "stackTrace": null,
       "mdc": {}
     }
-  ],
-  "metrics": []
+  ]
 }
 EOF
 )
 
 # Calculate signature
-PAYLOAD="$USER_AGENT$APP_KEY$ACCOUNT_KEY$TIMESTAMP$BODY"
-SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$SECRET" -binary | base64)
+MESSAGE="$APP_KEY$ACCOUNT_KEY$USER_AGENT$TIMESTAMP${NONCE}HTTP"
+HMAC=$(echo -n "$MESSAGE" | openssl dgst -sha256 -hmac "$SECRET" -binary | base64)
+SIGNATURE="$NONCE:$HMAC"
 
 # Send request
-curl -X POST http://localhost:8080/api/ingestion \
+curl -i -X POST http://localhost:8080/api/ingestion \
   -H "Content-Type: application/json" \
   -H "X-USER-AGENT: $USER_AGENT" \
   -H "X-APP-KEY: $APP_KEY" \
@@ -255,9 +262,10 @@ HTTP/1.1 202 Accepted
 ```
 
 **Troubleshooting:**
-- `401 Unauthorized` - Check your signature calculation
-- `400 Bad Request` - Verify timestamp is recent
-- `404 Not Found` - Verify app key and account key
+- Rejected as an illegal ingestion request: check the signature, the agent version, the clock (timestamp
+  window) and that the nonce was not reused. The backend logs the exact reason.
+- `404`: verify the app key and account key.
+- `413` / `429`: payload too large / rate limit exceeded (see `Retry-After`).
 
 ---
 
@@ -337,12 +345,14 @@ class LangaClient {
     this.token = null;
   }
 
-  async login(username, password) {
-    const response = await axios.post(`${LANGA_BASE_URL}/auth/login`, {
-      username,
-      password
+  setToken(token) {
+    this.token = token;
+  }
+
+  async getCurrentUser() {
+    const response = await axios.get(`${LANGA_BASE_URL}/users/me`, {
+      headers: { Authorization: `Bearer ${this.token}` }
     });
-    this.token = response.data.accessToken;
     return response.data;
   }
 
@@ -379,7 +389,11 @@ class LangaClient {
 export default new LangaClient();
 ```
 
-### Step 6.3: Create Login Component
+### Step 6.3: Create Token Login Component
+
+To keep this tutorial short, the dashboard uses the access token obtained in [Part 2](#part-2-getting-an-access-token).
+A real dashboard signs users in with the identity provider (the Langa dashboard uses MSAL, see
+[frontend/src/features/auth](../../frontend/src/features/auth)).
 
 Create `src/components/Login.jsx`:
 
@@ -388,47 +402,36 @@ import React, { useState } from 'react';
 import langaClient from '../api/langaClient';
 
 function Login({ onLoginSuccess }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [token, setToken] = useState('');
   const [error, setError] = useState('');
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const data = await langaClient.login(username, password);
-      onLoginSuccess(data);
+      langaClient.setToken(token.trim());
+      const user = await langaClient.getCurrentUser();
+      onLoginSuccess(user);
     } catch (err) {
-      setError('Invalid credentials');
+      setError('Invalid or expired token');
     }
   };
 
   return (
     <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px' }}>
-      <h2>Langa Dashboard Login</h2>
+      <h2>Langa Dashboard</h2>
       {error && <div style={{ color: 'red' }}>{error}</div>}
       <form onSubmit={handleLogin}>
         <div style={{ marginBottom: '10px' }}>
-          <input
-            type="email"
-            placeholder="Email"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            style={{ width: '100%', padding: '8px' }}
-            required
-          />
-        </div>
-        <div style={{ marginBottom: '10px' }}>
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{ width: '100%', padding: '8px' }}
+          <textarea
+            placeholder="Paste your access token ($LANGA_TOKEN)"
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+            style={{ width: '100%', padding: '8px', minHeight: '120px' }}
             required
           />
         </div>
         <button type="submit" style={{ width: '100%', padding: '10px' }}>
-          Login
+          Connect
         </button>
       </form>
     </div>
@@ -675,7 +678,7 @@ npm start
 ```
 
 Open http://localhost:3000 and:
-1. Login with `developer@example.com` / `SecurePass123!`
+1. Paste the access token obtained in Part 2
 2. Select your application from the dropdown
 3. View your logs in real-time!
 
@@ -720,11 +723,11 @@ Error: MongoTimeoutError
 ```
 **Solution:** Ensure MongoDB is running on port 27017
 
-### JWT Errors
+### Expired Token (401)
 ```
-Error: JWT expired
+401 Unauthorized
 ```
-**Solution:** Use the refresh token endpoint to get a new access token
+**Solution:** Access tokens expire after about an hour: request a new one (Part 2)
 
 ### CORS Errors in Dashboard
 ```
