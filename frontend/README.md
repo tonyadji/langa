@@ -1,487 +1,126 @@
 # Langa Dashboard
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-18-blue)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-6-purple)](https://vitejs.dev/)
-[![Tests](https://img.shields.io/badge/tests-passing-green)]()
-[![Coverage](https://img.shields.io/badge/coverage->80%25-green)]()
+Web dashboard of [Langa](../README.md): manage applications, explore logs and metrics, follow storage usage,
+and collaborate with teams.
 
-A modern, responsive web application for managing and monitoring your Langa applications. Built with React 18, TypeScript, and Tailwind CSS.
+[![Frontend CI](https://github.com/tonyadji/langa/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/tonyadji/langa/actions/workflows/frontend-ci.yml)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 
-## ✨ Features
+> [!NOTE]
+> Work in progress — see the [roadmap](../README.md#roadmap-to-mvp).
 
-### Implemented (Phases 1-9 + Polish)
+## Contents
 
-- **🔐 Authentication & Authorization**
-  - User registration and login
-  - Session management with refresh tokens
-  - Application creation and management
-  - Role-based access control (Owner/Viewer)
+- [Features](#features)
+- [Getting started](#getting-started)
+- [Configuration](#configuration)
+- [Scripts](#scripts)
+- [Project structure](#project-structure)
+- [Deployment](#deployment)
+- [Troubleshooting](#troubleshooting)
 
-- **📊 Application Management**
-  - Create and manage applications
-  - View application credentials
-  - Toggle credential visibility
-  - Copy-to-clipboard functionality
+## Features
 
-- **📋 Logs & Metrics**
-  - Real-time log streaming
-  - Advanced filtering (level, timeframe, search)
-  - Metrics visualization with Recharts
-  - Time-series data display
+| Area | What you can do |
+|---|---|
+| **Sign-in** | Sign up / sign in through Microsoft Entra External ID (OIDC, authorization code + PKCE via MSAL) |
+| **Applications** | Create and delete applications, reveal and copy ingestion credentials, set the retention policy |
+| **Logs** | Browse paginated logs, filter by level, keyword and time range |
+| **Metrics** | Charts and tables of `@Monitored` method timings, with filters and statistics |
+| **Usage** | Storage used by logs and metrics, trends over 7 / 30 / 90 days |
+| **Sharing & teams** | Share an application with a user or a team, revoke access, create teams, invite members by e-mail, accept invitations |
+| **UX** | Dark mode (follows the system), loading skeletons, error boundaries, keyboard navigation and skip link |
 
-- **👥 Application Sharing**
-  - Share with users and teams
-  - Granular permission management
-  - View shared users list
-  - Revoke access
+## Getting started
 
-- **🏢 Team Management**
-  - Create and manage teams
-  - Invite members via email
-  - Accept/decline invitations
-  - Team-based application sharing
-
-- **📈 Usage Monitoring**
-  - Track log and metric bytes
-  - Time-period filtering (7d/30d/90d)
-  - Usage trend visualization
-  - Storage breakdown
-
-- **🎨 Quality & Polish**
-  - Error boundaries
-  - Accessibility (WCAG 2.1 AA)
-  - Loading skeletons
-  - Responsive design
-  - TypeScript strict mode
-  - **Dark mode** with system preference detection
-  - Smooth theme transitions
-  - Persistent theme storage
-
-## � Prerequisites
-
-- **Node.js** >= 18.0.0
-- **npm** >= 9.0.0
-
-Check your versions:
-```bash
-node -v  # Should be >= 18.0.0
-npm -v   # Should be >= 9.0.0
-```
-
-## 🚀 Installation
-
-### Clone and Setup
+**Prerequisites:** Node.js 18+, a running [backend](../backend/README.md), and a SPA app registration in
+Entra External ID ([setup](../docs/authentication.md#microsoft-entra-external-id-setup)).
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd langa/frontend
-
-# Install dependencies
+cd frontend
 npm install
-
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your configuration
-
-# Start development server
-npm run dev
+cp .env.example .env.local   # then set the values below
+npm run dev                  # http://localhost:5173
 ```
 
-Visit `http://localhost:5173` to see the app running.
+## Configuration
 
-## 💡 Quick Start
+Vite variables are read at **build time** and end up in the browser: never put secrets in them.
 
-Once installed, you can:
+| Variable | Required | Description |
+|---|---|---|
+| `VITE_API_BASE_URL` | yes | Backend API URL, e.g. `http://localhost:8080/api` |
+| `VITE_AUTH_PROVIDER` | no | Identity provider implementation, default `entra` |
+| `VITE_ENTRA_CLIENT_ID` | yes | Client ID of the `langa-spa` app registration |
+| `VITE_ENTRA_AUTHORITY` | yes | `https://<tenant-subdomain>.ciamlogin.com/<tenant-id>/` |
+| `VITE_ENTRA_API_SCOPE` | yes | `api://<langa-api client id>/access_as_user` |
+| `VITE_ENTRA_REDIRECT_URI` · `VITE_ENTRA_POST_LOGOUT_REDIRECT_URI` | no | Default to the current origin and `<origin>/login` |
 
-1. **Create an Account**: Register a new user account
-2. **Create an Application**: Set up your first application
-3. **View Logs**: Monitor your application logs in real-time
-4. **Analyze Metrics**: Track performance metrics
-5. **Share Access**: Invite team members to collaborate
+Put local values in `.env.local` (git-ignored). `.env.development` is versioned and takes precedence, so
+do not define the `VITE_ENTRA_*` values there.
 
-### Environment Variables
+## Scripts
 
-Copy `.env.example` to `.env` and configure:
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Development server |
+| `npm run build` · `npm run preview` | Production build and local preview |
+| `npm test` · `npm run test:coverage` | Unit and integration tests (Vitest, Testing Library, MSW) |
+| `npm run test:e2e` | End-to-end tests (Playwright) |
+| `npm run lint` · `npm run check:types` | ESLint and TypeScript checks |
+| `npm run check:all` | Types + lint + tests, as in CI |
+| `npm run storybook` | Component catalogue on port 6006 |
 
-- `VITE_API_BASE_URL`: Backend API URL (default: `http://localhost:8080`)
-- `VITE_WS_URL`: WebSocket URL for real-time logs (default: `ws://localhost:8080/ws`)
-- `VITE_ENV`: Environment (`development` or `production`)
+## Project structure
 
-See [.env.example](.env.example) for full documentation.
-
-## 🧪 Examples
-
-### API Integration
-
-```typescript
-import { authService } from '@/services/authService';
-import { applicationService } from '@/services/applicationService';
-
-// Login
-await authService.login('user@example.com', 'password');
-
-// Create application
-const app = await applicationService.createApplication({
-  name: 'My App',
-  description: 'My application'
-});
-```
-
-### Custom Hook Usage
-
-```typescript
-import { useApplications } from '@/features/applications/hooks/useApplications';
-
-function MyComponent() {
-  const { applications, loading, error } = useApplications();
-  
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
-  
-  return <div>{applications.length} applications</div>;
-}
-```
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-**Port 5173 already in use**
-```bash
-# Kill the process using port 5173
-lsof -ti:5173 | xargs kill -9
-
-# Or use a different port
-npm run dev -- --port 3000
-```
-
-**TypeScript errors after install**
-```bash
-# Clear cache and reinstall
-rm -rf node_modules package-lock.json
-npm install
-```
-
-**Tests failing with MSW errors**
-```bash
-# Update MSW handlers
-npm run test -- --update
-```
-
-**Build fails with character encoding**
-- Check for smart quotes or special characters in source files
-- Use regular quotes and standard ASCII characters
-
-**Cannot connect to backend**
-- Verify `VITE_API_BASE_URL` in `.env`
-- Ensure backend is running on the specified port
-- Check CORS configuration on backend
-
-
-
-## 📦 Tech Stack
-
-- **Framework**: React 18 + TypeScript 5
-- **Build**: Vite 6
-- **Styling**: Tailwind CSS 3
-- **Icons**: Lucide React
-- **Charts**: Recharts 2
-- **HTTP**: Axios
-- **Testing**: Vitest + React Testing Library
-
-## 🛠️ Development
-
-### Scripts
-
-```bash
-npm run dev          # Start dev server
-npm run build        # Build for production
-npm run preview      # Preview production build
-npm test             # Run tests
-npm run test:coverage # Coverage report
-npm run lint         # Run ESLint
-npm run type-check   # TypeScript check
-```
-
-### Project Structure
-
-```
+```text
 src/
-├── components/      # Reusable UI components
-├── features/        # Feature modules
+├── features/           Feature modules: api client, hooks, components
 │   ├── applications/
-│   ├── auth/
+│   ├── auth/           AuthClient interface + MSAL implementation, useAuth()
 │   ├── logs/
 │   ├── metrics/
 │   ├── teams/
 │   └── usage/
-├── hooks/           # Custom hooks
-├── pages/           # Page components
-├── router/          # Routes
-├── services/        # API services
-└── types/           # TypeScript types
+├── pages/              Route-level pages
+├── router/             Routes and ProtectedRoute
+├── components/         Shared UI (layout, common widgets, error boundary…)
+├── services/ · hooks/ · contexts/ · utils/ · types/
+└── stories/            Storybook stories
+tests/                  Integration tests (MSW mocks) and Playwright e2e tests
 ```
 
-## ✅ Quality Standards
+The identity provider is hidden behind the `AuthClient` interface (`src/features/auth/providers`): pages only
+use `useAuth()`, so another OIDC provider can be added without touching them.
 
-- **TypeScript**: Strict mode, zero errors
-- **Testing**: Minimum 80% coverage
-- **Accessibility**: WCAG 2.1 AA compliant
-- **Performance**: FCP < 1.5s, LCP < 2.5s, TTI < 3s
+## Deployment
 
-## 🌐 Deployment
-
-### Production Deployment with Docker
-
-The application is containerized using a multi-stage Docker build optimized for production environments.
-
-#### Prerequisites
-- Docker 20.10+ with buildx support
-- Access to a VPS or cloud server (AMD64/Intel architecture)
-- Domain name with DNS configured (optional, for HTTPS)
-- SSL certificate (optional, for HTTPS)
-
-> **⚠️ Critical**: This project uses **Tailwind CSS v4**, which requires the `@tailwindcss/vite` plugin to compile CSS. Without this plugin, the app will have no styling. Ensure `@tailwindcss/vite` is in your `devDependencies` and configured in `vite.config.ts`.
-
-#### Quick Start
-
-**1. Build the Docker image:**
+The production image is a multi-stage build served by nginx ([`Dockerfile`](Dockerfile)). On every push to
+`main`, [frontend-deploy.yml](../.github/workflows/frontend-deploy.yml) deploys it to Railway;
+[frontend-ci.yml](../.github/workflows/frontend-ci.yml) runs lint, type check, tests, build and a dependency
+audit on every change.
 
 ```bash
-# Build for production with Railway backend
-docker buildx build \
-  --platform linux/amd64 \
-  --build-arg VITE_API_BASE_URL=https://langa-production.up.railway.app/api \
-  -t langa-dashboard:latest \
-  .
-
-# Or build for custom backend
-docker buildx build \
-  --platform linux/amd64 \
-  --build-arg VITE_API_BASE_URL=https://your-api.example.com/api \
-  -t langa-dashboard:latest \
-  .
+docker build --build-arg VITE_API_BASE_URL=https://api.example.com/api -t langa-dashboard .
+docker run -p 3000:80 langa-dashboard      # health check: GET /health
 ```
 
-**2. Run the container:**
+More options (Docker Compose, VPS with nginx and TLS): [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) and
+[docs/VPS_DEPLOYMENT.md](docs/VPS_DEPLOYMENT.md).
 
-```bash
-docker run -d \
-  --name langa-dashboard \
-  -p 3000:80 \
-  langa-dashboard:latest
-```
+## Troubleshooting
 
-**3. Access the application:**
+| Symptom | Fix |
+|---|---|
+| Page without styles | Tailwind CSS 4 needs the `@tailwindcss/vite` plugin in `vite.config.ts` |
+| Sign-in fails with an issuer error | `VITE_ENTRA_AUTHORITY` must contain the tenant **id**, not only the subdomain |
+| API calls blocked (CORS) | Add the dashboard URL to `CORS_ALLOWED_ORIGINS` on the backend |
+| Port 5173 busy | `npm run dev -- --port 3000` |
 
-```bash
-# Visit http://localhost:3000
-curl http://localhost:3000
-```
+## Credits
 
-#### Docker Compose Deployment
-
-Create `docker-compose.yml`:
-
-```yaml
-services:
-  langa-dashboard:
-    image: ktac95/langa-dashboard:latest
-    platform: linux/amd64
-    container_name: langa-dashboard
-    restart: unless-stopped
-    ports:
-      - "3000:80"
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-```
-
-Deploy:
-
-```bash
-docker compose up -d
-```
-
-#### VPS Deployment with Nginx Reverse Proxy
-
-**1. Install nginx on your VPS:**
-
-```bash
-sudo apt update
-sudo apt install nginx -y
-```
-
-**2. Create nginx site configuration:**
-
-```bash
-sudo nano /etc/nginx/sites-available/langa-dashboard
-```
-
-Add the following configuration:
-
-```nginx
-# HTTP redirect to HTTPS
-server {
-    listen 80;
-    server_name langa.yourdomain.com;
-    return 301 https://$server_name$request_uri;
-}
-
-# HTTPS configuration
-server {
-    listen 443 ssl http2;
-    server_name langa.yourdomain.com;
-
-    # SSL certificates
-    ssl_certificate /path/to/your/certificate.crt;
-    ssl_certificate_key /path/to/your/private.key;
-
-    # SSL configuration
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
-    ssl_prefer_server_ciphers on;
-
-    # Proxy to Docker container
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-**3. Enable the site:**
-
-```bash
-sudo ln -s /etc/nginx/sites-available/langa-dashboard /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
-**4. Configure firewall:**
-
-```bash
-sudo firewall-cmd --permanent --add-service=http
-sudo firewall-cmd --permanent --add-service=https
-sudo firewall-cmd --permanent --add-port=3000/tcp
-sudo firewall-cmd --reload
-```
-
-**5. Deploy the application:**
-
-```bash
-docker pull ktac95/langa-dashboard:latest
-docker compose up -d
-```
-
-#### Environment Configuration
-
-The application supports build-time environment variables:
-
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `VITE_API_BASE_URL` | Backend API endpoint | `http://localhost:3000/api` | Yes |
-
-Example `.env.production`:
-
-```env
-VITE_API_BASE_URL=https://langa-production.up.railway.app/api
-VITE_APP_NAME=Langa Dashboard
-VITE_ENABLE_DEBUG=false
-```
-
-#### CI/CD with GitHub Actions
-
-Workflows live at the repository root (`.github/workflows`):
-
-- **frontend-ci.yml**: lint, type check, tests, build and dependency audit on every push / pull request touching `frontend/`.
-- **frontend-deploy.yml**: on `main`, builds the Docker image (Vite settings baked in from the repository
-  variables `VITE_API_BASE_URL`, `VITE_AUTH_PROVIDER`, `VITE_ENTRA_*`), pushes it and deploys it to the VPS over SSH.
-  Required secrets and variables are listed at the top of the workflow.
-
-#### Health Checks
-
-The container exposes a health check endpoint:
-
-```bash
-curl http://localhost:3000/health
-# Response: healthy
-```
-
-Docker health check:
-
-```bash
-docker inspect --format='{{.State.Health.Status}}' langa-dashboard
-```
-
-### Alternative Deployment Options
-
-#### Vercel
-
-```bash
-npm i -g vercel
-vercel --env VITE_API_BASE_URL=https://your-api.example.com/api
-```
-
-#### Netlify
-
-```bash
-npm run build
-# Deploy dist/ directory via Netlify CLI or UI
-```
-
-#### Self-Hosted (Static Files)
-
-```bash
-npm run build
-# Serve dist/ directory with any static file server
-python -m http.server 8080 --directory dist
-```
-
-### Production Checklist
-
-- [ ] Configure `VITE_API_BASE_URL` for production backend
-- [ ] Set up SSL certificates (Let's Encrypt recommended)
-- [ ] Configure nginx reverse proxy
-- [ ] Enable firewall rules for ports 80 and 443
-- [ ] Set up Docker health checks
-- [ ] Configure automated backups
-- [ ] Set up monitoring and logging
-- [ ] Test HTTPS redirection
-- [ ] Verify asset loading (CSS, JS, images)
-- [ ] Test API connectivity from frontend
-
-## 📚 Documentation
-
-- **[Deployment Guide](./DEPLOYMENT.md)** - Complete production deployment instructions
-- **[Changelog](./CHANGELOG.md)** - Version history and release notes
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch
-3. Write tests first (TDD)
-4. Implement feature
-5. Ensure tests pass
-6. Submit Pull Request
-
-## 📝 License
-
-MIT
-
-## 💬 Support
-
-- Issues: [GitHub Issues](https://github.com/your-org/langa/issues)
-- Email: ...
-
----
-
-Built with ❤️ by the Langa Team
+Dashboard co-authored by **Alex Kouasseu** and **Tony Adji**. Development history (specs, plans, progress
+reports) is kept in [docs/archive](docs/archive/README.md).

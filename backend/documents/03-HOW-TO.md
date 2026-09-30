@@ -22,7 +22,7 @@
 
 ### How to Create an Application
 
-**Prerequisites:** Authenticated user with valid JWT token
+**Prerequisites:** Authenticated user with a valid access token (see [Security and Authentication](#security-and-authentication))
 
 **Steps:**
 
@@ -232,155 +232,35 @@ curl -X GET http://localhost:8080/api/applications/APP_ID/usage \
 
 ## Ingestion Implementation
 
-### How to Implement HTTP Ingestion in Java
+### How to Send Logs from a Java Application
 
-**Use Case:** Send logs from a Java Spring Boot application
+**Use Case:** Send logs and method metrics from any Java 17+ application (Spring Boot or not)
 
-**Step 1: Add Dependencies**
+Use the **Langa agent** rather than writing a client: it handles batching, signing, retries and back-pressure.
 
-```xml
-<!-- pom.xml -->
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-web</artifactId>
-</dependency>
-<dependency>
-    <groupId>commons-codec</groupId>
-    <artifactId>commons-codec</artifactId>
-</dependency>
+**Step 1: Get the Agent**
+
+Download `langa-agent` from [Maven Central](https://central.sonatype.com/artifact/com.capricedumardi/langa-agent),
+or add it as a dependency to use `@Monitored`.
+
+**Step 2: Configure It**
+
+```bash
+export LOGGING_FRAMEWORK=logback                                  # or log4j2
+export LANGA_INGESTION_URL=<ingestion URL shown in the dashboard>
+export LANGA_INGESTION_SECRET=<application secret>
 ```
 
-**Step 2: Create Ingestion Client**
+**Step 3: Start Your Application with the Agent**
 
-```java
-import org.apache.commons.codec.binary.Hex;
-import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
-
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-
-@Component
-public class LangaIngestionClient {
-    
-    private final RestTemplate restTemplate = new RestTemplate();
-    private final String appKey;
-    private final String accountKey;
-    private final String secret;
-    private final String ingestionUrl;
-    private static final String USER_AGENT = "java-client/1.0";
-    
-    public LangaIngestionClient(
-            @Value("${langa.app-key}") String appKey,
-            @Value("${langa.account-key}") String accountKey,
-            @Value("${langa.secret}") String secret,
-            @Value("${langa.ingestion-url}") String ingestionUrl) {
-        this.appKey = appKey;
-        this.accountKey = accountKey;
-        this.secret = secret;
-        this.ingestionUrl = ingestionUrl;
-    }
-    
-    public void sendLogs(List<LogDto> logs) {
-        String timestamp = String.valueOf(System.currentTimeMillis());
-        String body = toJson(Map.of("logs", logs, "metrics", List.of()));
-        String signature = calculateSignature(timestamp, body);
-        
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-USER-AGENT", USER_AGENT);
-        headers.set("X-APP-KEY", appKey);
-        headers.set("X-ACCOUNT-KEY", accountKey);
-        headers.set("X-TIMESTAMP", timestamp);
-        headers.set("X-AGENT-SIGNATURE", signature);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        
-        HttpEntity<String> request = new HttpEntity<>(body, headers);
-        restTemplate.postForEntity(ingestionUrl, request, Void.class);
-    }
-    
-    private String calculateSignature(String timestamp, String body) {
-        try {
-            String payload = USER_AGENT + appKey + accountKey + timestamp + body;
-            Mac hmac = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secretKey = new SecretKeySpec(
-                secret.getBytes(StandardCharsets.UTF_8), 
-                "HmacSHA256"
-            );
-            hmac.init(secretKey);
-            byte[] hash = hmac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(hash);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to calculate signature", e);
-        }
-    }
-    
-    private String toJson(Object obj) {
-        // Use Jackson or Gson
-        return new ObjectMapper().writeValueAsString(obj);
-    }
-}
+```bash
+java -javaagent:langa-agent.jar -jar your-application.jar
 ```
 
-**Step 3: Create Log DTO**
+Every log event goes to Langa. Annotate methods with `@Monitored` to record their execution time.
 
-```java
-public record LogDto(
-    String message,
-    String level,
-    String loggerName,
-    String timestamp,
-    String threadName,
-    String stackTrace,
-    Map<String, String> mdc
-) {}
-```
-
-**Step 4: Send Logs**
-
-```java
-@Service
-public class MyService {
-    
-    @Autowired
-    private LangaIngestionClient langaClient;
-    
-    public void doWork() {
-        try {
-            // Your business logic
-        } catch (Exception e) {
-            langaClient.sendLogs(List.of(new LogDto(
-                e.getMessage(),
-                "ERROR",
-                getClass().getName(),
-                Instant.now().toString(),
-                Thread.currentThread().getName(),
-                getStackTrace(e),
-                MDC.getCopyOfContextMap()
-            )));
-        }
-    }
-    
-    private String getStackTrace(Exception e) {
-        StringWriter sw = new StringWriter();
-        e.printStackTrace(new PrintWriter(sw));
-        return sw.toString();
-    }
-}
-```
-
-**Step 5: Configure Application Properties**
-
-```properties
-# application.properties
-langa.app-key=app_xyz123
-langa.account-key=acc_abc789
-langa.secret=sec_your_secret
-langa.ingestion-url=http://localhost:8080/api/ingestion
-```
+**Details:** [agent README](../../agent/README.md) and
+[configuration guide](../../agent/src/main/resources/configuration-guide.md).
 
 ---
 
@@ -403,41 +283,48 @@ import base64
 import json
 import time
 import requests
+import secrets
 from typing import List, Dict, Optional
 
 class LangaClient:
-    def __init__(self, app_key: str, account_key: str, secret: str, ingestion_url: str):
+    def __init__(self, app_key: str, account_key: str, secret: str, ingestion_url: str,
+                 agent_version: str = "langa-agent-v1.0.0"):
         self.app_key = app_key
         self.account_key = account_key
         self.secret = secret
         self.ingestion_url = ingestion_url
-        self.user_agent = "python-client/1.0"
-    
+        self.user_agent = agent_version  # must equal AGENT_VERSION on the backend
+
     def send_logs(self, logs: List[Dict]) -> None:
         timestamp = str(int(time.time() * 1000))
-        body = json.dumps({"logs": logs, "metrics": []})
-        signature = self._calculate_signature(timestamp, body)
-        
+        nonce = secrets.token_hex(16)  # single use
+        body = json.dumps({
+            "type": "LOG",
+            "appKey": self.app_key,
+            "accountKey": self.account_key,
+            "entries": logs,
+        })
+
         headers = {
             "X-USER-AGENT": self.user_agent,
             "X-APP-KEY": self.app_key,
             "X-ACCOUNT-KEY": self.account_key,
             "X-TIMESTAMP": timestamp,
-            "X-AGENT-SIGNATURE": signature,
+            "X-AGENT-SIGNATURE": self._calculate_signature(timestamp, nonce),
             "Content-Type": "application/json"
         }
-        
+
         response = requests.post(self.ingestion_url, data=body, headers=headers)
         response.raise_for_status()
-    
-    def _calculate_signature(self, timestamp: str, body: str) -> str:
-        payload = f"{self.user_agent}{self.app_key}{self.account_key}{timestamp}{body}"
-        signature = hmac.new(
+
+    def _calculate_signature(self, timestamp: str, nonce: str) -> str:
+        message = f"{self.app_key}{self.account_key}{self.user_agent}{timestamp}{nonce}HTTP"
+        digest = hmac.new(
             self.secret.encode('utf-8'),
-            payload.encode('utf-8'),
+            message.encode('utf-8'),
             hashlib.sha256
         ).digest()
-        return base64.b64encode(signature).decode('utf-8')
+        return f"{nonce}:{base64.b64encode(digest).decode('utf-8')}"
 ```
 
 **Step 3: Use the Client**
@@ -527,91 +414,27 @@ logger.info("Application started")  # Automatically sent to Langa
 **Use Case:** High-throughput asynchronous ingestion
 
 **Prerequisites:**
-- Kafka cluster running
-- Langa Backend configured with Kafka consumer
+- Kafka cluster reachable by your applications and by the backend
+- Backend `KAFKA_*` variables set (see [reference](04-REFERENCE.md#configuration-reference))
 
-**Step 1: Configure Kafka Consumer in Backend**
+**With the agent (recommended)**
 
-```properties
-# application.properties
-KAFKA_BOOTSTRAP_SERVERS=localhost:9092
-KAFKA_TOPIC=langa-ingestion
-KAFKA_CONSUMER_GROUP_ID=langa-backend
-KAFKA_AUTO_OFFSET_RESET=earliest
-KAFKA_ENABLE_AUTO_COMMIT=true
-```
+The agent picks its sender from the ingestion URL of the application: use the Kafka ingestion URL shown in
+the dashboard as `LANGA_INGESTION_URL` and it publishes batches asynchronously (compression, retries,
+circuit breaker). Tune it with the `langa.kafka.*` settings of the
+[configuration guide](../../agent/src/main/resources/configuration-guide.md).
 
-**Step 2: Create Kafka Producer (Java)**
+**Message format (custom producers)**
 
-```java
-@Configuration
-public class KafkaProducerConfig {
-    
-    @Bean
-    public ProducerFactory<String, String> producerFactory() {
-        Map<String, Object> config = new HashMap<>();
-        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        return new DefaultKafkaProducerFactory<>(config);
-    }
-    
-    @Bean
-    public KafkaTemplate<String, String> kafkaTemplate() {
-        return new KafkaTemplate<>(producerFactory());
-    }
-}
-
-@Service
-public class LangaKafkaIngestion {
-    
-    @Autowired
-    private KafkaTemplate<String, String> kafkaTemplate;
-    
-    @Value("${langa.kafka.topic}")
-    private String topic;
-    
-    public void sendLogs(List<LogDto> logs) {
-        IngestionRequest request = new IngestionRequest(logs, List.of());
-        String json = toJson(request);
-        kafkaTemplate.send(topic, json);
-    }
-    
-    private String toJson(Object obj) {
-        return new ObjectMapper().writeValueAsString(obj);
-    }
-}
-```
-
-**Step 3: Send Messages**
-
-```java
-@Service
-public class MyService {
-    
-    @Autowired
-    private LangaKafkaIngestion ingestion;
-    
-    public void logEvent(String message) {
-        ingestion.sendLogs(List.of(
-            new LogDto(
-                message,
-                "INFO",
-                getClass().getName(),
-                Instant.now().toString(),
-                Thread.currentThread().getName(),
-                null,
-                Map.of()
-            )
-        ));
-    }
-}
-```
+- Topic: `langa` (the consumer currently listens on this fixed topic)
+- Value: the same JSON body as HTTP ingestion — `type` (`LOG` or `METRIC`), `appKey`, `accountKey`, `entries`
+- Headers: `xUserAgent`, `xAppKey`, `xAccountKey`, `xTimestamp`, `xNonce`, `xAgentSignature`
+- Signature: same HMAC as HTTP, with credential type `KAFKA` instead of `HTTP`
+  (see [specification §4.3](01-SPECIFICATION.md#43-ingestion-security))
 
 **Benefits:**
 - Asynchronous (non-blocking)
 - High throughput
-- Built-in retry and fault tolerance
 - Decoupled from Langa Backend availability
 
 **Considerations:**
@@ -626,6 +449,8 @@ public class MyService {
 **Problem:** Sending logs individually is inefficient
 
 **Solution:** Buffer and batch logs
+
+> The Langa agent already does this (`langa.buffer.*` settings). The sketch below applies to custom clients.
 
 **Implementation (Java):**
 
@@ -983,128 +808,58 @@ curl -X GET "http://localhost:8080/api/applications/APP_ID/metrics?startTime=202
 
 ## Security and Authentication
 
-### How to Refresh an Expired Token
+### How to Get an Access Token for API Calls
 
-**Problem:** Access token expired (401 Unauthorized)
+**Problem:** You want to call the API with curl or Postman, without the dashboard
 
-**Solution:**
+**Solution:** enable the development token endpoint (never in production) and use an e-mail one-time code:
 
 ```bash
-curl -X POST http://localhost:8080/api/auth/refresh \
-  -H "Content-Type: application/json" \
-  -d '{
-    "refreshToken": "YOUR_REFRESH_TOKEN"
-  }'
+curl -X POST http://localhost:8080/api/dev/token/start -H "Content-Type: application/json" \
+     -d '{"username":"user@example.com"}'
+curl -X POST http://localhost:8080/api/dev/token/complete -H "Content-Type: application/json" \
+     -d '{"continuationToken":"…","code":"12345678"}'
 ```
 
-**Response:**
-```json
-{
-  "accessToken": "new_access_token",
-  "refreshToken": "new_refresh_token",
-  "email": "you@example.com"
-}
-```
+Setup and error codes: [docs/authentication.md](../../docs/authentication.md#getting-a-token-without-the-dashboard-dev-only).
 
-**Notes:**
-- Refresh tokens are single-use
-- Old refresh token is invalidated
-- New refresh token has extended expiration
+---
 
-**Best Practice:**
-Refresh tokens before they expire using a timer:
+### How to Handle an Expired Token
 
-```javascript
-// JavaScript example
-const TOKEN_EXPIRY_MS = 3600000; // 1 hour
-const REFRESH_BEFORE_MS = 300000; // 5 minutes
+**Problem:** API answers `401 Unauthorized`
 
-setTimeout(() => {
-  refreshAccessToken();
-}, TOKEN_EXPIRY_MS - REFRESH_BEFORE_MS);
-```
+**Solution:** access tokens are issued by the identity provider and expire after about an hour. The backend
+has no refresh endpoint:
+- **Dashboard** - MSAL renews tokens silently (`acquireTokenSilent`) and falls back to an interactive sign-in
+- **Scripts** - request a new token with the dev-token endpoint
 
 ---
 
 ### How to Handle Authentication in a Dashboard
 
-**Pattern:** Token Storage and Auto-Refresh
+**Solution:** sign users in with the identity provider using authorization code + PKCE, then send the access
+token on each call. The Langa dashboard does it with MSAL behind an `AuthClient` interface:
 
-**Step 1: Store Tokens Securely**
-
-```javascript
-// localStorage (simple but less secure)
-localStorage.setItem('accessToken', response.data.accessToken);
-localStorage.setItem('refreshToken', response.data.refreshToken);
-
-// sessionStorage (cleared on tab close)
-sessionStorage.setItem('accessToken', response.data.accessToken);
-
-// httpOnly cookie (most secure, requires backend support)
-document.cookie = `accessToken=${token}; secure; httpOnly`;
-```
-
-**Step 2: Create Axios Interceptor**
-
-```javascript
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: 'http://localhost:8080/api'
-});
-
-// Add token to requests
-api.interceptors.request.use(config => {
-  const token = localStorage.getItem('accessToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+```typescript
+// Axios interceptor: attach a fresh token to every API call
+api.interceptors.request.use(async (config) => {
+  const token = await authClient.getAccessToken();   // MSAL acquireTokenSilent under the hood
+  config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
-
-// Handle 401 and refresh
-api.interceptors.response.use(
-  response => response,
-  async error => {
-    if (error.response?.status === 401) {
-      const refreshToken = localStorage.getItem('refreshToken');
-      
-      try {
-        const response = await axios.post(
-          'http://localhost:8080/api/auth/refresh',
-          { refreshToken }
-        );
-        
-        localStorage.setItem('accessToken', response.data.accessToken);
-        localStorage.setItem('refreshToken', response.data.refreshToken);
-        
-        // Retry original request
-        error.config.headers.Authorization = `Bearer ${response.data.accessToken}`;
-        return axios(error.config);
-      } catch (refreshError) {
-        // Redirect to login
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
-      }
-    }
-    
-    return Promise.reject(error);
-  }
-);
-
-export default api;
 ```
 
-**Step 3: Use the API Client**
+See `frontend/src/features/auth` and [docs/authentication.md](../../docs/authentication.md) for the app
+registrations and variables.
 
-```javascript
-import api from './api';
+---
 
-async function getLogs(appId) {
-  const response = await api.get(`/applications/${appId}/logs`);
-  return response.data;
-}
-```
+### How to Switch Identity Provider
+
+**Solution:** set the `AUTH_*` variables for the new provider (a Cognito example is given in
+[docs/authentication.md](../../docs/authentication.md#backend-settings)) and implement the matching
+`AuthClient` in the dashboard. Existing users are linked by e-mail on their first sign-in.
 
 ---
 
@@ -1230,8 +985,7 @@ docker run -d \
   --name langa-backend \
   -p 8080:8080 \
   -e MONGODB_URI=mongodb://mongo:27017/langa \
-  -e JWT_KEY=your-secret-key \
-  -e JWT_KID=langa \
+  --env-file .env \
   -e CORS_ALLOWED_ORIGINS=http://localhost:3000 \
   langa-backend:latest
 ```
@@ -1257,8 +1011,9 @@ services:
       - "8080:8080"
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/langa
-      - JWT_KEY=change-this-in-production
-      - JWT_KID=langa
+      - AUTH_ISSUER_URI=https://<tenant-id>.ciamlogin.com/<tenant-id>/v2.0
+      - AUTH_JWK_SET_URI=https://<tenant-subdomain>.ciamlogin.com/<tenant-id>/discovery/v2.0/keys
+      - AUTH_AUDIENCES=<langa-api client id>,api://<langa-api client id>
       - CORS_ALLOWED_ORIGINS=http://localhost:3000
     depends_on:
       - mongodb
@@ -1281,7 +1036,6 @@ docker-compose up -d
 
 ```bash
 kubectl create secret generic langa-secrets \
-  --from-literal=jwt-key='your-secret-key' \
   --from-literal=mongodb-uri='mongodb://mongo:27017/langa'
 ```
 
@@ -1314,13 +1068,10 @@ spec:
             secretKeyRef:
               name: langa-secrets
               key: mongodb-uri
-        - name: JWT_KEY
-          valueFrom:
-            secretKeyRef:
-              name: langa-secrets
-              key: jwt-key
-        - name: JWT_KID
-          value: "langa"
+        - name: AUTH_ISSUER_URI
+          value: "https://<tenant-id>.ciamlogin.com/<tenant-id>/v2.0"
+        - name: AUTH_JWK_SET_URI
+          value: "https://<tenant-subdomain>.ciamlogin.com/<tenant-id>/discovery/v2.0/keys"
         - name: CORS_ALLOWED_ORIGINS
           value: "https://dashboard.example.com"
         livenessProbe:
@@ -1386,11 +1137,10 @@ kubectl get service langa-backend
 # Database
 MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/langa?retryWrites=true&w=majority
 
-# JWT (use strong random keys)
-JWT_KEY=<64-character-random-string>
-JWT_KID=langa-prod
-JWT_EXPIRATION=3600000
-JWT_REFRESH_TOKEN_EXPIRATION=604800000
+# Identity provider (see docs/authentication.md)
+AUTH_ISSUER_URI=https://<tenant-id>.ciamlogin.com/<tenant-id>/v2.0
+AUTH_JWK_SET_URI=https://<tenant-subdomain>.ciamlogin.com/<tenant-id>/discovery/v2.0/keys
+AUTH_AUDIENCES=<langa-api client id>,api://<langa-api client id>
 
 # CORS
 CORS_ALLOWED_ORIGINS=https://dashboard.example.com,https://app.example.com
@@ -1419,7 +1169,7 @@ BASE_URL=https://api.example.com
 
 **Security Checklist:**
 - ✅ Use HTTPS (TLS certificates)
-- ✅ Strong JWT secret (64+ characters)
+- ✅ Dev-token endpoint and Swagger disabled
 - ✅ Secure MongoDB connection (authentication + TLS)
 - ✅ Restrict CORS origins
 - ✅ Use secrets management (not environment variables)
@@ -1580,7 +1330,8 @@ spec:
 ### How to Scale Horizontally
 
 **Requirements for Horizontal Scaling:**
-- ✅ Stateless application (uses JWT, not sessions)
+- ✅ Stateless application (bearer tokens, no sessions)
+- ⚠️ Not yet safe with several instances: outbox poller and rate limiter are per instance (see roadmap)
 - ✅ Shared database (MongoDB)
 - ✅ No in-memory caching (or use Redis)
 

@@ -1,276 +1,189 @@
-# 🔍 Langa Agent
+# Langa Agent
 
 [![Maven Central](https://img.shields.io/maven-central/v/com.capricedumardi/langa-agent.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/com.capricedumardi/langa-agent)
-[![Java](https://img.shields.io/badge/Java-17+-orange?logo=java&logoColor=white)](https://www.oracle.com/java/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![Java](https://img.shields.io/badge/Java-17+-orange?logo=openjdk&logoColor=white)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Un agent Java léger pour la collecte de logs et de métriques avec support pour Log4j2, Logback et monitoring basé sur AOP.
+A lightweight Java agent that collects **logs** (Logback, Log4j2) and **method timings** (`@Monitored`) from
+your application and ships them to a [Langa](../README.md) backend — without blocking your threads.
 
-## 🚀 Fonctionnalités
+> [!NOTE]
+> Milestone releases (`0.0.x-Mx`): the API may still change. See the [changelog](CHANGELOG.md).
 
-- **📝 Collecte de logs** : Intégration transparente avec Log4j2 et Logback
-- **📊 Collecte de métriques** : Monitoring des méthodes via AspectJ et Spring AOP
-- **🔌 Modes d'envoi multiples** : HTTP (avec GZIP), Kafka (async), ou personnalisé
-- **⚡ Performance** : Buffer intelligent avec retry et batching configurable
-- **🔐 Sécurité** : Signature HMAC pour l'authentification
-- **🎯 Non-intrusif** : Fonctionne comme un Java Agent avec instrumentation bytecode
-- **🔄 Circuit Breaker** : Protection contre les backends défaillants
-- **⚙️ Configuration flexible** : Multi-source (fichier, env vars, system props)
-- **📈 Monitoring** : Support JMX et Spring Boot Actuator
-- **🛡️ Résilience** : Retry automatique avec exponential backoff
+## Contents
 
-## 📦 Installation
+- [Features](#features)
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Collecting logs](#collecting-logs)
+- [Collecting metrics](#collecting-metrics)
+- [Configuration](#configuration)
+- [Runtime monitoring](#runtime-monitoring)
+- [How it works](#how-it-works)
+- [Development](#development)
 
-### Maven
+## Features
+
+| | |
+|---|---|
+| **Logs** | Logback and Log4j2 appenders, bound automatically when the agent starts |
+| **Metrics** | Execution time and outcome of `@Monitored` methods, via AspectJ or Spring AOP |
+| **Transport** | HTTP (optional GZIP, HMAC-signed requests) or Kafka (async) |
+| **Non-blocking** | Bounded in-memory buffers, batching, background flush |
+| **Resilience** | Retry queue with exponential backoff, circuit breaker when the backend is down |
+| **Configuration** | System properties > environment variables > properties file > defaults, validated at startup |
+| **Observability** | JMX MBeans and Spring Boot Actuator endpoints; some settings can be changed at runtime |
+
+## Installation
+
+Use the latest version shown by the Maven Central badge above.
+
+**Maven**
 
 ```xml
 <dependency>
     <groupId>com.capricedumardi</groupId>
     <artifactId>langa-agent</artifactId>
-    <version>0.0.1-M1</version>
+    <version>${langa-agent.version}</version>
 </dependency>
 ```
 
-### Gradle
+**Gradle**
 
 ```groovy
-implementation 'com.capricedumardi:langa-agent:0.0.1-M1'
+implementation "com.capricedumardi:langa-agent:${langaAgentVersion}"
 ```
 
-## 🎯 Utilisation
+## Quick start
 
-### Comme Java Agent
-
-Ajoutez l'agent au démarrage de votre application :
+1. In the Langa dashboard, create an application and copy its **ingestion URL** and **secret**.
+2. Start your application with the agent:
 
 ```bash
-java -javaagent:langa-agent-0.0.1-M1.jar -jar your-application.jar
+export LOGGING_FRAMEWORK=logback            # or log4j2
+export LANGA_INGESTION_URL=<ingestion URL>
+export LANGA_INGESTION_SECRET=<application secret>
+
+java -javaagent:langa-agent.jar -jar your-application.jar
 ```
 
-### Nouvelles Fonctionnalités (v0.0.1-M1)
+The agent fails fast with an explicit message if a required setting is missing.
 
-#### 🔄 Circuit Breaker
-Protection automatique contre les backends défaillants :
-- **CLOSED** : Fonctionnement normal
-- **OPEN** : Trop d'échecs, requêtes rejetées immédiatement  
-- **HALF_OPEN** : Test de récupération après timeout
+## Collecting logs
 
-#### 📊 Monitoring JMX/Actuator
-- **JMX MBeans** : Accès aux métriques et configuration runtime
-- **Spring Boot Actuator** : Endpoints `/actuator/langaMetrics` et `/actuator/langaControl`
-- **Statistiques en temps réel** : Buffer stats, circuit breaker state, success/failure rates
+When started as a `-javaagent`, the agent attaches its appender to the root logger of the selected framework.
+You can also declare it explicitly:
 
-#### 🗜️ Compression GZIP
-Compression automatique des payloads HTTP > 1KB (réduction de 90% de la bande passante)
-
-#### 🔁 Retry Intelligent  
-Retry automatique avec exponential backoff configurable
-
-#### ⚙️ Configuration Dynamique
-Mise à jour de la configuration sans redémarrage via JMX/Actuator
-
-### Configuration
-
-L'agent utilise une configuration multi-source avec priorité :
-1. System Properties (`-Dlanga.xxx=value`)
-2. Variables d'environnement (`LANGA_XXX=value`)  
-3. Fichier de configuration (`langa-agent.properties`)
-4. Valeurs par défaut
-
-#### Configuration minimale requise
-
-```bash
-# Framework de logging
-export LOGGING_FRAMEWORK=logback  # ou log4j2
-
-# URL d'ingestion  
-export LANGA_INGESTION_URL=https://api.langa.io/api/ingestion/h/base64creds
-
-# Clé secrète
-export LANGA_INGESTION_SECRET=your-secret-key
-```
-
-#### Configuration avancée (optionnelle)
-
-Créez un fichier `langa-agent.properties` :
-
-```properties
-# ========================================
-# Configuration Buffer
-# ========================================
-langa.buffer.batch.size=100
-langa.buffer.flush.interval.seconds=10
-langa.buffer.main.queue.capacity=20000
-langa.buffer.retry.queue.capacity=10000
-
-# ========================================
-# Configuration HTTP
-# ========================================
-langa.http.max.connections.total=200
-langa.http.compression.threshold.bytes=1024
-langa.http.max.retry.attempts=3
-
-# ========================================
-# Configuration Kafka (si Kafka)
-# ========================================
-langa.kafka.async.send=true
-langa.kafka.compression.type=snappy
-langa.kafka.batch.size.bytes=16384
-
-# ========================================
-# Circuit Breaker
-# ========================================
-langa.circuit.breaker.failure.threshold=5
-langa.circuit.breaker.open.duration.millis=30000
-
-# ========================================
-# Debug
-# ========================================
-langa.debug.mode=false
-```
-
-📖 **Voir le [Guide de Configuration Complet](src/main/resources/configuration-guide.md) pour tous les paramètres disponibles**
-
-### Collecte de logs
-
-#### Log4j2
-
-L'agent s'intègre automatiquement via `LangaAppender` :
+**Logback** (`logback.xml`)
 
 ```xml
-<!-- log4j2.xml -->
+<configuration>
+    <appender name="LANGA" class="com.capricedumardi.agent.core.appenders.LangaLogbackAppender"/>
+    <root level="INFO">
+        <appender-ref ref="LANGA"/>
+    </root>
+</configuration>
+```
+
+**Log4j2** (`log4j2.xml`)
+
+```xml
 <Configuration>
     <Appenders>
-        <Langa name="LangaAppender"/>
-        <Console name="Console" target="SYSTEM_OUT"/>
+        <LangaAppender name="LangaAppender"/>
     </Appenders>
     <Loggers>
         <Root level="info">
-            <AppenderRef ref="Console"/>
             <AppenderRef ref="LangaAppender"/>
         </Root>
     </Loggers>
 </Configuration>
 ```
 
-#### Logback
+## Collecting metrics
 
-```xml
-<!-- logback.xml -->
-<configuration>
-    <appender name="LANGA" class="com.capricedumardi.agent.core.appenders.LangaLogbackAppender"/>
-    
-    <root level="INFO">
-        <appender-ref ref="LANGA" />
-    </root>
-</configuration>
-```
-
-### Collecte de métriques
-
-#### Avec AspectJ
-
-Annotez vos méthodes avec `@Monitored` :
+Annotate the methods to measure. Without Spring, AspectJ load-time weaving is used (`META-INF/aop.xml`).
+With Spring, register the `SpringMonitoringAspect` bean, e.g. by adding `com.capricedumardi.agent.core.aspects`
+to your component scan.
 
 ```java
-import com.capricedumardi.agent.core.metrics.Monitored;
-
-public class UserService {
-    
-    @Monitored
-    public User createUser(String username) {
-        // Votre logique métier
-        return new User(username);
-    }
-}
-```
-
-#### Avec Spring AOP (si vous utilisez Spring)
-
-```java
-import org.springframework.stereotype.Service;
 import com.capricedumardi.agent.core.metrics.Monitored;
 
 @Service
 public class OrderService {
-    
+
     @Monitored
     public Order processOrder(Order order) {
-        // Le temps d'exécution sera automatiquement mesuré
-        return orderRepository.save(order);
+        return orderRepository.save(order);   // duration and status are recorded
     }
 }
 ```
 
-## 🏗️ Architecture
+## Configuration
 
+Settings are resolved in this order (highest first):
+
+1. System properties — `-Dlanga.buffer.batch.size=100`
+2. Environment variables — `LANGA_BUFFER_BATCH_SIZE=100`
+3. `langa-agent.properties` file
+4. Built-in defaults
+
+**Required**
+
+| Variable | Description |
+|---|---|
+| `LOGGING_FRAMEWORK` | `logback`, `log4j2` or `none` |
+| `LANGA_INGESTION_URL` | Ingestion URL of the application |
+| `LANGA_INGESTION_SECRET` | Secret of the application (signs requests) |
+
+**Most useful options**
+
+| Property | Purpose |
+|---|---|
+| `langa.buffer.batch.size` · `langa.buffer.flush.interval.seconds` | Batch size and flush frequency |
+| `langa.buffer.main.queue.capacity` · `langa.buffer.retry.queue.capacity` | Memory bounds |
+| `langa.http.compression.enabled` · `langa.http.compression.threshold.bytes` | GZIP for large payloads |
+| `langa.http.max.retry.attempts` | Retries with exponential backoff |
+| `langa.circuit.breaker.failure.threshold` · `langa.circuit.breaker.open.duration.millis` | Circuit breaker |
+| `langa.kafka.async.send` · `langa.kafka.compression.type` | Kafka sender |
+| `langa.debug.mode` | Verbose agent output |
+
+Every setting, with defaults and tuning profiles: **[configuration guide](src/main/resources/configuration-guide.md)**.
+
+## Runtime monitoring
+
+- **JMX** — MBeans exposing buffer statistics, circuit breaker state, success / failure rates, and
+  dynamic configuration.
+- **Spring Boot Actuator** — `/actuator/langaMetrics` (statistics) and `/actuator/langaConfig`
+  (configuration), once exposed in `management.endpoints.web.exposure.include`.
+
+Circuit breaker states: **CLOSED** (normal) → **OPEN** (too many failures, sends are skipped) →
+**HALF_OPEN** (a trial send after the open duration).
+
+## How it works
+
+```mermaid
+flowchart LR
+    A[Logback / Log4j2 appender] --> B[Main buffer]
+    C["@Monitored aspect"] --> B
+    B -- "batch / flush interval" --> S{Sender}
+    S -- OK --> Z[Langa backend]
+    S -- failure --> R[Retry buffer<br/>exponential backoff] --> S
+    S -. "circuit open" .-> X[skip until half-open]
 ```
-┌─────────────────────────────────────┐
-│      Votre Application              │
-│  ┌──────────┐      ┌──────────┐    │
-│  │ Log4j2   │      │ Logback  │    │
-│  └────┬─────┘      └────┬─────┘    │
-│       │                 │           │
-│       └────────┬────────┘           │
-│                │                    │
-│         ┌──────▼──────┐             │
-│         │   Buffer    │             │
-│         └──────┬──────┘             │
-│                │                    │
-│         ┌──────▼──────┐             │
-│         │   Sender    │             │
-│         └──────┬──────┘             │
-└────────────────┼────────────────────┘
-                 │
-          ┌──────▼──────┐
-          │  HTTP/Kafka │
-          └──────┬──────┘
-                 │
-          ┌──────▼──────┐
-          │ Langa Backend│
-          └─────────────┘
-```
 
-## 🛠️ Développement
+## Development
 
-### Prérequis
-
-- Java 17+
-- Maven 3.8+
-
-### Build
+Requirements: Java 17+, Maven 3.8+.
 
 ```bash
-cd agent
-mvn clean install
+mvn clean verify       # build + tests
+mvn clean install      # install locally
 ```
 
-### Tests
+Releases are published to Maven Central by the
+[maven-publish](../.github/workflows/maven-publish.yml) workflow when a GitHub release is created.
 
-```bash
-mvn test
-```
+## Links
 
-## 🤝 Contribution
-
-Les contributions sont les bienvenues ! Consultez [CONTRIBUTING.md](../CONTRIBUTING.md) pour plus de détails.
-
-## 📄 Licence
-
-Ce projet est sous licence MIT. Voir [LICENSE](../LICENSE) pour plus de détails.
-
-## 🔗 Liens utiles
-
-- [Documentation complète](https://github.com/langa-org/langa)
-- [Exemples](https://github.com/langa-org/langa/tree/main/examples)
-- [Changelog](CHANGELOG.md)
-- [Issues](https://github.com/langa-org/langa/issues)
-
-## 💬 Support
-
-- 📧 Email : contact@capricedumardi.com
-- 🐛 Issues : [GitHub Issues](https://github.com/langa-org/langa/issues)
-
----
-
-Développé avec ❤️ par [Caprice du Mardi](https://github.com/langa-org)
+[Changelog](CHANGELOG.md) · [Issues](https://github.com/tonyadji/langa/issues) · [Contributing](../CONTRIBUTING.md) · [License (MIT)](LICENSE)

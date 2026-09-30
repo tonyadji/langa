@@ -18,62 +18,28 @@
 
 ## REST API Reference
 
-### Authentication Endpoints
+### Authentication
 
-#### POST /api/auth/register
-Register a new user account.
+Langa has no sign-up, login or refresh endpoint: users sign in with the OpenID Connect provider and every
+request carries `Authorization: Bearer <access token>`. See [docs/authentication.md](../../docs/authentication.md).
 
-**Request Body:**
-| Field | Type | Required | Validation |
-|-------|------|----------|------------|
-| username | string | Yes | Valid email format |
-| password | string | Yes | Min 8 characters |
-| confirmationPassword | string | Yes | Must match password |
+#### POST /api/dev/token/start · POST /api/dev/token/complete
+**Development only** — exist only when `application.security.dev-token.enabled=true`. Return a real access
+token for a user after an e-mail one-time code.
 
-**Response:** `200 OK`
-```
-User registered
-```
+`start` request body:
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| username | string | Yes | User e-mail |
+| signUp | boolean | No | Create the user in the identity provider if needed |
+| displayName | string | No | Display name for sign-up |
 
-**Error Responses:**
-- `400` - Validation failed
-- `409` - Email already exists
+`start` response: `continuationToken`, `codeSentTo`, `codeLength`, `signUp`.
 
----
+`complete` request body: `continuationToken`, `code`. Response: `accessToken`, `tokenType`, `expiresIn`.
 
-#### POST /api/auth/login
-Authenticate and receive JWT tokens.
-
-**Request Body:**
-| Field | Type | Required |
-|-------|------|----------|
-| username | string | Yes |
-| password | string | Yes |
-
-**Response:** `200 OK`
-| Field | Type | Description |
-|-------|------|-------------|
-| accessToken | string | JWT access token |
-| refreshToken | string | Refresh token |
-| email | string | User email |
-
-**Error Responses:**
-- `401` - Invalid credentials
-
----
-
-#### POST /api/auth/refresh
-Refresh an expired access token.
-
-**Request Body:**
-| Field | Type | Required |
-|-------|------|----------|
-| refreshToken | string | Yes |
-
-**Response:** `200 OK` (same as login)
-
-**Error Responses:**
-- `401` - Invalid or expired refresh token
+**Error Responses:** `400-101`, `400-300` … `400-303`, `401-001`, `502-000`
+(see [docs/authentication.md](../../docs/authentication.md#getting-a-token-without-the-dashboard-dev-only)).
 
 ---
 
@@ -419,27 +385,15 @@ Accept a team invitation.
 
 ### User Endpoints
 
-#### GET /api/users/profile
-Get current user profile.
+#### GET /api/users/me
+Current user. On the first call with a new access token, the user is created (or linked by e-mail to an
+existing invited user).
 
 **Response:** `200 OK`
 | Field | Type | Description |
 |-------|------|-------------|
 | email | string | User email |
 | accountKey | string | Account key |
-| firstConnection | boolean | First login flag |
-
----
-
-#### POST /api/users/complete-setup
-Mark first-time setup as complete.
-
-**Request Body:**
-| Field | Type | Required |
-|-------|------|----------|
-| hasCompletedSetup | boolean | Yes |
-
-**Response:** `200 OK`
 
 ---
 
@@ -556,12 +510,14 @@ Custom Langa metrics.
 #### User
 | Field | Type | Description |
 |-------|------|-------------|
-| email | String | Primary key |
-| password | String | BCrypt hash |
-| accountKey | String | Unique account key |
-| role | String | User role |
-| firstConnection | boolean | First login flag |
-| registrationDate | LocalDateTime | Registration timestamp |
+| id | String | UUID |
+| email | String | User e-mail |
+| accountKey | String | Unique account key (derived from the e-mail) |
+| identityProvider | String | OIDC provider (`entra`, `cognito`…), empty until first sign-in |
+| externalId | String | Subject of the user in the provider |
+| status | UserStatus | `ACTIVE`, `CREATED` (invited), `VERIFICATION_PENDING` |
+
+No password or token is stored: credentials live in the identity provider.
 
 **Constraints:**
 - `email` unique index
@@ -684,15 +640,18 @@ Custom Langa metrics.
 #### Security Configuration
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| JWT_KEY | string | Yes | JWT signing secret |
-| JWT_KID | string | Yes | JWT key ID |
-| JWT_EXPIRATION | long | No | Access token lifetime (ms) |
-| JWT_REFRESH_TOKEN_EXPIRATION | long | No | Refresh token lifetime (ms) |
-| SECURITY_UNSECURED_ENDPOINTS | string | No | Comma-separated endpoints |
+| AUTH_PROVIDER | string | No | Identity provider name (default `entra`) |
+| AUTH_ISSUER_URI | string | Yes | Expected token issuer |
+| AUTH_JWK_SET_URI | string | Yes | Signing keys of the provider |
+| AUTH_AUDIENCES | string | Yes | Accepted audiences (comma separated) |
+| AUTH_AUDIENCE_CLAIM | string | No | Default `aud` |
+| AUTH_SCOPE_CLAIM · AUTH_REQUIRED_SCOPE | string | No | Default `scp` · `access_as_user` |
+| AUTH_REQUIRED_CLAIMS | string | No | Extra `claim=value` checks |
+| AUTH_SUBJECT_CLAIM | string | No | Default `oid` |
+| AUTH_EMAIL_SOURCE · AUTH_EMAIL_CLAIM · AUTH_USERINFO_URI | string | No | Where to read the e-mail (`claim` or `userinfo`) |
+| SECURITY_UNSECURED_ENDPOINTS | string | Yes | Comma-separated public endpoints |
 
-**Defaults:**
-- `JWT_EXPIRATION`: 3600000 (1 hour)
-- `JWT_REFRESH_TOKEN_EXPIRATION`: 604800000 (7 days)
+Values per provider: [docs/authentication.md](../../docs/authentication.md#backend-settings).
 
 ---
 
@@ -831,7 +790,7 @@ Custom Langa metrics.
 ---
 
 #### FirstConnectionMailEvent
-**Trigger:** User completes first login
+**Trigger:** User signs in for the first time
 
 **Payload:**
 | Field | Type | Description |
@@ -902,7 +861,6 @@ Custom Langa metrics.
 | c_application_usage | Usage statistics |
 | c_application_nonce | Replay protection |
 | c_users | User accounts |
-| c_refresh_tokens | Refresh tokens |
 | c_teams | Teams |
 | c_team_members | Team memberships |
 | c_team_invitations | Team invitations |

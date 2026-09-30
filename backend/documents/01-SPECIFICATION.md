@@ -1,7 +1,7 @@
 # Langa Backend - Technical Specification
 
 **Version:** 0.0.1-SNAPSHOT  
-**Last Updated:** December 28, 2025  
+**Last Updated:** October 1, 2026  
 **Document Type:** Specification (Based on Implementation Analysis)
 
 ## Executive Summary
@@ -47,7 +47,7 @@ Langa Backend is a centralized observability and application monitoring platform
 | Framework | Spring Boot | 3.5.5 |
 | Database | MongoDB | - |
 | Message Broker | Apache Kafka | - |
-| Security | Spring Security + JWT | - |
+| Security | Spring Security OAuth2 Resource Server (OIDC access tokens) | - |
 | Validation | Jakarta Validation | 3.x |
 | Testing | JUnit 5 + Mockito | - |
 | Code Coverage | JaCoCo | 0.8.13 |
@@ -139,25 +139,21 @@ Langa Backend is a centralized observability and application monitoring platform
 
 ### 2.2 Users Domain
 
-#### User Entity
-**Purpose:** Represents a system user.
+#### User Aggregate
+**Purpose:** Represents a Langa user. Credentials are **not** stored in Langa: users sign in with an external
+OpenID Connect provider (Microsoft Entra External ID by default) and are identified by the provider and the
+subject of their access token.
 
 **Attributes:**
-- `email` (String) - User email (unique identifier)
-- `password` (String) - Encrypted password
-- `accountKey` (String) - Unique account key
-- `role` (String) - User role
-- `firstConnection` (boolean) - First login flag
-- `registrationDate` (LocalDateTime) - Registration timestamp
+- `userId` (UserId) - `id` (UUID), `email` (unique), `accountKey` (derived from the email)
+- `identityProvider` (String) - Provider the user signs in with (e.g. `entra`, `cognito`)
+- `externalId` (String) - Subject of the user in that provider
+- `status` (UserStatus) - `ACTIVE`, `CREATED` (invited, never signed in), `VERIFICATION_PENDING`
 
-#### RefreshToken Entity
-**Purpose:** Manages JWT refresh tokens.
-
-**Attributes:**
-- `id` (String) - Token identifier
-- `token` (String) - Refresh token value
-- `username` (String) - Associated user
-- `expirationDate` (LocalDateTime) - Expiration timestamp
+**Operations:**
+- `createFromExternalIdentity(identity)` - Creates an active user on first sign-in, emits `ActiveUserRegisteredEvent`
+- `createInvited(email)` - Creates a placeholder user when someone is invited to a team
+- `linkExternalIdentity(identity)` - Links an existing (invited or legacy) user with the same email to the provider account
 
 ### 2.3 Teams Domain
 
@@ -212,66 +208,20 @@ Langa Backend is a centralized observability and application monitoring platform
 
 ### 3.1 Authentication & Authorization
 
-**Base Path:** `/api/auth`
+Langa exposes **no sign-up, login or refresh endpoint**. The dashboard obtains an access token from the OIDC
+provider (authorization code + PKCE) and sends it as `Authorization: Bearer <token>`. The backend validates
+it as an OAuth2 resource server (issuer, signature via JWKS, audience, required scope and claims) and
+resolves the Langa user on each request, creating or linking it on the first one.
 
-#### POST /register
-**Purpose:** Register a new user account.
+Configuration and provider setup: [docs/authentication.md](../../docs/authentication.md).
 
-**Request Body:**
-```json
-{
-  "username": "user@example.com",
-  "password": "SecurePass123!",
-  "confirmationPassword": "SecurePass123!"
-}
-```
-
-**Response:** `200 OK`
-```json
-"User registered"
-```
-
-**Validation Rules:**
-- Email format required
-- Password minimum length
-- Passwords must match
-
-#### POST /login
-**Purpose:** Authenticate and obtain JWT tokens.
-
-**Request Body:**
-```json
-{
-  "username": "user@example.com",
-  "password": "SecurePass123!"
-}
-```
-
-**Response:** `200 OK`
-```json
-{
-  "accessToken": "eyJhbGc...",
-  "refreshToken": "refresh_token_value",
-  "email": "user@example.com"
-}
-```
-
-#### POST /refresh
-**Purpose:** Refresh an expired access token.
-
-**Request Body:**
-```json
-{
-  "refreshToken": "refresh_token_value"
-}
-```
-
-**Response:** `200 OK` (same structure as login)
+**Development only:** `POST /api/dev/token/start` and `POST /api/dev/token/complete` return a real access token
+using an e-mail one-time code, when `application.security.dev-token.enabled=true` (disabled by default).
 
 ### 3.2 Application Management
 
 **Base Path:** `/api/applications`  
-**Authentication:** Required (Bearer JWT)
+**Authentication:** Required (Bearer OIDC access token)
 
 #### POST /
 **Purpose:** Create a new monitored application.
@@ -504,7 +454,7 @@ or
 ### 3.4 Team Management
 
 **Base Path:** `/api/teams`  
-**Authentication:** Required (Bearer JWT)
+**Authentication:** Required (Bearer OIDC access token)
 
 #### POST /
 **Purpose:** Create a new team.
@@ -576,7 +526,7 @@ or
 ### 3.5 User Profile
 
 **Base Path:** `/api/users`  
-**Authentication:** Required (Bearer JWT)
+**Authentication:** Required (Bearer OIDC access token)
 
 #### GET /profile
 **Purpose:** Get current user profile.
@@ -608,36 +558,32 @@ or
 
 ### 4.1 Authentication
 
-**Mechanism:** JWT (JSON Web Tokens)
+**Mechanism:** OAuth2 resource server validating access tokens issued by an external OpenID Connect provider
+(Microsoft Entra External ID by default, Amazon Cognito supported by configuration).
 
-**Token Types:**
-1. **Access Token**
-   - Lifetime: Configurable via `JWT_EXPIRATION` (default: 1 hour)
-   - Used for API authentication
-   - Passed as `Authorization: Bearer <token>`
+**Token validation:**
+- Issuer (`AUTH_ISSUER_URI`) and signature (keys from `AUTH_JWK_SET_URI`)
+- Audience (`AUTH_AUDIENCE_CLAIM` must contain one of `AUTH_AUDIENCES`)
+- Required scope (`AUTH_SCOPE_CLAIM` / `AUTH_REQUIRED_SCOPE`) and optional extra claims (`AUTH_REQUIRED_CLAIMS`)
 
-2. **Refresh Token**
-   - Lifetime: Configurable via `JWT_REFRESH_TOKEN_EXPIRATION` (default: 7 days)
-   - Used to obtain new access tokens
-   - Stored in database with user association
+**User resolution:** the `ExternalIdentityResolver` port reads the subject (`AUTH_SUBJECT_CLAIM`) and the e-mail
+(from a claim, or from the UserInfo endpoint on first sign-in). The user is found by provider + subject,
+otherwise linked by e-mail or created.
 
-**JWT Configuration:**
-- Algorithm: Configured via `JWT_KID`
-- Secret: `JWT_KEY` environment variable
-- Issuer: Langa Backend
+Token lifetime and refresh are handled by the provider and the dashboard (MSAL), not by the backend.
+See [docs/authentication.md](../../docs/authentication.md).
 
 ### 4.2 Authorization
 
 **Access Control Levels:**
-1. **Public Endpoints**
-   - `/api/auth/register`
-   - `/api/auth/login`
-   - `/api/auth/refresh`
-   - Actuator endpoints (health, metrics)
+1. **Public Endpoints** (`SECURITY_UNSECURED_ENDPOINTS`)
+   - `/api/ingestion/**` (authenticated by HMAC signature instead, see 4.3)
+   - `/api/team-invitations/*/public`
+   - Health probes `/actuator/health/liveness` and `/actuator/health/readiness`
 
 2. **Authenticated Endpoints**
    - All other `/api/*` endpoints
-   - Require valid JWT access token
+   - Require a valid OIDC access token
 
 3. **Resource-Level Authorization**
    - Applications: Owner or shared access
@@ -646,18 +592,23 @@ or
 
 ### 4.3 Ingestion Security
 
-**HMAC Signature Validation:**
+**HMAC Signature Validation** (`IngestionSecurityImpl`):
 ```
-Signature = HMAC-SHA256(
-  secret,
-  X-USER-AGENT + X-APP-KEY + X-ACCOUNT-KEY + X-TIMESTAMP + request_body
+X-AGENT-SIGNATURE = nonce + ":" + HMAC-SHA256(
+  application secret,
+  X-APP-KEY + X-ACCOUNT-KEY + X-USER-AGENT + X-TIMESTAMP + nonce + credential type (HTTP | KAFKA)
 )
 ```
 
 **Protection Mechanisms:**
-- Timestamp validation (prevents old requests)
-- Nonce storage (prevents replay attacks)
-- Secret-based signature (verifies authenticity)
+- App key and account key must match the application
+- Timestamp window: at most 300 s old, 5 s in the future
+- Nonce stored per application (MongoDB TTL, 10 min): a nonce can be used only once (anti-replay)
+- Constant-time comparison of signatures
+- Payload size and per-key rate limits on the HTTP endpoint (`413` / `429`)
+
+> **Known gap:** the signature does not cover the request body yet, so it authenticates the sender but not
+> the payload integrity (mitigated by TLS). Adding a body hash is on the roadmap.
 
 ### 4.4 CORS Configuration
 
@@ -682,7 +633,7 @@ Configurable via environment:
 - `c_application_usage` - Usage statistics
 - `c_application_nonce` - Replay protection nonces
 - `c_users` - User documents
-- `c_refresh_tokens` - Refresh token documents
+- (no credential or token storage: identities live in the OIDC provider)
 - `c_teams` - Team documents
 - `c_team_members` - Team membership documents
 - `c_team_invitations` - Team invitation documents
@@ -799,10 +750,9 @@ Configurable via environment:
 - `KAFKA_ENABLE_AUTO_COMMIT` - true/false
 
 **Security:**
-- `JWT_KEY` - JWT signing secret
-- `JWT_KID` - Key ID
-- `JWT_EXPIRATION` - Access token lifetime (milliseconds)
-- `JWT_REFRESH_TOKEN_EXPIRATION` - Refresh token lifetime (milliseconds)
+- `AUTH_PROVIDER`, `AUTH_ISSUER_URI`, `AUTH_JWK_SET_URI`, `AUTH_AUDIENCES` - OIDC provider (required)
+- `AUTH_AUDIENCE_CLAIM`, `AUTH_SCOPE_CLAIM`, `AUTH_REQUIRED_SCOPE`, `AUTH_REQUIRED_CLAIMS`, `AUTH_SUBJECT_CLAIM`,
+  `AUTH_EMAIL_SOURCE`, `AUTH_EMAIL_CLAIM`, `AUTH_USERINFO_URI` - Optional, defaults suit Entra ID
 - `SECURITY_UNSECURED_ENDPOINTS` - Comma-separated list of public endpoints
 
 **CORS:**
@@ -923,8 +873,8 @@ Configurable via environment:
 
 ### 9.4 Security Rules
 
-1. All API endpoints (except `/api/auth/*`) require authentication
-2. JWT tokens expire and must be refreshed
+1. All API endpoints except ingestion and public invitation lookup require an OIDC access token
+2. Access tokens are short-lived; the dashboard renews them through the identity provider
 3. Refresh tokens are single-use
 4. First-time users must complete setup
 5. Passwords must meet minimum strength requirements
@@ -1006,7 +956,7 @@ Configurable via environment:
 ### 11.2 Scalability
 
 **Horizontal Scaling:**
-- Stateless application servers (JWT-based auth)
+- Stateless application servers (token-based auth)
 - MongoDB supports sharding
 - Kafka consumers can be partitioned
 
