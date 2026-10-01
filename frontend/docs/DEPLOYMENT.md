@@ -1,7 +1,7 @@
 # Langa Dashboard - Deployment Guide
 
 > [!NOTE]
-> The current pipeline deploys the dashboard to **Railway** ([frontend-deploy.yml](../../.github/workflows/frontend-deploy.yml)).
+> The dashboard is deployed on **Railway**, which builds the [`Dockerfile`](../Dockerfile) (see [docs/deployment.md](../../docs/deployment.md)).
 > This guide covers self-hosting alternatives (Docker, VPS with nginx); its CI/CD section is an example.
 
 **Document Type:** Deployment Guide  

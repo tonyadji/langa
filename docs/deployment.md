@@ -3,8 +3,14 @@
 | Component | Artifact | Pipeline |
 |---|---|---|
 | Agent | JAR on [Maven Central](https://central.sonatype.com/artifact/com.capricedumardi/langa-agent) | [`maven-publish.yml`](../.github/workflows/maven-publish.yml) (on GitHub release) |
-| Backend | Docker image ([`backend/Dockerfile`](../backend/Dockerfile)) | [`backend-ci.yml`](../.github/workflows/backend-ci.yml) builds and tests |
-| Dashboard | Docker image (nginx, [`frontend/Dockerfile`](../frontend/Dockerfile)) | [`frontend-deploy.yml`](../.github/workflows/frontend-deploy.yml) deploys to Railway on `main` |
+| Backend | Docker image ([`backend/Dockerfile`](../backend/Dockerfile)) | [`backend-ci.yml`](../.github/workflows/backend-ci.yml) builds and tests; Railway builds and deploys the Dockerfile |
+| Dashboard | Docker image (nginx, [`frontend/Dockerfile`](../frontend/Dockerfile)) | [`frontend-ci.yml`](../.github/workflows/frontend-ci.yml) builds and tests; Railway builds and deploys the Dockerfile |
+
+Railway builds each service from the Dockerfile at the root of its folder (service root directory `backend`
+or `frontend`). The configuration lives in the Railway service variables: the `AUTH_*`, `MONGODB_URI`… runtime
+variables for the backend, and the `VITE_*` variables for the dashboard, which Railway passes to the Dockerfile
+as build args (Vite bakes them into the static files at build time), plus `PORT=80` (nginx listens on port 80).
+The production URL of the dashboard must be declared as a redirect URI of the SPA app registration.
 
 ## Backend
 
