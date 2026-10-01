@@ -1,9 +1,13 @@
 package com.langa.backend.infra.security.config;
 
+import com.langa.backend.infra.security.localauth.LocalIdentity;
+import com.langa.backend.infra.security.localauth.LocalTokenIssuer;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -177,5 +181,20 @@ class SecurityConfigTest {
         Jwt token = cognitoToken().claim("scope", List.of("openid", "langa-api/access")).build();
 
         assertFalse(SecurityConfig.jwtValidator(cognitoProperties()).validate(token).hasErrors());
+    }
+
+    @Test
+    void localTokens_shouldPassTheValidatorOfTheConfiguredProvider() {
+        AuthProviderProperties properties = entraProperties();
+        properties.setProvider(LocalIdentity.PROVIDER);
+        properties.setIssuerUri("langa-local");
+        properties.setAudiences("langa-local");
+        LocalTokenIssuer issuer = new LocalTokenIssuer(properties, Duration.ofHours(1), LocalTokenIssuer.generateKeyPair());
+
+        Jwt token = NimbusJwtDecoder.withPublicKey(issuer.publicKey()).build()
+                .decode(issuer.issue("demo@langa.local").accessToken());
+
+        assertFalse(SecurityConfig.jwtValidator(properties).validate(token).hasErrors());
+        assertTrue(SecurityConfig.jwtValidator(entraProperties()).validate(token).hasErrors());
     }
 }

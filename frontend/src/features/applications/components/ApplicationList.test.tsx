@@ -22,6 +22,7 @@ const mockAuthContext: AuthContextType = {
   logout: vi.fn(),
   updateUser: vi.fn(),
   fetchUserProfile: vi.fn(),
+  provider: 'entra',
 };
 
 // Test wrapper component

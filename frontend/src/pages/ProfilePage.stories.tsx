@@ -11,6 +11,7 @@ const mockAuthContextValue = {
     firstConnection: false,
     registrationDate: '2024-12-01T10:30:00Z',
   },
+  provider: 'entra',
   isAuthenticated: true,
   isLoading: false,
   accessToken: 'mock-access-token',

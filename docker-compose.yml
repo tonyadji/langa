@@ -1,0 +1,151 @@
+# Langa on your machine in one command, no cloud account needed:
+#
+#   docker compose up --build
+#
+# Dashboard  http://localhost:3000  (sign in with any email; demo@langa.local owns the demo data)
+# API        http://localhost:8080  (Swagger UI: /swagger-ui.html)
+# E-mails    http://localhost:8025  (Mailpit catches every e-mail sent by the backend)
+#
+# Kafka is optional: `KAFKA_ENABLED=true docker compose --profile kafka up --build` also starts a broker
+# and the backend consumer.
+# Host ports can be changed in a .env file next to this one (see .env.example).
+#
+# LOCAL USE ONLY: the backend runs in local authentication mode (anyone can sign in with any email)
+# and the demo application secret is public.
+
+name: langa
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_PORT:-8025}:8025"
+
+  backend:
+    build:
+      context: ./backend
+      args:
+        SKIP_TESTS: "true"
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    environment:
+      APP_NAME: langa-backend
+      SERVER_PORT: 8080
+      BASE_URL: http://localhost:${BACKEND_PORT:-8080}
+      FRONT_URL: http://localhost:${DASHBOARD_PORT:-3000}
+      AGENT_VERSION: langa-agent-v1.0.0
+      PERSISTENCE_PROVIDER: mongo
+      MONGODB_URI: mongodb://mongo:27017/langa_db
+      MULTIPART_MAX_FILE_SIZE: 5MB
+      MULTIPART_MAX_REQUEST_SIZE: 5MB
+      TOMCAT_MAX_FORM_POST_SIZE: 5MB
+      # Local authentication: the backend issues its own tokens (see docs/authentication.md)
+      AUTH_PROVIDER: local
+      LOCAL_AUTH_ENABLED: "true"
+      AUTH_ISSUER_URI: langa-local
+      AUTH_AUDIENCES: langa-local
+      AUTH_JWK_SET_URI: ""
+      DEMO_DATA_ENABLED: "true"
+      SECURITY_UNSECURED_ENDPOINTS: /api/ingestion/**,/api/team-invitations/*/public,/swagger-ui.html,/swagger-ui/**,/v3/api-docs/**
+      SPRINGDOC_ENABLED: "true"
+      CORS_ALLOWED_ORIGINS: http://localhost:${DASHBOARD_PORT:-3000},http://localhost:5173
+      CORS_ALLOWED_METHODS: GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD
+      CORS_ALLOWED_HEADERS: "*"
+      CORS_ALLOW_CREDENTIALS: "true"
+      CORS_PATTERN_REGISTRY: /**
+      INGESTION_ENDPOINT: /api/ingestion
+      # Kafka ingestion is optional: KAFKA_ENABLED=true docker compose --profile kafka up --build
+      KAFKA_ENABLED: ${KAFKA_ENABLED:-false}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC: langa
+      KAFKA_CONSUMER_GROUP_ID: langa-ingestion-group
+      KAFKA_AUTO_OFFSET_RESET: earliest
+      KAFKA_KEY_DESERIALIZER: org.apache.kafka.common.serialization.StringDeserializer
+      KAFKA_VALUE_DESERIALIZER: org.apache.kafka.common.serialization.StringDeserializer
+      KAFKA_ENABLE_AUTO_COMMIT: "false"
+      KAFKA_TRUSTED_PACKAGES: com.langa.backend.infra.rest.ingest.dto
+      KAFKA_LISTENER_ACK_MODE: manual_immediate
+      # E-mails go to Mailpit ("gmail" is the generic SMTP implementation)
+      MAIL_PROVIDER: gmail
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+      MAIL_SMTP_AUTH: "false"
+      MAIL_STARTTLS_ENABLE: "false"
+      MAIL_STARTTLS_REQUIRED: "false"
+      LOG_LEVEL_SPRING_WEB: INFO
+      LOG_LEVEL_SPRING_SECURITY: INFO
+      LOG_LEVEL_LANGA: INFO
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health/readiness > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 5s
+      start_period: 60s
+      retries: 30
+
+  dashboard:
+    build:
+      context: ./frontend
+      args:
+        # Read by the browser: the API as seen from the host
+        VITE_API_BASE_URL: http://localhost:${BACKEND_PORT:-8080}/api
+        VITE_AUTH_PROVIDER: local
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${DASHBOARD_PORT:-3000}:80"
+
+  sample-app:
+    build:
+      context: .
+      dockerfile: examples/sample-app/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${SAMPLE_APP_PORT:-8081}:8081"
+    environment:
+      LOGGING_FRAMEWORK: logback
+      # Demo application created by the backend (application.demo.*): the URL ends with
+      # base64("<account key of demo@langa.local>-lga-APP-DemoShop"), the backend logs it at startup
+      LANGA_INGESTION_URL: http://backend:8080/api/ingestion/h/VS01RjJJWW50aE5HUkNUVzYydjRNdHY5LWxnYS1BUFAtRGVtb1Nob3A=
+      LANGA_INGESTION_SECRET: langa-demo-secret-for-local-use-only
+
+  kafka:
+    image: apache/kafka:3.9.1
+    profiles: ["kafka"]
+    restart: unless-stopped
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+volumes:
+  mongo-data:

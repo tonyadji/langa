@@ -44,6 +44,8 @@ application:
   base-url: ${BASE_URL}
   front-url: ${FRONT_URL}
   ingestion:
+    # Consume the agents' Kafka topic (false: HTTP ingestion only, no broker needed)
+    kafka-enabled: ${KAFKA_ENABLED:true}
     kafka-url: ${spring.kafka.bootstrap-servers}
     kafka-topic: ${KAFKA_TOPIC}
     endpoint: ${INGESTION_ENDPOINT}
@@ -67,6 +69,9 @@ application:
       email-source: ${AUTH_EMAIL_SOURCE:claim}
       email-claim: ${AUTH_EMAIL_CLAIM:email}
       userinfo-uri: ${AUTH_USERINFO_URI:}
+    # Local authentication mode (no identity provider, requires AUTH_PROVIDER=local): never in production
+    local-auth:
+      enabled: ${LOCAL_AUTH_ENABLED:false}
     endpoints:
       unsecured: ${SECURITY_UNSECURED_ENDPOINTS}
     cors:
@@ -77,6 +82,9 @@ application:
       pattern-registry: ${CORS_PATTERN_REGISTRY}
   mail:
     provider: ${MAIL_PROVIDER}
+  # Demo user, application and history created at startup (docker compose)
+  demo:
+    enabled: ${DEMO_DATA_ENABLED:false}
 
 logging:
   level:

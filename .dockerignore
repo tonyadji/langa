@@ -1,0 +1,11 @@
+# Build context of examples/sample-app/Dockerfile (repository root): only agent/ and examples/ are needed
+**/node_modules
+**/target
+**/dist
+**/.idea
+**/.env
+**/.env.local
+.git
+frontend
+backend
+docs

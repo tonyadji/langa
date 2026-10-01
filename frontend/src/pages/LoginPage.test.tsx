@@ -14,6 +14,7 @@ const buildAuth = (overrides: Partial<AuthContextType> = {}): AuthContextType =>
   logout: vi.fn().mockResolvedValue(undefined),
   updateUser: vi.fn(),
   fetchUserProfile: vi.fn(),
+  provider: 'entra',
   ...overrides,
 });
 
@@ -75,5 +76,39 @@ describe('LoginPage', () => {
     expect(screen.getByText(/could not be validated/i)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /sign out/i }));
     expect(auth.logout).toHaveBeenCalled();
+  });
+
+  describe('in local mode', () => {
+    it('should sign in with the demo email by default', async () => {
+      const auth = buildAuth({ provider: 'local' });
+      renderLogin(auth);
+
+      expect(screen.getByText(/local mode/i)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /create an account/i })).not.toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+      expect(auth.login).toHaveBeenCalledWith(`${window.location.origin}/dashboard`, 'demo@langa.local');
+    });
+
+    it('should sign in with the typed email', async () => {
+      const auth = buildAuth({ provider: 'local' });
+      renderLogin(auth);
+
+      const email = screen.getByLabelText('Email');
+      await userEvent.clear(email);
+      await userEvent.type(email, 'alice@example.com');
+      await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+      expect(auth.login).toHaveBeenCalledWith(`${window.location.origin}/dashboard`, 'alice@example.com');
+    });
+
+    it('should explain a failed sign-in', async () => {
+      const auth = buildAuth({ provider: 'local', login: vi.fn().mockRejectedValue(new Error('HTTP 404')) });
+      renderLogin(auth);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+      expect(await screen.findByText(/LOCAL_AUTH_ENABLED/)).toBeInTheDocument();
+    });
   });
 });

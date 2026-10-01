@@ -41,6 +41,7 @@ const mockAuthContextValue: AuthContextType = {
   logout: mockLogout,
   updateUser: vi.fn(),
   fetchUserProfile: vi.fn().mockResolvedValue(undefined),
+  provider: 'entra',
 };
 
 describe('ProfilePage Component Tests', () => {

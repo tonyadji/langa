@@ -7,6 +7,10 @@ import com.langa.backend.infra.security.devtoken.DevTokenProperties;
 import com.langa.backend.infra.security.identity.ClaimsExternalIdentityResolver;
 import com.langa.backend.infra.security.identity.ExternalIdentityResolver;
 import com.langa.backend.infra.security.identity.UserInfoExternalIdentityResolver;
+import com.langa.backend.infra.security.localauth.LocalAuthController;
+import com.langa.backend.infra.security.localauth.LocalAuthProperties;
+import com.langa.backend.infra.security.localauth.LocalTokenIssuer;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -46,15 +50,18 @@ public class SecurityConfig {
     private final SecurityCors securityCors;
     private final AuthProviderProperties authProperties;
     private final DevTokenProperties devTokenProperties;
+    private final LocalAuthProperties localAuthProperties;
 
     public SecurityConfig(SecurityEndpoints securityEndpoints,
                           SecurityCors securityCors,
                           AuthProviderProperties authProperties,
-                          DevTokenProperties devTokenProperties) {
+                          DevTokenProperties devTokenProperties,
+                          LocalAuthProperties localAuthProperties) {
         this.securityEndpoints = securityEndpoints;
         this.securityCors = securityCors;
         this.authProperties = authProperties;
         this.devTokenProperties = devTokenProperties;
+        this.localAuthProperties = localAuthProperties;
     }
 
     @Bean
@@ -74,6 +81,10 @@ public class SecurityConfig {
                         // Development endpoint issuing tokens: public only when explicitly enabled
                         authorizer.requestMatchers(DevTokenController.PATH + "/**").permitAll();
                     }
+                    if (localAuthProperties.isEnabled()) {
+                        // Local sign-in (no identity provider): public only when explicitly enabled
+                        authorizer.requestMatchers(LocalAuthController.PATH + "/**").permitAll();
+                    }
                     authorizer.anyRequest().authenticated();
                 })
             .oauth2ResourceServer(oauth2 -> oauth2
@@ -84,13 +95,17 @@ public class SecurityConfig {
 
     /**
      * Validates the access tokens of the configured identity provider: RS256 signature (keys fetched lazily
-     * from the JWKS endpoint), expiry, issuer, audience, scope and additional required claims.
+     * from the JWKS endpoint, or the local key in local authentication mode), expiry, issuer, audience, scope
+     * and additional required claims.
      */
     @Bean
-    public JwtDecoder jwtDecoder() {
-        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(authProperties.getJwkSetUri())
-                .jwsAlgorithm(SignatureAlgorithm.RS256)
-                .build();
+    public JwtDecoder jwtDecoder(ObjectProvider<LocalTokenIssuer> localTokenIssuer) {
+        final LocalTokenIssuer localIssuer = localTokenIssuer.getIfAvailable();
+        NimbusJwtDecoder decoder = localIssuer != null
+                ? NimbusJwtDecoder.withPublicKey(localIssuer.publicKey()).signatureAlgorithm(SignatureAlgorithm.RS256).build()
+                : NimbusJwtDecoder.withJwkSetUri(authProperties.getJwkSetUri())
+                        .jwsAlgorithm(SignatureAlgorithm.RS256)
+                        .build();
         decoder.setJwtValidator(jwtValidator(authProperties));
         return decoder;
     }

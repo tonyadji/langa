@@ -1,8 +1,11 @@
+import { useState, type FormEvent } from 'react';
 import { Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { Alert } from '@/components/common/Alert';
+import { Input } from '@/components/common/Input';
+import { config } from '@/config';
 
 interface LoginPageProps {
   /** Show the sign-up call to action first (used by the /register route). */
@@ -12,11 +15,12 @@ interface LoginPageProps {
 /**
  * Entry point of the authentication: sign-in and sign-up are handled by
  * Microsoft Entra External ID, this page only redirects to it.
+ * In local mode (no identity provider), the user signs in with an email only.
  */
 export function LoginPage({ signUp = false }: LoginPageProps) {
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { isAuthenticated, isLoading, login, register, logout } = useAuth();
+  const { provider, isAuthenticated, isLoading, login, register, logout } = useAuth();
 
   const sessionRejected = searchParams.get('error') === 'unauthorized';
   const from = (location.state as { from?: string } | null)?.from ?? '/dashboard';
@@ -24,6 +28,17 @@ export function LoginPage({ signUp = false }: LoginPageProps) {
 
   if (isAuthenticated && !sessionRejected) {
     return <Navigate to={from} replace />;
+  }
+
+  if (provider === 'local') {
+    return (
+      <LocalLoginCard
+        redirectTo={redirectTo}
+        sessionRejected={sessionRejected}
+        isLoading={isLoading}
+        login={login}
+      />
+    );
   }
 
   const primaryAction = signUp ? () => register(redirectTo) : () => login(redirectTo);
@@ -60,6 +75,73 @@ export function LoginPage({ signUp = false }: LoginPageProps) {
             </Button>
           )}
         </div>
+      </Card>
+    </div>
+  );
+}
+
+interface LocalLoginCardProps {
+  redirectTo: string;
+  sessionRejected: boolean;
+  isLoading: boolean;
+  login: (redirectTo?: string, loginHint?: string) => Promise<void>;
+}
+
+/** Local mode: any email signs in (and creates the user on first sign-in). */
+function LocalLoginCard({ redirectTo, sessionRejected, isLoading, login }: LocalLoginCardProps) {
+  const [email, setEmail] = useState<string>(config.auth.local.defaultEmail);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      await login(redirectTo, email);
+    } catch {
+      setError('Sign-in failed. Is the backend running with LOCAL_AUTH_ENABLED=true?');
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md p-8">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Welcome to Langa</h1>
+          <p className="text-gray-600 dark:text-gray-300">Sign in with any email address</p>
+        </div>
+
+        <Alert variant="info" className="mb-6">
+          Local mode: no password, no identity provider. A new email creates a new user. Use the demo
+          account to explore the seeded data.
+        </Alert>
+
+        {sessionRejected && (
+          <Alert variant="error" className="mb-6">
+            Your session could not be validated. Please sign in again.
+          </Alert>
+        )}
+        {error && (
+          <Alert variant="error" className="mb-6">
+            {error}
+          </Alert>
+        )}
+
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <Input
+            label="Email"
+            type="email"
+            required
+            autoComplete="email"
+            value={email}
+            onChange={event => setEmail(event.target.value)}
+          />
+          <Button type="submit" fullWidth size="lg" isLoading={isLoading || isSubmitting}>
+            Sign in
+          </Button>
+        </form>
       </Card>
     </div>
   );
