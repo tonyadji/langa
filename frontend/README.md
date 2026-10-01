@@ -99,9 +99,11 @@ use `useAuth()`, so another OIDC provider can be added without touching them.
 ## Deployment
 
 The production image is a multi-stage build served by nginx ([`Dockerfile`](Dockerfile)). Railway builds and
-deploys it, with the `VITE_*` service variables passed as build args (see [docs/deployment.md](../docs/deployment.md));
+deploys it, with the `VITE_*` service variables passed as build args (see [docs/deployment.md](../docs/deployment.md)).
 [frontend-ci.yml](../.github/workflows/frontend-ci.yml) runs lint, type check, tests, build and a dependency
 audit on every change.
+
+Staging: https://langa-frontend-staging.up.railway.app/
 
 ```bash
 docker build --build-arg VITE_API_BASE_URL=https://api.example.com/api -t langa-dashboard .

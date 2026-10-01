@@ -12,6 +12,10 @@ variables for the backend, and the `VITE_*` variables for the dashboard, which R
 as build args (Vite bakes them into the static files at build time), plus `PORT=80` (nginx listens on port 80).
 The production URL of the dashboard must be declared as a redirect URI of the SPA app registration.
 
+| Environment | Dashboard |
+|---|---|
+| Staging | https://langa-frontend-staging.up.railway.app/ |
+
 ## Backend
 
 The image runs the unit tests during the build (`--build-arg SKIP_TESTS=true` to skip them), runs as a
