@@ -12,8 +12,9 @@
 
 > [!WARNING]
 > **Work in progress.** Langa is a personal project under active development, not production software yet.
-> The core flow works end to end (agent → ingestion → storage → dashboard); the path to a first MVP is
-> described in the [roadmap](#roadmap-to-mvp).
+> The core flow works end to end (agent → ingestion → storage → dashboard) and can be
+> [tried locally in one command](#quick-start-docker); the path to a first MVP is described in the
+> [roadmap](#roadmap-to-mvp).
 
 ---
 
@@ -90,14 +91,33 @@ What is worth a look if you are reviewing the code:
 
 ## Getting started
 
-**Prerequisites:** Java 21, Maven 3.9+, Node.js 18+, a MongoDB instance, and a Microsoft Entra External ID
-tenant for sign-in ([setup guide](docs/authentication.md#microsoft-entra-external-id-setup)).
-Kafka is optional.
+### Quick start (Docker)
+
+Only [Docker](https://docs.docker.com/get-docker/) is needed: no identity provider, no cloud account.
 
 ```bash
 git clone https://github.com/tonyadji/langa.git
 cd langa
+docker compose up --build
 ```
+
+| | |
+|---|---|
+| **Dashboard** | http://localhost:3000. Sign in with `demo@langa.local` to see the demo data, or with any other email for a new account |
+| **API** | http://localhost:8080 (Swagger UI at `/swagger-ui.html`) |
+| **Sample app** | http://localhost:8081/orders. A small [Spring Boot shop](examples/sample-app) running with the agent: it generates traffic on its own, and its logs and timings show up live in the "Demo Shop" application |
+| **E-mails** | http://localhost:8025 (Mailpit catches the invitations sent by the backend) |
+
+The stack is MongoDB, the backend, the dashboard, the sample app and Mailpit. Run `KAFKA_ENABLED=true docker compose --profile kafka up --build`
+to also start a Kafka broker and the backend Kafka consumer. The backend runs in [local authentication mode](docs/authentication.md#local-mode-no-identity-provider)
+and seeds 24 hours of demo logs and metrics. This setup is **for local use only**.
+Run `docker compose down -v` to stop and delete the data.
+
+### Manual setup
+
+**Prerequisites:** Java 21, Maven 3.9+, Node.js 18+, a MongoDB instance, and a Microsoft Entra External ID
+tenant for sign-in ([setup guide](docs/authentication.md#microsoft-entra-external-id-setup)), or the local
+authentication mode. Kafka is optional.
 
 **1. Backend** — configure the environment from [`backend/.env.example`](backend/.env.example), then:
 
@@ -125,8 +145,6 @@ export LANGA_INGESTION_SECRET=<application secret>
 java -javaagent:langa-agent.jar -jar your-app.jar
 ```
 
-> A one-command `docker compose up` with a sample application is the first item of the [roadmap](#roadmap-to-mvp).
-
 ## Repository layout
 
 ```text
@@ -134,6 +152,7 @@ langa/
 ├── agent/       Java agent published on Maven Central (collects and ships logs & metrics)
 ├── backend/     Spring Boot API: ingestion, applications, teams, users
 ├── frontend/    React dashboard
+├── examples/    Sample Spring Boot app instrumented with the agent
 ├── docs/        Cross-cutting docs: authentication, deployment
 └── .github/     CI/CD workflows
 ```
@@ -147,6 +166,7 @@ langa/
 | [Backend](backend/README.md) | Architecture, local setup, tests |
 | [Backend in depth](backend/documents/README.md) | Specification, tutorial, how-to guides, reference, design rationale |
 | [Dashboard](frontend/README.md) | Features, setup, scripts |
+| [Sample app](examples/sample-app/README.md) | Spring Boot app instrumented with the agent, used by `docker compose` |
 | [Authentication](docs/authentication.md) | OIDC providers, Entra setup, dev tokens |
 | [Deployment](docs/deployment.md) | Docker images, pipelines, production checklist |
 
@@ -155,11 +175,11 @@ langa/
 **Done** — agent on Maven Central (Logback, Log4j2, `@Monitored`, HTTP & Kafka senders, circuit breaker) ·
 HMAC-secured ingestion with limits · applications, retention policies, usage tracking · sharing with users and
 teams, e-mail invitations · OIDC sign-in (Entra) · dashboard for logs, metrics, usage, teams · CI and
-containerised deployment.
+containerised deployment · **M1**: `docker compose up` with a sample app, demo data and local sign-in.
 
 | Milestone | Goal | Items |
 |---|---|---|
-| **M1 · Run it in 5 minutes** | Anyone can try Langa locally | Root `docker-compose.yml` (MongoDB, backend, dashboard, optional Kafka) · sample Spring Boot app instrumented with the agent · seeded demo data · local auth mode that does not need an Entra tenant |
+| ~~**M1 · Run it in 5 minutes**~~ ✅ | Anyone can try Langa locally | Root `docker-compose.yml` (MongoDB, backend, dashboard, optional Kafka) · sample Spring Boot app instrumented with the agent · seeded demo data · local auth mode that does not need an Entra tenant |
 | **M2 · Correctness at scale** | Safe with several backend instances and concurrent agents | Real transactional outbox (Mongo transaction manager, or write events in the aggregate document) · distributed lock on the outbox poller (ShedLock) · atomic usage counters (`$inc`) · HMAC signature covering the request body · distributed rate limiting (Bucket4j + Redis) · configurable Kafka topic (currently fixed to `langa`) · remove the last domain → infra dependency and enforce layering with ArchUnit |
 | **M3 · Test pyramid** | Confidence beyond unit tests | Testcontainers integration tests (MongoDB, Kafka) · end-to-end test agent → backend · Playwright smoke tests on the dashboard · coverage reported in CI |
 | **M4 · Product MVP** | Useful to a small team every day | Full-text log search · live tail (Server-Sent Events) · metric aggregation (p50 / p95 / error rate per method) · alert rules with e-mail / webhook notifications · retention and quotas per plan |

@@ -94,12 +94,13 @@ describe('AuthProvider', () => {
   it('should delegate sign-in, sign-up and sign-out to the provider', async () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
 
-    await result.current.login('http://localhost/teams');
+    await result.current.login('http://localhost/teams', 'user@example.com');
     await result.current.register();
     await result.current.logout();
 
-    expect(fake.authClient.login).toHaveBeenCalledWith('http://localhost/teams');
-    expect(fake.authClient.register).toHaveBeenCalledWith(undefined);
+    expect(result.current.provider).toBe('fake');
+    expect(fake.authClient.login).toHaveBeenCalledWith('http://localhost/teams', 'user@example.com');
+    expect(fake.authClient.register).toHaveBeenCalledWith(undefined, undefined);
     expect(fake.authClient.logout).toHaveBeenCalled();
   });
 });

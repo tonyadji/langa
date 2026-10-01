@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: langa-sample-app
+
+server:
+  port: ${SERVER_PORT:8081}
+
+sample:
+  traffic:
+    # Calls the shop endpoints on a schedule, so that logs and metrics flow without doing anything
+    enabled: ${SAMPLE_TRAFFIC_ENABLED:true}
+    interval-millis: ${SAMPLE_TRAFFIC_INTERVAL_MILLIS:3000}

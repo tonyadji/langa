@@ -1,5 +1,6 @@
 import { config } from '@/config';
 import type { AuthClient } from './AuthClient';
+import { createLocalAuthClient } from './localAuthClient';
 import { createMsalAuthClient } from './msalAuthClient';
 
 export type { AuthClient } from './AuthClient';
@@ -13,6 +14,8 @@ function createAuthClient(): AuthClient {
   switch (config.auth.provider) {
     case 'entra':
       return createMsalAuthClient(config.auth.entra);
+    case 'local':
+      return createLocalAuthClient({ apiBaseUrl: config.apiBaseUrl, ...config.auth.local });
     default:
       throw new Error(`Unsupported authentication provider: ${config.auth.provider}`);
   }

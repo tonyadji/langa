@@ -18,11 +18,14 @@ export interface AuthClient {
   /** Whether a user is signed in. Must be cheap: it is read on every render. */
   isAuthenticated(): boolean;
 
-  /** Redirects to the provider sign-in page, then back to `redirectTo` (current page by default). */
-  login(redirectTo?: string): Promise<void>;
+  /**
+   * Redirects to the provider sign-in page, then back to `redirectTo` (current page by default).
+   * `loginHint` is the email of the user, when known.
+   */
+  login(redirectTo?: string, loginHint?: string): Promise<void>;
 
   /** Redirects to the provider sign-up page, then back to `redirectTo` (current page by default). */
-  register(redirectTo?: string): Promise<void>;
+  register(redirectTo?: string, loginHint?: string): Promise<void>;
 
   /** Signs out from the application and the provider. */
   logout(): Promise<void>;

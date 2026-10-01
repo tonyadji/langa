@@ -1,8 +1,8 @@
 # Multi-stage build for production-ready Langa Dashboard
-# Target Platform: linux/amd64 (Intel/AMD servers)
+# Built for the platform of the Docker host (use docker buildx --platform to target another one)
 
 # Stage 1: Build the application
-FROM --platform=linux/amd64 node:20-alpine AS builder
+FROM node:20-alpine AS builder
 
 # Accept build arguments
 ARG VITE_API_BASE_URL=https://langa-production.up.railway.app/api
@@ -40,7 +40,7 @@ ENV VITE_ENTRA_API_SCOPE=$VITE_ENTRA_API_SCOPE
 RUN npm run build
 
 # Stage 2: Serve with nginx
-FROM --platform=linux/amd64 nginx:alpine
+FROM nginx:alpine
 
 # Copy custom nginx config
 COPY <<'EOF' /etc/nginx/conf.d/default.conf
@@ -92,7 +92,7 @@ EXPOSE 80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost/health || exit 1
+    CMD wget --quiet --tries=1 --spider http://127.0.0.1/health || exit 1
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]

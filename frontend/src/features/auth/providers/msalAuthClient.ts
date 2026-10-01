@@ -94,13 +94,13 @@ export function createMsalAuthClient(settings: MsalAuthClientSettings): AuthClie
       return msalInstance.getActiveAccount() !== null;
     },
 
-    login(redirectTo) {
-      return redirect({}, redirectTo);
+    login(redirectTo, loginHint) {
+      return redirect({ loginHint }, redirectTo);
     },
 
-    register(redirectTo) {
+    register(redirectTo, loginHint) {
       // Opens the sign-up page of the External ID user flow
-      return redirect({ prompt: 'create' }, redirectTo);
+      return redirect({ prompt: 'create', loginHint }, redirectTo);
     },
 
     logout() {
