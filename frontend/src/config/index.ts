@@ -16,5 +16,9 @@ export const config = {
       postLogoutRedirectUri:
         import.meta.env.VITE_ENTRA_POST_LOGOUT_REDIRECT_URI || `${window.location.origin}/login`,
     },
+    // Local mode (VITE_AUTH_PROVIDER=local): tokens issued by the backend, no identity provider
+    local: {
+      defaultEmail: import.meta.env.VITE_LOCAL_AUTH_EMAIL || 'demo@langa.local',
+    },
   },
 } as const;

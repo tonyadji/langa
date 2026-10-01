@@ -32,7 +32,9 @@ public class IngestionConsumer {
     private final KafkaCredentialsMapper kafkaCredentialsMapper;
     private final ObjectMapper objectMapper;
 
-    @KafkaListener(topics = "langa", groupId = "langa-ingestion-group")
+    // Not started (no consumer, no broker connection) when Kafka ingestion is disabled
+    @KafkaListener(topics = "langa", groupId = "langa-ingestion-group",
+            autoStartup = "${application.ingestion.kafka-enabled:true}")
     public void consumeIngestionMessage(ConsumerRecord<String, String> messageRecord) {
         try {
             log.trace("Received message from topic 'langa': partition={}, offset={}, key={}",

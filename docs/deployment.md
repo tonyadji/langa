@@ -24,7 +24,7 @@ docker run --env-file backend/.env -p 8080:8080 langa-backend
    `VITE_*` variables when building the dashboard (see [authentication](authentication.md)).
 3. `CORS_ALLOWED_ORIGINS` and `FRONT_URL` set to the production dashboard URL.
 4. `SECURITY_UNSECURED_ENDPOINTS` limited to `/api/ingestion/**,/api/team-invitations/*/public`.
-5. Swagger disabled (`SPRINGDOC_ENABLED` unset or `false`) and `application.security.dev-token` not enabled.
+5. Swagger disabled (`SPRINGDOC_ENABLED` unset or `false`); `application.security.dev-token`, `LOCAL_AUTH_ENABLED` and `DEMO_DATA_ENABLED` not enabled.
 6. Probes: liveness `/actuator/health/liveness`, readiness `/actuator/health/readiness` (public, without
    details unless `MANAGEMENT_HEALTH_SHOW_DETAILS` is set).
 7. Ingestion limits reviewed for the expected traffic: `INGESTION_MAX_PAYLOAD_BYTES` (default 5 MB) and

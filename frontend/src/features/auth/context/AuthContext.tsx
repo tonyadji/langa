@@ -13,10 +13,15 @@ export interface AuthState {
 }
 
 export interface AuthContextType extends AuthState {
-  /** Redirects to the identity provider sign-in page, then back to `redirectTo` (current page by default). */
-  login: (redirectTo?: string) => Promise<void>;
+  /** Name of the identity provider (see AuthClient), e.g. `entra` or `local`. */
+  provider: string;
+  /**
+   * Redirects to the identity provider sign-in page, then back to `redirectTo` (current page by default).
+   * `loginHint` is the email of the user, when known.
+   */
+  login: (redirectTo?: string, loginHint?: string) => Promise<void>;
   /** Redirects to the identity provider sign-up page, then back to `redirectTo` (current page by default). */
-  register: (redirectTo?: string) => Promise<void>;
+  register: (redirectTo?: string, loginHint?: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (user: User) => void;
   fetchUserProfile: () => Promise<void>;
@@ -78,9 +83,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     });
   }, [isAuthenticated, user, profileFailed, fetchUserProfile]);
 
-  const login = useCallback((redirectTo?: string) => authClient.login(redirectTo), []);
+  const login = useCallback(
+    (redirectTo?: string, loginHint?: string) => authClient.login(redirectTo, loginHint),
+    []
+  );
 
-  const register = useCallback((redirectTo?: string) => authClient.register(redirectTo), []);
+  const register = useCallback(
+    (redirectTo?: string, loginHint?: string) => authClient.register(redirectTo, loginHint),
+    []
+  );
 
   const logout = useCallback(async (): Promise<void> => {
     setUser(null);
@@ -92,6 +103,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const value: AuthContextType = {
+    provider: authClient.name,
     user,
     isAuthenticated,
     // Signed in but the Langa profile is not loaded yet

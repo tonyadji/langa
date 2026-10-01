@@ -2,6 +2,7 @@
 
 Langa does not store passwords. Users and tokens are managed by an external **OpenID Connect** provider:
 Microsoft Entra External ID today, any OIDC provider (Amazon Cognito, Keycloak, Auth0…) tomorrow.
+For local runs and demos, a [local mode](#local-mode-no-identity-provider) needs no provider at all.
 
 - The **dashboard** signs users in (authorization code + PKCE) and sends the access token to the API.
 - The **backend** is a pure OAuth2 resource server: it only validates access tokens.
@@ -18,6 +19,7 @@ Microsoft Entra External ID today, any OIDC provider (Amazon Cognito, Keycloak, 
 - [Microsoft Entra External ID setup](#microsoft-entra-external-id-setup)
 - [Amazon Cognito (backend ready, frontend not yet)](#amazon-cognito-backend-ready-frontend-not-yet)
 - [Getting a token without the dashboard (dev only)](#getting-a-token-without-the-dashboard-dev-only)
+- [Local mode (no identity provider)](#local-mode-no-identity-provider)
 
 ## How the provider is isolated
 
@@ -127,3 +129,35 @@ with the new token, as for a sign-up through the dashboard.
 | `400-303` | Invalid continuation token |
 | `401-001` | Wrong code |
 | `502-000` | Identity provider error |
+
+## Local mode (no identity provider)
+
+Used by the root [`docker-compose.yml`](../docker-compose.yml) so that Langa runs without any cloud account.
+The backend issues its own access tokens: **anyone can sign in with any email, never enable it in production.**
+
+- The backend generates an RSA key at startup (in memory: tokens are invalidated by a restart) and exposes
+  `POST /api/auth/local/token {"email": "…"}` → `{"accessToken", "tokenType": "Bearer", "expiresIn"}`.
+- The tokens carry the claims expected by the `AUTH_*` settings (issuer, audience, scope, subject, email) and
+  go through the same validation and user provisioning as provider tokens. The subject is derived from the
+  email, so an email always maps to the same local user.
+- Startup fails if the mode is enabled with a provider other than `local`, so local identities are never mixed
+  with those of a real provider.
+
+| Side | Variable | Value |
+|---|---|---|
+| Backend | `LOCAL_AUTH_ENABLED` | `true` (default `false`: the endpoint does not exist) |
+| Backend | `AUTH_PROVIDER` | `local` |
+| Backend | `AUTH_ISSUER_URI` / `AUTH_AUDIENCES` | any value, e.g. `langa-local` (`AUTH_JWK_SET_URI` is not used) |
+| Backend | `application.security.local-auth.token-ttl` | token lifetime, default `12h` |
+| Frontend | `VITE_AUTH_PROVIDER` | `local`: the sign-in page asks for an email only |
+| Frontend | `VITE_LOCAL_AUTH_EMAIL` | email prefilled on the sign-in page, default `demo@langa.local` |
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/local/token \
+  -H 'Content-Type: application/json' -d '{"email":"demo@langa.local"}' | jq -r .accessToken)
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/applications
+```
+
+With `DEMO_DATA_ENABLED=true`, the backend also creates at startup the demo user `demo@langa.local`, its
+"Demo Shop" application (fixed key and secret, see `application.demo.*`) and 24 hours of logs and metrics.
+
