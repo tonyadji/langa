@@ -191,7 +191,7 @@ Cognito / Keycloak sign-in in the dashboard.
 ## Contributors
 
 - **Tony Adji** ([@tonyadji](https://github.com/tonyadji)) — author and maintainer; agent, backend, architecture, CI/CD.
-- **Alex Kouasseu** — dashboard (React frontend) co-author.
+- **Alex Kouasseu** — dashboard (React frontend), agent & backend (JMX, Kafka integration) co-author.
 
 Contributions are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
